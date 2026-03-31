@@ -1,0 +1,6 @@
+@Backend_Ingenieria_Purrujas_HostAddress = http://localhost:5232
+
+GET {{Backend_Ingenieria_Purrujas_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
