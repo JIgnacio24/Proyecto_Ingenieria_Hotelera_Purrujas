@@ -422,6 +422,8 @@
   border-radius: 16px;
   padding: 2.5rem 2rem;
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
   transition: transform 0.3s ease, background 0.3s ease;
 
   &:hover {
