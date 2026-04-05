@@ -11,4 +11,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\\Application\\Backend-Ingenieria-Purrujas.Application.csproj" />
+    <ProjectReference Include="..\\Infrastructure\\Backend-Ingenieria-Purrujas.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
