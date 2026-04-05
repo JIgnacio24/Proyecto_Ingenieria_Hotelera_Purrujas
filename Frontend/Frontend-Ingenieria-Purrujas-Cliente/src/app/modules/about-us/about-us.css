@@ -93,9 +93,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
+
+  background-image:
     linear-gradient(160deg, rgba(26,58,42,0.82) 0%, rgba(45,106,79,0.65) 60%, rgba(82,183,136,0.3) 100%),
-    url('https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1600&q=80') center/cover no-repeat;
+    url('/images/foto_fondo.png');
+
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
   overflow: hidden;
 }
 
@@ -387,105 +393,6 @@
 }
 
 /* =============================================
-   CARACTERÍSTICAS
-   ============================================= */
-.section-caracteristicas {
-  background: var(--crema);
-}
-
-.feature-highlight {
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
-  background: var(--blanco);
-  border: 1px solid rgba(82,183,136,0.2);
-  border-left: 5px solid var(--verde-claro);
-  border-radius: 16px;
-  padding: 2.5rem;
-  margin-bottom: 2.5rem;
-  box-shadow: 0 4px 24px rgba(26,58,42,0.06);
-
-  .feature-icon-large { font-size: 3rem; flex-shrink: 0; }
-
-  h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem;
-    color: var(--verde-bosque);
-    margin-bottom: 0.6rem;
-  }
-
-  p {
-    color: var(--texto-medio);
-    line-height: 1.8;
-    font-size: 0.97rem;
-    margin: 0;
-  }
-
-  @media (max-width: 600px) { flex-direction: column; }
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-
-  @media (max-width: 768px) { grid-template-columns: 1fr; }
-}
-
-.feature-card {
-  background: var(--blanco);
-  border-radius: 16px;
-  padding: 2rem;
-  border: 1px solid rgba(82,183,136,0.15);
-  box-shadow: 0 4px 20px rgba(26,58,42,0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(26,58,42,0.1);
-  }
-
-  .feature-top {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1.2rem;
-
-    .feature-emoji { font-size: 1.8rem; }
-
-    h4 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
-      color: var(--verde-bosque);
-      margin: 0;
-    }
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    li {
-      font-size: 0.9rem;
-      color: var(--texto-medio);
-      padding-left: 1.2rem;
-      position: relative;
-
-      &::before {
-        content: '▸';
-        position: absolute;
-        left: 0;
-        color: var(--verde-claro);
-      }
-    }
-  }
-}
-
-/* =============================================
    EQUIPO
    ============================================= */
 .section-equipo {
@@ -731,6 +638,25 @@
   padding-left: 1.2rem;
   color: var(--texto-medio);
   line-height: 1.6;
+}
+
+.cotizar-button {
+  display: inline-block;
+  margin-top: 1.1rem;
+  background: var(--verde-bosque);
+  color: var(--blanco);
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.cotizar-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(26,58,42,0.15);
+  background: var(--verde-medio);
 }
 
 .tarifa-card.destacada {
