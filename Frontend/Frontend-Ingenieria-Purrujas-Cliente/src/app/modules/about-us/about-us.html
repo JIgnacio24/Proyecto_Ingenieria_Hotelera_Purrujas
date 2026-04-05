@@ -109,58 +109,8 @@
   </div>
 </section>
 
-<!-- Características -->
-<section id="facilidades" class="section section-caracteristicas">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag">Lo que nos distingue</span>
-      <h2 class="section-title centered">Características Principales</h2>
-    </div>
-
-    <div class="feature-highlight animate-up">
-      <div class="feature-icon-large"><span class="material-icons">place</span></div>
-      <div class="feature-highlight-text">
-        <h3>Ubicación Privilegiada</h3>
-        <p>
-          Situado a solo 45 minutos de San José, en las verdes montañas de Cartago, el hotel ofrece
-          vistas panorámicas al Volcán Turrialba y está rodeado de bosques nubosos y ríos cristalinos.
-          Una combinación única de accesibilidad y tranquilidad absoluta.
-        </p>
-      </div>
-    </div>
-
-    <div class="features-grid">
-      <div class="feature-card animate-up delay-1">
-        <div class="feature-top">
-          <span class="material-icons">home</span>
-          <h4>Instalaciones</h4>
-        </div>
-        <ul>
-          <li>18 habitaciones temáticas</li>
-          <li>Restaurante "La Ceiba"</li>
-          <li>Piscina natural de manantial</li>
-          <li>Senderos ecológicos (5 km)</li>
-          <li>Salón de eventos</li>
-          <li>Spa con plantas locales</li>
-        </ul>
-      </div>
-      <div class="feature-card animate-up delay-2">
-        <div class="feature-top">
-          <span class="material-icons">forest</span>
-          <h4>Servicios Destacados</h4>
-        </div>
-        <ul>
-          <li>Tours al Volcán Turrialba e Irazú</li>
-          <li>Birdwatching con guías certificados</li>
-          <li>Talleres de gastronomía típica</li>
-          <li>Transporte desde San José</li>
-          <li>Wi-Fi de alta velocidad</li>
-          <li>Atención personalizada 24/7</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Características / Facilidades extraído a componente -->
+<app-facilities></app-facilities>
 
 <!-- Galería -->
 <section id="galeria" class="section section-galeria">
@@ -302,6 +252,7 @@
           <li>Vista al bosque nuboso</li>
           <li>Café chorreado de cortesía</li>
         </ul>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'doble'}">Cotizar</a>
       </div>
       <div class="tarifa-card destacada">
         <h3>Suite Volcán</h3>
@@ -312,6 +263,7 @@
           <li>Coctel de bienvenida</li>
         </ul>
         <span class="badge">Más solicitada</span>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'suite'}">Cotizar</a>
       </div>
       <div class="tarifa-card">
         <h3>Villa Familiar</h3>
@@ -321,6 +273,7 @@
           <li>Cocina equipada</li>
           <li>Chimenea y deck privado</li>
         </ul>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'villa'}">Cotizar</a>
       </div>
     </div>
   </div>
