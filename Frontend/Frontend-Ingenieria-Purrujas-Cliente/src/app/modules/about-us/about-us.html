@@ -145,14 +145,14 @@
     </div>
 
     <div class="gallery-grid">
-      @for (item of filteredItems; track item.src) {
-        <div class="gallery-card animate-up">
-          <img [src]="item.src" [alt]="item.alt" loading="lazy" />
-          <div class="gallery-overlay">
-            <p class="gallery-caption">{{ item.caption }}</p>
-          </div>
+      <div
+        class="gallery-card animate-up"
+        *ngFor="let item of filteredItems; trackBy: trackBySrc">
+        <img [src]="item.src" [alt]="item.alt" loading="lazy" />
+        <div class="gallery-overlay">
+          <p class="gallery-caption">{{ item.caption }}</p>
         </div>
-      }
+      </div>
     </div>
   </div>
 </section>
