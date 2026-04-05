@@ -1,0 +1,190 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- NAVBAR -->
+<nav class="top-nav">
+  <div class="nav-container">
+    <div class="nav-brand">Hotel Las Purrujas</div>
+    <ul class="nav-links">
+      <li><a routerLink="/about-us">Home</a></li>
+      <li><a routerLink="/about-us" fragment="sobre-nosotros">Sobre nosotros</a></li>
+      <li><a routerLink="/about-us" fragment="facilidades">Facilidades</a></li>
+      <li><a routerLink="/about-us" fragment="galeria">Galería</a></li>
+      <li><a routerLink="/about-us" fragment="tarifas">Tarifas</a></li>
+      <li><a routerLink="/promociones" class="nav-active">Publicidad</a></li>
+      <li><a routerLink="/about-us" fragment="reservas">Reservas en línea</a></li>
+      <li><a routerLink="/about-us" fragment="contactenos">Contáctenos</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="promo-hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-leaves">
+    <span class="leaf leaf-1">🌿</span>
+    <span class="leaf leaf-2">🍃</span>
+    <span class="leaf leaf-3">🌿</span>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Ahorra más, disfruta más</p>
+    <h1 class="hero-title">Ofertas & <span>Publicidad</span></h1>
+    <p class="hero-subtitle">Descubre las mejores promociones del hotel y ofertas de nuestros aliados para maximizar el valor de tu estadía.</p>
+    <div class="hero-divider">
+      <span></span><span class="diamond">◆</span><span></span>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Ver promociones</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- BANNER AHORRO -->
+<div class="savings-banner">
+  <div class="savings-container">
+    <span class="material-icons">local_offer</span>
+    <p>Huéspedes activos ahorran hasta un <strong>30%</strong> combinando nuestras promociones con ofertas de aliados locales.</p>
+    <a routerLink="/about-us" fragment="reservas" class="savings-cta">Reservar ahora</a>
+  </div>
+</div>
+
+<!-- PROMOCIONES DEL HOTEL -->
+<section id="promociones" class="section section-promociones">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Hotel Las Purrujas</span>
+      <h2 class="section-title centered">Promociones del Hotel</h2>
+      <p class="section-subtext">Ofertas exclusivas diseñadas para que tu estadía sea perfecta y tu presupuesto rinda más.</p>
+    </div>
+
+    <div class="promo-filters">
+      <button class="promo-filter-btn" [class.active]="filtroActivo === 'todas'" (click)="setFiltro('todas')">
+        <span class="material-icons">apps</span> Todas
+      </button>
+      <button class="promo-filter-btn" [class.active]="filtroActivo === 'activas'" (click)="setFiltro('activas')">
+        <span class="material-icons">bolt</span> Activas ahora
+      </button>
+      <button class="promo-filter-btn" [class.active]="filtroActivo === 'proximas'" (click)="setFiltro('proximas')">
+        <span class="material-icons">schedule</span> Próximamente
+      </button>
+    </div>
+
+    <div class="promo-grid">
+      @for (promo of promocionesFiltradas; track promo.promotionId) {
+        <div class="promo-card animate-up">
+          <div class="promo-header">
+            <div class="discount-circle">
+              <span class="discount-value">-{{ promo.discount }}%</span>
+              <span class="discount-label">descuento</span>
+            </div>
+            <div class="promo-status">
+              @if (isActiva(promo)) {
+                <span class="status-badge activa">
+                  <span class="material-icons">bolt</span> Activa
+                </span>
+              } @else {
+                <span class="status-badge proxima">
+                  <span class="material-icons">schedule</span> Próximamente
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="promo-body">
+            <div class="promo-room-tag">
+              <span class="material-icons">hotel</span>
+              {{ roomName(promo.roomTypeId) }}
+            </div>
+            <h3>{{ promo.name }}</h3>
+
+            <div class="promo-dates">
+              <div class="date-item">
+                <span class="material-icons">calendar_today</span>
+                <div>
+                  <small>Desde</small>
+                  <span>{{ formatDate(promo.startDate) }}</span>
+                </div>
+              </div>
+              <div class="date-item">
+                <span class="material-icons">event</span>
+                <div>
+                  <small>Hasta</small>
+                  <span>{{ formatDate(promo.endDate) }}</span>
+                </div>
+              </div>
+            </div>
+
+            @if (isActiva(promo)) {
+              <div class="countdown">
+                <span class="material-icons">timer</span>
+                Termina en <strong>{{ diasRestantes(promo.endDate) }} días</strong>
+              </div>
+            }
+
+            <a routerLink="/about-us" fragment="reservas" class="promo-cta">
+              Aprovechar oferta <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (promocionesFiltradas.length === 0) {
+      <div class="empty-state">
+        <span class="material-icons">search_off</span>
+        <p>No hay promociones en esta categoría por el momento.</p>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- PUBLICIDAD DE ALIADOS -->
+<section id="publicidad" class="section section-publicidad">
+  <div class="publicidad-bg"></div>
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag tag-dorado">Aliados locales</span>
+      <h2 class="section-title centered white">Ofertas de Nuestros Aliados</h2>
+      <p class="section-subtext white-sub">Marcas y experiencias cuidadosamente seleccionadas para complementar tu estadía en Las Purrujas.</p>
+    </div>
+
+    <div class="pub-list">
+      @for (pub of publicidades; track pub.advertisingId) {
+        <div class="pub-card animate-up">
+          <div class="pub-icon">
+            <span class="material-icons">storefront</span>
+          </div>
+          <div class="pub-body">
+            <h3>{{ pub.name }}</h3>
+          </div>
+          <a [href]="pub.link" target="_blank" rel="noopener" class="pub-cta">
+            Ver oferta <span class="material-icons">open_in_new</span>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="section section-cta">
+  <div class="container cta-box">
+    <div class="cta-content">
+      <span class="material-icons cta-icon">savings</span>
+      <div>
+        <span class="section-tag">Tu estadía ideal</span>
+        <h2 class="section-title">¿Listo para ahorrar?</h2>
+        <p>Combina nuestras promociones del hotel con las ofertas de aliados locales y obtén la experiencia más completa al mejor precio.</p>
+      </div>
+    </div>
+    <div class="cta-actions">
+      <a routerLink="/about-us" fragment="reservas" class="cta-button primary">Reservar ahora</a>
+      <a routerLink="/about-us" fragment="contactenos" class="cta-button secondary">Consultar disponibilidad</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> · Cartago, Costa Rica · Proyecto Académico</p>
+</footer>
