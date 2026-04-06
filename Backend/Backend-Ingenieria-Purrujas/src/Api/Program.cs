@@ -1,8 +1,12 @@
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+// Load environment variables from .env file
+DotNetEnv.Env.Load();
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();

@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PublicidadService, Promocion, Publicidad } from '../../services/publicidad.service';
+import { Narvar } from '../narvar/narvar';
+import { ChangeDetectorRef } from '@angular/core';
 
 const ROOM_NAMES: Record<number, string> = {
   1: 'Habitación Doble',
@@ -12,12 +14,13 @@ const ROOM_NAMES: Record<number, string> = {
 @Component({
   selector: 'app-promociones',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, Narvar],
   templateUrl: './promociones.html',
   styleUrl: './promociones.css'
 })
 export class Promociones implements OnInit {
   private publicidadService = inject(PublicidadService);
+  private cdr = inject(ChangeDetectorRef); // Inject ChangeDetectorRef
 
   promociones: Promocion[] = [];
   publicidades: Publicidad[] = [];
@@ -26,9 +29,12 @@ export class Promociones implements OnInit {
   ngOnInit(): void {
     this.publicidadService.getPromociones().subscribe(data => {
       this.promociones = data;
+      this.setFiltro('todas'); // Apply default filter
+      this.cdr.detectChanges(); // Force change detection
     });
     this.publicidadService.getPublicidades().subscribe(data => {
       this.publicidades = data;
+      this.cdr.detectChanges(); // Force change detection
     });
   }
 
