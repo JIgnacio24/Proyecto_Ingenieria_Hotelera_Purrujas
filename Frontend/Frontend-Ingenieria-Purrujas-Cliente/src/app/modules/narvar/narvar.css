@@ -98,3 +98,16 @@
     margin-right: 0;
   }
 }
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+}

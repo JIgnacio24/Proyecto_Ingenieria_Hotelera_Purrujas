@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 
 type RoomId = 'doble' | 'suite' | 'villa';
 
@@ -18,7 +17,7 @@ interface Room {
 @Component({
   selector: 'app-quote',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './quote.html',
   styleUrl: './quote.css'
 })
@@ -60,9 +59,7 @@ export class QuoteComponent implements OnInit {
   total = 0;
   mensajeError = '';
 
-  private readonly apiUrl = '/api/quote/calculate';
-
-  constructor(private route: ActivatedRoute, private http: HttpClient) {}
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     const roomParam = this.route.snapshot.queryParamMap.get('habitacion') as RoomId | null;
@@ -103,38 +100,65 @@ export class QuoteComponent implements OnInit {
     }
   }
 
+  private esTemporadaAlta(fecha: Date): boolean {
+    const mes = fecha.getMonth(); // 0-11
+    const dia = fecha.getDate();
+
+    // Meses completos de alta: enero, julio, agosto, diciembre
+    const mesesAlta = [0, 6, 7, 11];
+    if (mesesAlta.includes(mes)) return true;
+
+    // Ventana aproximada de Semana Santa (2026): 29 marzo - 5 abril
+    const esSemanaSanta =
+      (mes === 2 && dia >= 29) || (mes === 3 && dia <= 5);
+
+    return esSemanaSanta;
+  }
+
+  private calcularNoches(): { noches: number; alta: number; baja: number } {
+    if (!this.fechaInicio || !this.fechaFin) return { noches: 0, alta: 0, baja: 0 };
+
+    const inicio = new Date(this.fechaInicio);
+    const fin = new Date(this.fechaFin);
+
+    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return { noches: 0, alta: 0, baja: 0 };
+    if (fin <= inicio) return { noches: 0, alta: 0, baja: 0 };
+
+    let cursor = new Date(inicio);
+    let noches = 0;
+    let alta = 0;
+    let baja = 0;
+
+    while (cursor < fin) {
+      noches++;
+      if (this.esTemporadaAlta(cursor)) alta++; else baja++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return { noches, alta, baja };
+  }
+
   private calcular(): void {
     this.mensajeError = '';
-    this.total = 0;
-    this.nochesTotales = 0;
-    this.nochesAlta = 0;
-    this.nochesBaja = 0;
+    const { noches, alta, baja } = this.calcularNoches();
+    this.nochesTotales = noches;
+    this.nochesAlta = alta;
+    this.nochesBaja = baja;
 
-    if (!this.fechaInicio || !this.fechaFin) return;
+    if (!this.fechaInicio || !this.fechaFin) {
+      this.total = 0;
+      return;
+    }
 
     const inicio = new Date(this.fechaInicio);
     const fin = new Date(this.fechaFin);
     if (fin <= inicio) {
       this.mensajeError = 'La fecha de salida debe ser posterior a la de entrada.';
+      this.total = 0;
       return;
     }
 
-    const body = {
-      roomTypeKey: this.habitacionSeleccionada.id,
-      startDate: this.fechaInicio,
-      endDate: this.fechaFin
-    };
-
-    this.http.post<any>(this.apiUrl, body).subscribe({
-      next: (res) => {
-        this.nochesTotales = res.nightsTotal ?? 0;
-        this.nochesAlta = res.nightsHigh ?? 0;
-        this.nochesBaja = res.nightsLow ?? 0;
-        this.total = res.total ?? 0;
-      },
-      error: (err: HttpErrorResponse) => {
-        this.mensajeError = err.error?.message ?? 'No pudimos calcular la cotización. Intenta de nuevo.';
-      }
-    });
+    const precioAlta = this.habitacionSeleccionada.precioBaja * this.habitacionSeleccionada.multiplicadorAlta;
+    this.total = (baja * this.habitacionSeleccionada.precioBaja) + (alta * precioAlta);
   }
 }

@@ -1,4 +1,4 @@
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
 <section id="home" class="about-hero">
   <div class="hero-overlay"></div>
@@ -11,9 +11,7 @@
     <p class="hero-eyebrow">Sobre Nosotros</p>
     <h1 class="hero-title">Hotel Las Purrujas</h1>
     <p class="hero-subtitle">Donde la naturaleza te abraza y Costa Rica te enamora.</p>
-    <div class="hero-divider">
-      <span></span><span class="diamond">◆</span><span></span>
-    </div>
+    <div class="hero-divider"><span></span><span class="diamond">◆</span><span></span></div>
   </div>
   <div class="hero-scroll-hint">
     <span>Descubre nuestra historia</span>
@@ -29,10 +27,10 @@
         <span class="section-tag">Desde 2005</span>
         <h2 class="section-title">Nuestra Historia</h2>
         <p>
-          <strong>Hotel Las Purrujas</strong> nació en el año 2005 en el corazón de los Andes costarricenses,
-          específicamente en las faldas del Volcán Turrialba, en la provincia de Cartago. Su nombre rinde
-          homenaje a las <em>purrujas</em>, pequeñas aves endémicas de la región que simbolizan la vida
-          silvestre y la conexión profunda con la naturaleza.
+          <strong>Hotel Las Purrujas</strong> nació en el año 2005 en el corazón de los Andes
+          costarricenses, específicamente en las faldas del Volcán Turrialba, en la provincia de
+          Cartago. Su nombre rinde homenaje a las <em>purrujas</em>, pequeñas aves endémicas de la
+          región que simbolizan la vida silvestre y la conexión profunda con la naturaleza.
         </p>
         <p>
           Fundado por la familia Vargas Montoya, el hotel comenzó como una pequeña posada de cuatro
@@ -90,8 +88,8 @@
         <h3>Visión</h3>
         <p>
           Ser reconocidos como el principal destino de ecoturismo en la región de Cartago para el
-          año 2030, liderando un modelo de turismo responsable que inspire a otras empresas hoteleras
-          a adoptar prácticas sostenibles.
+          año 2030, liderando un modelo de turismo responsable que inspire a otras empresas
+          hoteleras a adoptar prácticas sostenibles.
         </p>
       </div>
       <div class="mvv-card animate-up delay-3">
@@ -118,36 +116,40 @@
     <div class="section-header">
       <span class="section-tag">Inspirate</span>
       <h2 class="section-title centered">Galería</h2>
-      <p class="section-subtext">Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para planificar tu itinerario perfecto.</p>
+      <p class="section-subtext">
+        Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para
+        planificar tu itinerario perfecto.
+      </p>
     </div>
 
     <div class="gallery-filters">
       <button
         class="gallery-filter-btn"
         [class.active]="activeFilter === 'todos'"
-        (click)="setFilter('todos')">
+        (click)="setFilter('todos')"
+      >
         Todos
       </button>
       <button
         class="gallery-filter-btn"
         [class.active]="activeFilter === 'hotel'"
-        (click)="setFilter('hotel')">
+        (click)="setFilter('hotel')"
+      >
         <span class="material-icons">hotel</span>
         Beneficios del Hotel
       </button>
       <button
         class="gallery-filter-btn"
         [class.active]="activeFilter === 'lugares'"
-        (click)="setFilter('lugares')">
+        (click)="setFilter('lugares')"
+      >
         <span class="material-icons">explore</span>
         Lugares Aledaños
       </button>
     </div>
 
     <div class="gallery-grid">
-      <div
-        class="gallery-card animate-up"
-        *ngFor="let item of filteredItems; trackBy: trackBySrc">
+      <div class="gallery-card animate-up" *ngFor="let item of filteredItems; trackBy: trackBySrc">
         <img [src]="item.src" [alt]="item.alt" loading="lazy" />
         <div class="gallery-overlay">
           <p class="gallery-caption">{{ item.caption }}</p>
@@ -185,9 +187,10 @@
         <h3>Andrea Vargas</h3>
         <span class="director-title">Directora General</span>
         <p>
-          Hija de los fundadores y graduada en Administración Hotelera de la Universidad de Costa Rica,
-          Andrea lidera el hotel con una visión moderna sin perder la esencia familiar que lo caracteriza.
-          Bajo su dirección, Las Purrujas ha crecido como referente de ecoturismo responsable en la región.
+          Hija de los fundadores y graduada en Administración Hotelera de la Universidad de Costa
+          Rica, Andrea lidera el hotel con una visión moderna sin perder la esencia familiar que lo
+          caracteriza. Bajo su dirección, Las Purrujas ha crecido como referente de ecoturismo
+          responsable en la región.
         </p>
       </div>
     </div>
@@ -196,17 +199,18 @@
       <div class="filosofia-icon"><span class="material-icons">eco</span></div>
       <h3>Nuestra Filosofía</h3>
       <p>
-        En Las Purrujas no solo ofrecemos una cama y un desayuno; ofrecemos una <strong>experiencia de vida</strong>.
-        Cada detalle, desde la decoración artesanal hasta el menú del restaurante, está pensado para que el huésped
-        se lleve consigo un pedazo auténtico de Costa Rica. Creemos que el turismo puede y debe ser un motor de
-        desarrollo local, por eso reinvertimos parte de nuestros ingresos en programas educativos y ambientales
-        para la comunidad.
+        En Las Purrujas no solo ofrecemos una cama y un desayuno; ofrecemos una
+        <strong>experiencia de vida</strong>. Cada detalle, desde la decoración artesanal hasta el
+        menú del restaurante, está pensado para que el huésped se lleve consigo un pedazo auténtico
+        de Costa Rica. Creemos que el turismo puede y debe ser un motor de desarrollo local, por eso
+        reinvertimos parte de nuestros ingresos en programas educativos y ambientales para la
+        comunidad.
       </p>
       <blockquote class="filosofia-quote">
         "Donde la naturaleza te abraza y Costa Rica te enamora."
       </blockquote>
     </div>
-</div>  
+  </div>
 </section>
 
 <!-- Cómo llegar -->
@@ -220,16 +224,33 @@
     <div class="map-card">
       <div class="map-text">
         <h3>Coordenadas</h3>
-        <p>9.9046° N, 83.6785° W · Las Purrujas, Cartago.</p>
+        <p>9.975878207007307° N,83.770258333651° W · Las Purrujas, Cartago.</p>
         <ul>
           <li>Ruta 32 hasta Turrialba, luego desvío a La Pastora.</li>
           <li>Transporte privado disponible desde el aeropuerto SJO.</li>
           <li>Parqueo gratuito y seguro dentro de la propiedad.</li>
         </ul>
-        <a class="map-button" href="https://maps.app.goo.gl/" target="_blank" rel="noopener">Abrir en Google Maps</a>
+        <a
+          class="map-button"
+          href="https://maps.app.goo.gl/N7oWPu6m2tAaNHhy9"
+          target="_blank"
+          rel="noopener"
+        >
+          Abrir en Google Maps
+        </a>
       </div>
       <div class="map-embed">
-        <div class="map-placeholder">Mapa ilustrativo</div>
+        <div class="map-embed">
+          <iframe
+            src="https://www.google.com/maps?q=9.975878207007307,-83.770258333651&z=18&output=embed"
+            width="100%"
+            height="100%"
+            style="border: 0"
+            allowfullscreen=""
+            loading="lazy"
+          >
+          </iframe>
+        </div>
       </div>
     </div>
   </div>
@@ -252,7 +273,9 @@
           <li>Vista al bosque nuboso</li>
           <li>Café chorreado de cortesía</li>
         </ul>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'doble'}">Cotizar</a>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'doble' }"
+          >Cotizar</a
+        >
       </div>
       <div class="tarifa-card destacada">
         <h3>Suite Volcán</h3>
@@ -263,7 +286,9 @@
           <li>Coctel de bienvenida</li>
         </ul>
         <span class="badge">Más solicitada</span>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'suite'}">Cotizar</a>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'suite' }"
+          >Cotizar</a
+        >
       </div>
       <div class="tarifa-card">
         <h3>Villa Familiar</h3>
@@ -273,7 +298,9 @@
           <li>Cocina equipada</li>
           <li>Chimenea y deck privado</li>
         </ul>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{habitacion: 'villa'}">Cotizar</a>
+        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'villa' }"
+          >Cotizar</a
+        >
       </div>
     </div>
   </div>
@@ -285,7 +312,9 @@
     <div>
       <span class="section-tag">Tu estancia</span>
       <h2 class="section-title">Reserva en línea</h2>
-      <p>Confirma tu habitación en minutos. Pagos seguros y cancelación flexible hasta 7 días antes.</p>
+      <p>
+        Confirma tu habitación en minutos. Pagos seguros y cancelación flexible hasta 7 días antes.
+      </p>
     </div>
     <a class="cta-button" href="#contactenos">Solicitar disponibilidad</a>
   </div>
@@ -294,15 +323,24 @@
 <!-- Contáctenos -->
 <section id="contactenos" class="section section-contacto">
   <div class="container contacto-grid">
-    <div>
+    <!-- Información -->
+    <div class="contact-info">
       <span class="section-tag">Hablemos</span>
       <h2 class="section-title">Contáctenos</h2>
-      <p>+506 2454-0000 · reservas@laspurrujas.com</p>
-      <p>Lunes a domingo · 7:00 a.m. - 9:00 p.m.</p>
+
+      <p><strong>Teléfono:</strong> +506 8888 8888</p>
+      <p><strong>Correo:</strong> reservas@laspurrujas.com</p>
+      <p><strong>Horario:</strong> Lunes a domingo · 7:00 a.m. - 9:00 p.m.</p>
+      <p><strong>Ubicación:</strong> Cartago, Costa Rica</p>
     </div>
+
+    <!-- Acciones -->
     <div class="contact-actions">
-      <a class="contact-button" href="tel:+50624540000">Llamar ahora</a>
-      <a class="contact-button secondary" href="mailto:reservas@laspurrujas.com">Enviar correo</a>
+      <a class="contact-button" href="tel:+50688888888"> Llamar ahora </a>
+
+      <a class="contact-button secondary" href="mailto:reservas@laspurrujas.com"> Enviar correo </a>
+
+      <a class="contact-button" href="https://wa.me/50688888888" target="_blank"> WhatsApp </a>
     </div>
   </div>
 </section>
@@ -311,5 +349,3 @@
 <footer>
   <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> · Cartago, Costa Rica · Proyecto Académico</p>
 </footer>
-
-
