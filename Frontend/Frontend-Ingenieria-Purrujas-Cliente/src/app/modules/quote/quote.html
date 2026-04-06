@@ -34,6 +34,14 @@
         <p class="hint">{{ habitacionSeleccionada.descripcion }}</p>
       </div>
 
+      <div class="quote-field">
+        <label for="moneda">Moneda</label>
+        <select id="moneda" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)">
+          <option value="USD">Dólares (USD)</option>
+          <option value="CRC">Colones (CRC)</option>
+        </select>
+      </div>
+
       <div class="quote-dates">
         <div class="quote-field">
           <label for="fechaInicio">Fecha de entrada</label>
@@ -71,7 +79,7 @@
       <div class="price-breakdown">
         <div class="row total">
           <span>Total estimado ({{ nochesTotales }} noches)</span>
-          <strong class="total-amount">\${{ total | number:'1.2-2' }}</strong>
+          <strong class="total-amount">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
         </div>
       </div>
 
