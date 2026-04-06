@@ -263,11 +263,18 @@
       <span class="section-tag">Transparencia</span>
       <h2 class="section-title centered">Tarifas 2026</h2>
       <p class="section-subtext">Incluyen desayuno típico, Wi‑Fi y acceso a senderos ecológicos.</p>
+      <div class="quote-field" style="max-width:260px;margin:0 auto 16px auto;">
+        <label for="currency-selector">Moneda</label>
+        <select id="currency-selector" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)">
+          <option value="USD">Dólares (USD)</option>
+          <option value="CRC">Colones (CRC)</option>
+        </select>
+      </div>
     </div>
     <div class="tarifa-grid">
       <div class="tarifa-card">
         <h3>Habitación Doble</h3>
-        <p class="price">$95 <span>/ noche</span></p>
+        <p class="price">{{ currencySymbol }}{{ price(95) | number:'1.0-0' }} <span>/ noche</span></p>
         <ul>
           <li>Cama queen + balcón</li>
           <li>Vista al bosque nuboso</li>
@@ -279,7 +286,7 @@
       </div>
       <div class="tarifa-card destacada">
         <h3>Suite Volcán</h3>
-        <p class="price">$135 <span>/ noche</span></p>
+        <p class="price">{{ currencySymbol }}{{ price(135) | number:'1.0-0' }} <span>/ noche</span></p>
         <ul>
           <li>Jacuzzi con sales termales</li>
           <li>Terraza panorámica</li>
@@ -292,7 +299,7 @@
       </div>
       <div class="tarifa-card">
         <h3>Villa Familiar</h3>
-        <p class="price">$180 <span>/ noche</span></p>
+        <p class="price">{{ currencySymbol }}{{ price(180) | number:'1.0-0' }} <span>/ noche</span></p>
         <ul>
           <li>Hasta 5 huéspedes</li>
           <li>Cocina equipada</li>

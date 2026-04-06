@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FacilitiesComponent } from '../facilities/facilities.component';
+import { Currency, CurrencyService } from '../../shared/currency.service';
+import { Subscription } from 'rxjs';
 
 interface GalleryItem {
   src: string;
@@ -12,13 +15,16 @@ interface GalleryItem {
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [CommonModule, RouterModule, FacilitiesComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FacilitiesComponent],
   templateUrl: './about-us.html',
   styleUrl: './about-us.css'
 })
 
-export class AboutUs {
+export class AboutUs implements OnInit, OnDestroy {
   activeFilter: 'todos' | 'hotel' | 'lugares' = 'todos';
+  currency: Currency = 'USD';
+  currencySymbol = '$';
+  private subs = new Subscription();
 
   galleryItems: GalleryItem[] = [
     {
@@ -98,6 +104,25 @@ export class AboutUs {
   get filteredItems(): GalleryItem[] {
     if (this.activeFilter === 'todos') return this.galleryItems;
     return this.galleryItems.filter(item => item.category === this.activeFilter);
+  }
+
+  constructor(public currencyService: CurrencyService) {}
+
+  ngOnInit(): void {
+    this.subs.add(
+      this.currencyService.currencyChanges$.subscribe(curr => {
+        this.currency = curr;
+        this.currencySymbol = this.currencyService.symbol(curr);
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+  }
+
+  price(amountUsd: number): number {
+    return this.currencyService.convertFromUsd(amountUsd, this.currency);
   }
 
   trackBySrc(_index: number, item: GalleryItem): string {

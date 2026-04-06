@@ -1,5 +1,6 @@
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using System.Linq;
 
 namespace Backend_Ingenieria_Purrujas.Application.Quotes;
 
@@ -8,6 +9,7 @@ public class QuoteService : IQuoteService
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
     private const decimal DefaultHighSeasonMultiplier = 1.25m;
+    private const decimal UsdToCrcRate = 500m;
     private static readonly int[] HighSeasonMonths = { 0, 6, 7, 11 }; // Jan, Jul, Aug, Dec
 
     public QuoteService(IRoomTypeRepository roomTypeRepository, ISeasonRepository seasonRepository)
@@ -26,23 +28,46 @@ public class QuoteService : IQuoteService
         var roomType = await _roomTypeRepository.GetByKeyAsync(request.RoomTypeKey, cancellationToken)
                         ?? throw new ArgumentException($"Tipo de habitación '{request.RoomTypeKey}' no encontrado.");
 
+        var currency = NormalizeCurrency(request.Currency);
+
         var highMultiplier = await ResolveHighMultiplier(cancellationToken);
 
         var (totalNights, highNights, lowNights) = CountNights(request.StartDate, request.EndDate);
 
         var priceHigh = roomType.BasePrice * highMultiplier;
-        var total = (lowNights * roomType.BasePrice) + (highNights * priceHigh);
+        var totalUsd = (lowNights * roomType.BasePrice) + (highNights * priceHigh);
+
+        var (total, basePerNight, multiplier) = currency == "CRC"
+            ? ConvertToCrc(totalUsd, roomType.BasePrice, highMultiplier)
+            : (totalUsd, roomType.BasePrice, highMultiplier);
 
         return new QuoteResponseDto(
             RoomTypeKey: request.RoomTypeKey,
             NightsTotal: totalNights,
             NightsHigh: highNights,
             NightsLow: lowNights,
-            BasePricePerNight: roomType.BasePrice,
-            HighSeasonMultiplier: highMultiplier,
+            BasePricePerNight: basePerNight,
+            HighSeasonMultiplier: multiplier,
             Total: decimal.Round(total, 2),
-            Currency: "USD"
+            Currency: currency
         );
+    }
+
+    private static (decimal total, decimal basePerNight, decimal multiplier) ConvertToCrc(decimal totalUsd, decimal baseUsd, decimal multiplier)
+    {
+        return (totalUsd * UsdToCrcRate, baseUsd * UsdToCrcRate, multiplier);
+    }
+
+    private static string NormalizeCurrency(string requested)
+    {
+        if (string.IsNullOrWhiteSpace(requested)) return "USD";
+        var upper = requested.Trim().ToUpperInvariant();
+        return upper switch
+        {
+            "USD" => "USD",
+            "CRC" => "CRC",
+            _ => "USD"
+        };
     }
 
     private async Task<decimal> ResolveHighMultiplier(CancellationToken cancellationToken)
