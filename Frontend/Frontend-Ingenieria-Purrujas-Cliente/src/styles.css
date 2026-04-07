@@ -2,6 +2,10 @@
 
 @import 'tailwindcss';
 
+:root {
+  --nav-height: 84px;
+}
+
 /* Scroll suave para anclas en toda la app */
 html, body {
   scroll-behavior: smooth;
@@ -9,7 +13,7 @@ html, body {
 
 /* Evita que las secciones queden ocultas bajo el navbar sticky */
 :target {
-  scroll-margin-top: 90px;
+  scroll-margin-top: var(--nav-height);
 }
 
 /* loader*/
