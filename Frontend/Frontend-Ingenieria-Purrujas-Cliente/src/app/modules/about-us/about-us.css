@@ -43,7 +43,7 @@
   padding: 90px 0;
   position: relative;
   overflow: hidden;
-  scroll-margin-top: 90px;
+  scroll-margin-top: var(--nav-height);
 }
 
 .section-tag {
@@ -89,7 +89,9 @@
    ============================================= */
 .about-hero {
   position: relative;
-  min-height: 88vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-top: var(--nav-height);
   display: flex;
   align-items: center;
   justify-content: center;
