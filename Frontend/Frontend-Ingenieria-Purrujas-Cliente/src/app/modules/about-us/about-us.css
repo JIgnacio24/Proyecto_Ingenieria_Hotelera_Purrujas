@@ -681,6 +681,7 @@
 }
 
 .section-reservas {
+  scroll-margin-top: 88px;
   background: var(--verde-bosque);
   color: var(--blanco);
 }
@@ -717,6 +718,7 @@
 }
 
 .section-contacto {
+  scroll-margin-top: 88px;
   background: var(--crema);
 }
 

@@ -13,6 +13,7 @@ public class PromotionsController : ControllerBase
         {
             PromotionId = 1,
             Name = "Escapada Romántica",
+            Link = "http://localhost:4200/about-us#reservas",
             Discount = 25,
             StartDate = new DateTime(2026, 4, 1),
             EndDate = new DateTime(2026, 5, 31),
@@ -22,6 +23,7 @@ public class PromotionsController : ControllerBase
         {
             PromotionId = 2,
             Name = "Semana Ecológica",
+            Link = "http://localhost:4200/about-us#reservas",
             Discount = 20,
             StartDate = new DateTime(2026, 4, 15),
             EndDate = new DateTime(2026, 6, 30),
@@ -31,6 +33,7 @@ public class PromotionsController : ControllerBase
         {
             PromotionId = 3,
             Name = "Aventura Familiar",
+            Link = "http://localhost:4200/about-us#reservas",
             Discount = 30,
             StartDate = new DateTime(2026, 5, 1),
             EndDate = new DateTime(2026, 7, 15),
@@ -40,6 +43,7 @@ public class PromotionsController : ControllerBase
         {
             PromotionId = 4,
             Name = "Retiro de Bienestar",
+            Link = "http://localhost:4200/about-us#reservas",
             Discount = 15,
             StartDate = new DateTime(2026, 6, 1),
             EndDate = new DateTime(2026, 8, 31),
