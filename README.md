@@ -19,6 +19,7 @@ Este proyecto busca gestionar los procesos principales de un sistema hotelero, i
 | Tecnología | Uso |
 |-----------|-----|
 | ASP.NET Core | Backend / API |
+| Angular v.21 | Frontend |
 | SQL Server | Base de datos |
 | Entity Framework / Repositories | Persistencia |
 | Clean / Hexagonal Architecture | Organización del proyecto |
