@@ -22,7 +22,6 @@ Este proyecto busca gestionar los procesos principales de un sistema hotelero, i
 | SQL Server | Base de datos |
 | Entity Framework / Repositories | Persistencia |
 | Clean / Hexagonal Architecture | Organización del proyecto |
-| xUnit / Tests | Pruebas |
 
 ## Arquitectura del backend
 
@@ -40,14 +39,36 @@ El backend está organizado en cuatro capas principales:
 - **Application** → depende de `Domain`
 - **Domain** → no depende de ninguna otra capa
 
-## Estructura del proyecto
+## Estructura del backend
 
 ```text
 Backend/
 └── Backend-Ingenieria-Purrujas/
     ├── src/
     │   ├── Backend-Ingenieria-Purrujas.Api/
+    │   │   ├── Controllers/
+    │   │   ├── Extensions/
+    │   │   ├── Middleware/
+    │   │   └── Program.cs
+    │   │
     │   ├── Backend-Ingenieria-Purrujas.Application/
+    │   │   ├── Abstractions/
+    │   │   ├── Auth/
+    │   │   ├── Customers/
+    │   │   ├── Reservations/
+    │   │   └── Rooms/
+    │   │
     │   ├── Backend-Ingenieria-Purrujas.Domain/
+    │   │   ├── Common/
+    │   │   ├── Customers/
+    │   │   ├── Reservations/
+    │   │   └── Rooms/
+    │   │
     │   └── Backend-Ingenieria-Purrujas.Infrastructure/
-    └── tests/
+    │       ├── Files/
+    │       ├── Identity/
+    │       ├── Persistence/
+    │       └── Services/
+    │
+    ├── tests/
+    └── Backend-Ingenieria-Purrujas.sln
