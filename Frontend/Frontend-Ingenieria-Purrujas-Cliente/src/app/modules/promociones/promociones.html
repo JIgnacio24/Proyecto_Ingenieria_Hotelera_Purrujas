@@ -1,22 +1,5 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-<!-- NAVBAR -->
-<nav class="top-nav">
-  <div class="nav-container">
-    <div class="nav-brand">Hotel Las Purrujas</div>
-    <ul class="nav-links">
-      <li><a routerLink="/about-us">Home</a></li>
-      <li><a routerLink="/about-us" fragment="sobre-nosotros">Sobre nosotros</a></li>
-      <li><a routerLink="/about-us" fragment="facilidades">Facilidades</a></li>
-      <li><a routerLink="/about-us" fragment="galeria">Galería</a></li>
-      <li><a routerLink="/about-us" fragment="tarifas">Tarifas</a></li>
-      <li><a routerLink="/promociones" class="nav-active">Publicidad</a></li>
-      <li><a routerLink="/about-us" fragment="reservas">Reservas en línea</a></li>
-      <li><a routerLink="/about-us" fragment="contactenos">Contáctenos</a></li>
-    </ul>
-  </div>
-</nav>
-
+<app-narvar></app-narvar>
 <!-- HERO -->
 <section class="promo-hero">
   <div class="hero-overlay"></div>
@@ -44,7 +27,7 @@
   <div class="savings-container">
     <span class="material-icons">local_offer</span>
     <p>Huéspedes activos ahorran hasta un <strong>30%</strong> combinando nuestras promociones con ofertas de aliados locales.</p>
-    <a routerLink="/about-us" fragment="reservas" class="savings-cta">Reservar ahora</a>
+    <a routerLink="/#reserva" fragment="reservas" class="savings-cta">Reservar ahora</a>
   </div>
 </div>
 
@@ -178,7 +161,7 @@
       </div>
     </div>
     <div class="cta-actions">
-      <a routerLink="/about-us" fragment="reservas" class="cta-button primary">Reservar ahora</a>
+      <a routerLink="/#reserva" fragment="reservas" class="cta-button primary">Reservar ahora</a>
       <a routerLink="/about-us" fragment="contactenos" class="cta-button secondary">Consultar disponibilidad</a>
     </div>
   </div>
@@ -188,3 +171,4 @@
 <footer>
   <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> · Cartago, Costa Rica · Proyecto Académico</p>
 </footer>
+

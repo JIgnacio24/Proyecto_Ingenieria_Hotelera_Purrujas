@@ -21,8 +21,8 @@ export interface Publicidad {
 @Injectable({ providedIn: 'root' })
 export class PublicidadService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5232/api';
-
+  private apiUrl = 'http://localhost:5232/api'; // Updated to port 5232
+  
   getPromociones(): Observable<Promocion[]> {
     return this.http.get<Promocion[]>(`${this.apiUrl}/promotions`).pipe(
       catchError(() => of(this.mockPromociones))

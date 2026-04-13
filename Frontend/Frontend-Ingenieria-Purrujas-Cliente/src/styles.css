@@ -2,6 +2,10 @@
 
 @import 'tailwindcss';
 
+:root {
+  --nav-height: 84px;
+}
+
 /* Scroll suave para anclas en toda la app */
 html, body {
   scroll-behavior: smooth;
@@ -9,5 +13,54 @@ html, body {
 
 /* Evita que las secciones queden ocultas bajo el navbar sticky */
 :target {
-  scroll-margin-top: 90px;
+  scroll-margin-top: var(--nav-height);
+}
+
+/* loader*/
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+}
+
+/*Capa */
+#loader .overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #52b788; 
+}
+
+/* Logo centrado */
+#loader img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Animación */
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+body.loading app-root {
+  opacity: 0;
+}
+
+body.loaded app-root {
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }

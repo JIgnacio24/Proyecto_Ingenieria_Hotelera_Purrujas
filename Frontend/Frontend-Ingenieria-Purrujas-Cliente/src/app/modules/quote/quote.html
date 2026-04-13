@@ -1,0 +1,89 @@
+<nav class="top-nav">
+  <div class="nav-container">
+    <div class="nav-brand" routerLink="/">Hotel Las Purrujas</div>
+    <ul class="nav-links">
+      <li><a routerLink="/">Home</a></li>
+      <li><a routerLink="/" fragment="sobre-nosotros">Sobre nosotros</a></li>
+      <li><a routerLink="/" fragment="facilidades">Facilidades</a></li>
+      <li><a routerLink="/" fragment="como-llegar">¿Cómo llegar?</a></li>
+      <li><a routerLink="/" fragment="tarifas">Tarifas</a></li>
+      <li><a routerLink="/" fragment="reservas">Reservas</a></li>
+      <li><a routerLink="/" fragment="contactenos">Contáctenos</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="section quote-hero">
+  <div class="container">
+    <span class="section-tag">Cotización rápida</span>
+    <h1 class="section-title">Calcula tu estancia</h1>
+    <p class="section-subtext">
+      Selecciona habitación y rango de fechas. Ajustamos automáticamente el precio por temporada alta o baja.
+    </p>
+  </div>
+</section>
+
+<section class="section quote-body">
+  <div class="container quote-grid">
+    <div class="quote-card">
+      <div class="quote-field">
+        <label for="habitacion">Tipo de habitación</label>
+        <select id="habitacion" [ngModel]="habitacionSeleccionada.id" (ngModelChange)="onRoomChange($event)">
+          <option *ngFor="let room of habitaciones" [value]="room.id">{{ room.nombre }}</option>
+        </select>
+        <p class="hint">{{ habitacionSeleccionada.descripcion }}</p>
+      </div>
+
+      <div class="quote-field">
+        <label for="moneda">Moneda</label>
+        <select id="moneda" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)">
+          <option value="USD">Dólares (USD)</option>
+          <option value="CRC">Colones (CRC)</option>
+        </select>
+      </div>
+
+      <div class="quote-dates">
+        <div class="quote-field">
+          <label for="fechaInicio">Fecha de entrada</label>
+          <input id="fechaInicio" type="date" [(ngModel)]="fechaInicio" (change)="onDateChange()">
+        </div>
+        <div class="quote-field">
+          <label for="fechaFin">Fecha de salida</label>
+          <input id="fechaFin" type="date" [(ngModel)]="fechaFin" (change)="onDateChange()">
+        </div>
+      </div>
+
+      <div class="quote-summary">
+        <div>
+          <div class="summary-value">{{ nochesTotales }}</div>
+          <div class="summary-label">Noches totales</div>
+        </div>
+        <div>
+          <div class="summary-value">{{ nochesAlta }}</div>
+          <div class="summary-label">Noches en temporada alta</div>
+        </div>
+        <div>
+          <div class="summary-value">{{ nochesBaja }}</div>
+          <div class="summary-label">Noches en temporada baja</div>
+        </div>
+      </div>
+
+      <div class="quote-alert" *ngIf="mensajeError">{{ mensajeError }}</div>
+    </div>
+
+    <div class="quote-card total-card">
+      <h3>{{ habitacionSeleccionada.nombre }}</h3>
+      <p class="card-desc">{{ habitacionSeleccionada.descripcion }}</p>
+      <p class="capacity">Capacidad: {{ habitacionSeleccionada.capacidad }}</p>
+
+      <div class="price-breakdown">
+        <div class="row total">
+          <span>Total estimado ({{ nochesTotales }} noches)</span>
+          <strong class="total-amount">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <a class="cta-button" routerLink="/">Volver a inicio</a>
+    </div>
+  </div>
+</section>
