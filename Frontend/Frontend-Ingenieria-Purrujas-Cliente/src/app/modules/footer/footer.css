@@ -4,11 +4,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 500;
+  z-index: 999;
   background: #1b4332;
   color: #fff;
   box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.35);
   font-family: inherit;
+  width: 100%;
+  pointer-events: auto;
 }
 
 /* ── Fila del carrete / ticker ── */
@@ -18,9 +20,10 @@
   height: 42px;
   overflow: hidden;
   background: #2d6a4f;
+  min-height: 42px;
 }
 
-/* Etiqueta "Promociones" */
+/* Etiqueta "Ofertas & Aliados" */
 .ticker-label {
   flex-shrink: 0;
   display: flex;
@@ -46,6 +49,7 @@
   flex: 1;
   display: flex;
   align-items: center;
+  min-height: 42px;
 }
 
 /* Pista animada — desplaza la mitad de su ancho (los ítems están duplicados) */
@@ -60,7 +64,7 @@
   animation-play-state: paused;
 }
 
-/* Ítem individual */
+/* ── Ítem individual ── */
 .ticker-item {
   display: inline-flex;
   align-items: center;
@@ -78,9 +82,38 @@
   color: #95d5b2;
 }
 
-/* Badge de descuento */
-.discount-badge {
+/* ── Badges de tipo (PROMO vs ALIADO) ── */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+/* Badge PROMO (verde) */
+.promo-badge {
   background: #52b788;
+  color: #1b4332;
+}
+
+/* Badge ALIADO (dorado) */
+.pub-badge {
+  background: #d4a574;
+  color: #2d2416;
+}
+
+.type-badge .material-icons {
+  font-size: 0.8rem;
+}
+
+/* Badge de descuento (solo para promociones) */
+.discount-badge {
+  background: #40916c;
   color: #fff;
   font-weight: 700;
   font-size: 0.72rem;
@@ -90,10 +123,11 @@
 }
 
 .ticker-item.activa .discount-badge {
-  background: #40916c;
+  background: rgba(82, 183, 136, 0.9);
+  box-shadow: 0 0 8px rgba(82, 183, 136, 0.5);
 }
 
-.promo-name {
+.item-name {
   font-weight: 500;
 }
 
@@ -108,6 +142,10 @@
   text-align: center;
   background: #1b4332;
   padding: 5px 16px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .copyright-row p {
@@ -122,3 +160,4 @@
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+

@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PublicidadService, Promocion } from '../../services/publicidad.service';
-import { Narvar } from '../narvar/narvar';
 import { ChangeDetectorRef } from '@angular/core';
 
 const ROOM_NAMES: Record<number, string> = {
@@ -14,7 +13,7 @@ const ROOM_NAMES: Record<number, string> = {
 @Component({
   selector: 'app-promociones',
   standalone: true,
-  imports: [CommonModule, RouterModule, Narvar],
+  imports: [CommonModule, RouterModule],
   templateUrl: './promociones.html',
   styleUrl: './promociones.css'
 })

@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
 
-import { Narvar } from '../narvar/narvar';
 import { Publicidad, PublicidadService } from '../../services/publicidad.service';
 
 @Component({
   selector: 'app-publicidad',
   standalone: true,
-  imports: [CommonModule, RouterModule, Narvar],
+  imports: [CommonModule, RouterModule],
   templateUrl: './publicidad.html',
   styleUrl: './publicidad.css'
 })

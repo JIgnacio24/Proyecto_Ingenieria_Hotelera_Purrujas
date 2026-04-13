@@ -7,9 +7,17 @@
   --footer-height: 70px;
 }
 
+/* Contenedor principal con espacio para navbar y footer */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 /* Espacio para el footer fijo */
 .page-content {
   padding-bottom: var(--footer-height);
+  min-height: calc(100vh - var(--nav-height));
 }
 
 /* Scroll suave para anclas en toda la app */
@@ -37,7 +45,7 @@ html, body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: #52b788; 
+  background: #52b788;
 }
 
 /* Logo centrado */
@@ -70,3 +78,17 @@ body.loaded app-root {
   opacity: 1;
   transition: opacity 0.5s ease;
 }
+
+/* Asegurar que app-root y sus hijos no oculten el footer */
+app-root {
+  display: block;
+  width: 100%;
+}
+
+app-footer {
+  display: block;
+  width: 100%;
+  position: relative;
+  z-index: auto;
+}
+
