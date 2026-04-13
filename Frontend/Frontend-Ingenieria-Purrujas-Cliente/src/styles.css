@@ -4,6 +4,12 @@
 
 :root {
   --nav-height: 84px;
+  --footer-height: 70px;
+}
+
+/* Espacio para el footer fijo */
+.page-content {
+  padding-bottom: var(--footer-height);
 }
 
 /* Scroll suave para anclas en toda la app */

@@ -1,0 +1,25 @@
+<footer class="promo-footer">
+  <!-- Ticker de promociones -->
+  <div class="ticker-row">
+    <div class="ticker-label">
+      <span class="material-icons ticker-icon">local_offer</span>
+      <span>Promociones</span>
+    </div>
+    <div class="ticker-container">
+      <div class="ticker-track">
+        @for (promo of tickerItems; track $index) {
+          <a [routerLink]="['/promociones']" class="ticker-item" [class.activa]="isActiva(promo)">
+            <span class="discount-badge">-{{ promo.discount }}%</span>
+            <span class="promo-name">{{ promo.name }}</span>
+            <span class="separator" aria-hidden="true">·</span>
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="copyright-row">
+    <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> &nbsp;·&nbsp; Cartago, Costa Rica &nbsp;·&nbsp; Proyecto Académico</p>
+  </div>
+</footer>

@@ -1,0 +1,124 @@
+/* ── Contenedor principal del footer ── */
+.promo-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: #1b4332;
+  color: #fff;
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.35);
+  font-family: inherit;
+}
+
+/* ── Fila del carrete / ticker ── */
+.ticker-row {
+  display: flex;
+  align-items: stretch;
+  height: 42px;
+  overflow: hidden;
+  background: #2d6a4f;
+}
+
+/* Etiqueta "Promociones" */
+.ticker-label {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  background: #52b788;
+  color: #1b4332;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.ticker-icon {
+  font-size: 1.1rem;
+}
+
+/* Área de desplazamiento */
+.ticker-container {
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* Pista animada — desplaza la mitad de su ancho (los ítems están duplicados) */
+.ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: ticker-scroll 28s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Ítem individual */
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px;
+  color: #d8f3dc;
+  text-decoration: none;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.ticker-item:hover {
+  color: #95d5b2;
+}
+
+/* Badge de descuento */
+.discount-badge {
+  background: #52b788;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 2px 9px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.ticker-item.activa .discount-badge {
+  background: #40916c;
+}
+
+.promo-name {
+  font-weight: 500;
+}
+
+.separator {
+  color: #74c69d;
+  margin-left: 4px;
+  user-select: none;
+}
+
+/* ── Fila de copyright ── */
+.copyright-row {
+  text-align: center;
+  background: #1b4332;
+  padding: 5px 16px;
+}
+
+.copyright-row p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #95d5b2;
+  letter-spacing: 0.02em;
+}
+
+/* ── Animación infinita ── */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
