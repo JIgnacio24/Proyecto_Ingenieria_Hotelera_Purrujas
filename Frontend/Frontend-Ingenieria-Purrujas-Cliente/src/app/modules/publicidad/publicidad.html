@@ -1,0 +1,67 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<app-narvar></app-narvar>
+
+<section class="publicidad-hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Aliados del Hotel</p>
+    <h1 class="hero-title">Publicidad & <span>Ofertas Externas</span></h1>
+    <p class="hero-subtitle">
+      Explora promociones de tours, gastronomia, bienestar y experiencias locales conectadas con tu estadia en Las Purrujas.
+    </p>
+  </div>
+</section>
+
+<section class="section section-publicidad">
+  <div class="publicidad-bg"></div>
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag tag-dorado">Aliados locales</span>
+      <h2 class="section-title centered white">Ofertas de Nuestros Aliados</h2>
+      <p class="section-subtext white-sub">
+        Cada tarjeta consume su enlace desde el backend para llevarte directamente a la pagina externa correspondiente.
+      </p>
+    </div>
+
+    <div class="pub-list">
+      @for (pub of publicidades; track pub.advertisingId) {
+        <div class="pub-card animate-up">
+          <div class="pub-icon">
+            <span class="material-icons">storefront</span>
+          </div>
+          <div class="pub-body">
+            <span class="pub-label">Oferta {{ pub.advertisingId }}</span>
+            <h3>{{ pub.name }}</h3>
+          </div>
+          <a [href]="pub.link" target="_blank" rel="noopener noreferrer" class="pub-cta">
+            Ver oferta <span class="material-icons">open_in_new</span>
+          </a>
+        </div>
+      }
+    </div>
+
+    @if (publicidades.length === 0) {
+      <div class="empty-state">
+        <span class="material-icons">storefront</span>
+        <p>No hay publicidad disponible en este momento.</p>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="section section-cta">
+  <div class="container cta-box">
+    <div class="cta-content">
+      <span class="material-icons cta-icon">hotel</span>
+      <div>
+        <span class="section-tag">Volver al hotel</span>
+        <h2 class="section-title">Combina publicidad y promociones</h2>
+        <p>Revisa primero las promociones del hotel y luego completa tu plan con experiencias externas.</p>
+      </div>
+    </div>
+    <div class="cta-actions">
+      <a routerLink="/promociones" class="cta-button primary">Ir a promociones</a>
+      <a routerLink="/about-us" fragment="reservas" class="cta-button secondary">Reservar ahora</a>
+    </div>
+  </div>
+</section>
