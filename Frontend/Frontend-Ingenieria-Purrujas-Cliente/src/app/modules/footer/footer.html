@@ -1,0 +1,48 @@
+<footer class="promo-footer">
+  <!-- Debug: Mostrar si se está renderizando -->
+  <div class="ticker-row">
+    <div class="ticker-label">
+      <span class="material-icons ticker-icon">local_offer</span>
+      <span>Ofertas & Aliados</span>
+    </div>
+    <div class="ticker-container">
+      <div class="ticker-track">
+        <!-- Debug: Si carouselItems está vacío, mostrar mensaje -->
+        @if (carouselItems.length === 0) {
+          <div style="color: #aaa; padding: 10px;">Cargando ofertas...</div>
+        } @else {
+          @for (item of tickerItems; track $index) {
+            <a [routerLink]="item.type === 'publicidad' ? '/publicidad' : item.link"
+               class="ticker-item" [class.promocion]="item.type === 'promocion'"
+               [class.publicidad]="item.type === 'publicidad'"
+               [class.activa]="item.isActive">
+
+              @if (item.type === 'promocion') {
+                <span class="type-badge promo-badge">
+                  <span class="material-icons">local_offer</span>
+                  PROMO
+                </span>
+                <span class="discount-badge">-{{ item.discount }}%</span>
+              } @else {
+                <span class="type-badge pub-badge">
+                  <span class="material-icons">handshake</span>
+                  ALIADO
+                </span>
+              }
+
+              <span class="item-name">{{ item.name }}</span>
+              <span class="separator" aria-hidden="true">·</span>
+            </a>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="copyright-row">
+    <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> &nbsp;·&nbsp; Cartago, Costa Rica &nbsp;·&nbsp; Proyecto Académico</p>
+  </div>
+</footer>
+
+
