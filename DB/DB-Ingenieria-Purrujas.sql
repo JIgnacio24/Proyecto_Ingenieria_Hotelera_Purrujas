@@ -26,6 +26,20 @@ CREATE TABLE Customer (
 );
 GO
 
+CREATE TABLE AdminUser (
+    AdminUserId INT PRIMARY KEY IDENTITY,
+    FullName NVARCHAR(255) NOT NULL,
+    Username NVARCHAR(100) NOT NULL UNIQUE,
+    Email NVARCHAR(255) NOT NULL UNIQUE,
+    PasswordHash VARBINARY(64) NOT NULL,
+    PasswordSalt VARBINARY(32) NOT NULL,
+    Role NVARCHAR(50) NOT NULL DEFAULT 'Administrador',
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    LastLoginAt DATETIME2 NULL
+);
+GO
+
 CREATE TABLE RoomType (
     RoomTypeId INT PRIMARY KEY IDENTITY,
     Name NVARCHAR(255) NOT NULL,
@@ -229,6 +243,183 @@ CREATE TABLE ForecastSnapshots (
     ConfidenceLevel DECIMAL(8,2) NULL,
     GeneratedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
 );
+GO
+
+-- =========================================
+-- ADMIN USER
+-- =========================================
+
+CREATE OR ALTER PROCEDURE usp_AdminUser_Register
+    @FullName NVARCHAR(255),
+    @Username NVARCHAR(100),
+    @Email NVARCHAR(255),
+    @Password NVARCHAR(255),
+    @Role NVARCHAR(50) = 'Administrador'
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        SET @FullName = LTRIM(RTRIM(@FullName));
+        SET @Username = LTRIM(RTRIM(@Username));
+        SET @Email = LTRIM(RTRIM(@Email));
+        SET @Role = ISNULL(NULLIF(LTRIM(RTRIM(@Role)), ''), 'Administrador');
+
+        IF @FullName IS NULL OR @FullName = ''
+            THROW 50010, 'El nombre completo es obligatorio.', 1;
+
+        IF @Username IS NULL OR @Username = ''
+            THROW 50011, 'El nombre de usuario es obligatorio.', 1;
+
+        IF @Email IS NULL OR @Email = ''
+            THROW 50012, 'El correo es obligatorio.', 1;
+
+        IF @Password IS NULL OR LEN(@Password) < 8
+            THROW 50013, 'La contrasena debe tener al menos 8 caracteres.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM AdminUser
+            WHERE LOWER(Username) = LOWER(@Username)
+        )
+            THROW 50014, 'El nombre de usuario ya existe.', 1;
+
+        IF EXISTS (
+            SELECT 1
+            FROM AdminUser
+            WHERE LOWER(Email) = LOWER(@Email)
+        )
+            THROW 50015, 'El correo ya existe.', 1;
+
+        DECLARE @PasswordSalt VARBINARY(32) = CRYPT_GEN_RANDOM(32);
+        DECLARE @PasswordHash VARBINARY(64) =
+            HASHBYTES('SHA2_512', @PasswordSalt + CONVERT(VARBINARY(4000), @Password));
+
+        INSERT INTO AdminUser (
+            FullName,
+            Username,
+            Email,
+            PasswordHash,
+            PasswordSalt,
+            Role,
+            IsActive
+        )
+        VALUES (
+            @FullName,
+            @Username,
+            @Email,
+            @PasswordHash,
+            @PasswordSalt,
+            @Role,
+            1
+        );
+
+        SELECT
+            AdminUserId,
+            FullName,
+            Username,
+            Email,
+            Role,
+            IsActive,
+            CreatedAt,
+            LastLoginAt
+        FROM AdminUser
+        WHERE AdminUserId = CAST(SCOPE_IDENTITY() AS INT);
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO
+
+CREATE OR ALTER PROCEDURE usp_AdminUser_Login
+    @Username NVARCHAR(100),
+    @Password NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @AdminUserId INT;
+    DECLARE @StoredHash VARBINARY(64);
+    DECLARE @StoredSalt VARBINARY(32);
+    DECLARE @ComputedHash VARBINARY(64);
+
+    SELECT TOP 1
+        @AdminUserId = AdminUserId,
+        @StoredHash = PasswordHash,
+        @StoredSalt = PasswordSalt
+    FROM AdminUser
+    WHERE LOWER(Username) = LOWER(LTRIM(RTRIM(@Username)))
+      AND IsActive = 1;
+
+    IF @AdminUserId IS NULL
+        RETURN;
+
+    SET @ComputedHash = HASHBYTES('SHA2_512', @StoredSalt + CONVERT(VARBINARY(4000), @Password));
+
+    IF @ComputedHash <> @StoredHash
+        RETURN;
+
+    UPDATE AdminUser
+    SET LastLoginAt = SYSDATETIME()
+    WHERE AdminUserId = @AdminUserId;
+
+    SELECT
+        AdminUserId,
+        FullName,
+        Username,
+        Email,
+        Role,
+        IsActive,
+        CreatedAt,
+        LastLoginAt
+    FROM AdminUser
+    WHERE AdminUserId = @AdminUserId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE usp_AdminUser_GetById
+    @AdminUserId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AdminUserId,
+        FullName,
+        Username,
+        Email,
+        Role,
+        IsActive,
+        CreatedAt,
+        LastLoginAt
+    FROM AdminUser
+    WHERE AdminUserId = @AdminUserId
+      AND IsActive = 1;
+END;
+GO
+
+EXEC usp_AdminUser_Register
+    @FullName = 'Gabriela Solano',
+    @Username = 'admin.purrujas',
+    @Email = 'admin@laspurrujas.local',
+    @Password = 'Purrujas2026!',
+    @Role = 'Administrador';
+GO
+
+EXEC usp_AdminUser_Register
+    @FullName = 'Carlos Mora',
+    @Username = 'recepcion.purrujas',
+    @Email = 'recepcion@laspurrujas.local',
+    @Password = 'Recepcion2026!',
+    @Role = 'Supervisor';
 GO
 
 -- =========================================

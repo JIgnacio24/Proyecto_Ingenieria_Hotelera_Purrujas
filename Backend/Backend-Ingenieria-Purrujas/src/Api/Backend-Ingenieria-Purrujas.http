@@ -1,6 +1,24 @@
 @Backend_Ingenieria_Purrujas_HostAddress = http://localhost:5232
 
-GET {{Backend_Ingenieria_Purrujas_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin.purrujas",
+  "password": "Purrujas2026!"
+}
+
+###
+
+POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Andrea Vargas",
+  "username": "andrea.vargas",
+  "email": "andrea.vargas@laspurrujas.local",
+  "password": "Andres2026!",
+  "role": "Administrador"
+}
 
 ###
