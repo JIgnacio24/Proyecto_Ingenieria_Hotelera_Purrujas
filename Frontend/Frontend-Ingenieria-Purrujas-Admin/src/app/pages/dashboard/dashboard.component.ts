@@ -33,7 +33,7 @@ export class DashboardComponent {
     } catch (error) {
       this.errorMessage.set(this.resolveError(error, 'No fue posible validar la sesion.'));
 
-      if (error instanceof HttpErrorResponse && error.status === 401) {
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
         this.authService.logout();
         return;
       }

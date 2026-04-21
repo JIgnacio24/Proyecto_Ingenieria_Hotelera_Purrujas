@@ -5,20 +5,20 @@
       <li><a routerLink="/">Home</a></li>
       <li><a routerLink="/" fragment="sobre-nosotros">Sobre nosotros</a></li>
       <li><a routerLink="/" fragment="facilidades">Facilidades</a></li>
-      <li><a routerLink="/" fragment="como-llegar">¿Cómo llegar?</a></li>
+      <li><a routerLink="/" fragment="como-llegar">Como llegar</a></li>
       <li><a routerLink="/" fragment="tarifas">Tarifas</a></li>
       <li><a routerLink="/" fragment="reservas">Reservas</a></li>
-      <li><a routerLink="/" fragment="contactenos">Contáctenos</a></li>
+      <li><a routerLink="/" fragment="contactenos">Contactenos</a></li>
     </ul>
   </div>
 </nav>
 
 <section class="section quote-hero">
   <div class="container">
-    <span class="section-tag">Cotización rápida</span>
+    <span class="section-tag">Cotizacion rapida</span>
     <h1 class="section-title">Calcula tu estancia</h1>
     <p class="section-subtext">
-      Selecciona habitación y rango de fechas. Ajustamos automáticamente el precio por temporada alta o baja.
+      Selecciona habitacion y rango de fechas. Ajustamos automaticamente el precio por temporada alta o baja.
     </p>
   </div>
 </section>
@@ -27,8 +27,12 @@
   <div class="container quote-grid">
     <div class="quote-card">
       <div class="quote-field">
-        <label for="habitacion">Tipo de habitación</label>
-        <select id="habitacion" [ngModel]="habitacionSeleccionada.id" (ngModelChange)="onRoomChange($event)">
+        <label for="habitacion">Tipo de habitacion</label>
+        <select
+          id="habitacion"
+          [ngModel]="habitacionSeleccionada.id"
+          (ngModelChange)="onRoomChange($event)"
+          required>
           <option *ngFor="let room of habitaciones" [value]="room.id">{{ room.nombre }}</option>
         </select>
         <p class="hint">{{ habitacionSeleccionada.descripcion }}</p>
@@ -36,8 +40,8 @@
 
       <div class="quote-field">
         <label for="moneda">Moneda</label>
-        <select id="moneda" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)">
-          <option value="USD">Dólares (USD)</option>
+        <select id="moneda" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)" required>
+          <option value="USD">Dolares (USD)</option>
           <option value="CRC">Colones (CRC)</option>
         </select>
       </div>
@@ -45,11 +49,23 @@
       <div class="quote-dates">
         <div class="quote-field">
           <label for="fechaInicio">Fecha de entrada</label>
-          <input id="fechaInicio" type="date" [(ngModel)]="fechaInicio" (change)="onDateChange()">
+          <input
+            id="fechaInicio"
+            type="date"
+            [(ngModel)]="fechaInicio"
+            [min]="minStartDate"
+            required
+            (change)="onDateChange()">
         </div>
         <div class="quote-field">
           <label for="fechaFin">Fecha de salida</label>
-          <input id="fechaFin" type="date" [(ngModel)]="fechaFin" (change)="onDateChange()">
+          <input
+            id="fechaFin"
+            type="date"
+            [(ngModel)]="fechaFin"
+            [min]="minEndDate"
+            required
+            (change)="onDateChange()">
         </div>
       </div>
 

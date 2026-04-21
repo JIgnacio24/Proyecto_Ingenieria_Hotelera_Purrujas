@@ -1,8 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
-import { AdminUser, AuthResponse, LoginPayload, RegisterPayload } from './auth.models';
+import { catchError, firstValueFrom, Observable, of, tap } from 'rxjs';
+import {
+  ADMINISTRATOR_ROLE,
+  AdminUser,
+  AuthResponse,
+  LoginPayload,
+  RegisterPayload
+} from './auth.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -23,15 +29,19 @@ export class AuthService {
       .pipe(tap((session) => this.persistSession(session)));
   }
 
-  register(payload: RegisterPayload): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload)
-      .pipe(tap((session) => this.persistSession(session)));
+  register(payload: RegisterPayload, persistSession = true): Observable<AuthResponse> {
+    const request = this.http.post<AuthResponse>(`${this.apiBaseUrl}/auth/register`, payload);
+    return persistSession ? request.pipe(tap((session) => this.persistSession(session))) : request;
   }
 
   fetchProfile(): Observable<AdminUser> {
     return this.http.get<AdminUser>(`${this.apiBaseUrl}/auth/me`).pipe(
       tap((user) => {
+        if (!this.isAdministratorUser(user)) {
+          this.invalidateSession();
+          throw new Error('La sesion no pertenece a un administrador autorizado.');
+        }
+
         const session = this.sessionState();
         if (!session) {
           return;
@@ -51,8 +61,8 @@ export class AuthService {
       return null;
     }
 
-    if (this.isExpired(session.expiresAt)) {
-      this.clearSession();
+    if (!this.isAdministrativeSession(session)) {
+      this.invalidateSession();
       return null;
     }
 
@@ -65,38 +75,49 @@ export class AuthService {
       return false;
     }
 
-    if (this.isExpired(session.expiresAt)) {
-      this.clearSession();
+    if (!this.isAdministrativeSession(session)) {
+      this.invalidateSession();
       return false;
     }
 
     return true;
   }
 
-  logout(): void {
+  invalidateSession(): void {
     this.clearSession();
-    void this.router.navigate(['/ingreso']);
+  }
+
+  logout(): void {
+    const logoutRequest = this.hasValidSession()
+      ? this.http.post<void>(`${this.apiBaseUrl}/auth/logout`, {}).pipe(catchError(() => of(void 0)))
+      : of(void 0);
+
+    void firstValueFrom(logoutRequest).finally(() => {
+      void this.finalizeLogout();
+    });
+  }
+
+  private async finalizeLogout(): Promise<void> {
+    await this.clearBrowserState();
+    await this.router.navigate(['/ingreso'], { replaceUrl: true });
   }
 
   private persistSession(session: AuthResponse): void {
-    if (this.isExpired(session.expiresAt)) {
-      this.clearSession();
+    if (!this.isAdministrativeSession(session)) {
+      this.invalidateSession();
       return;
     }
 
     this.sessionState.set(session);
-
-    if (this.canUseStorage()) {
-      localStorage.setItem(this.storageKey, JSON.stringify(session));
-    }
+    this.sessionStorageRef()?.setItem(this.storageKey, JSON.stringify(session));
+    this.legacyStorageRef()?.removeItem(this.storageKey);
   }
 
   private readStoredSession(): AuthResponse | null {
-    if (!this.canUseStorage()) {
-      return null;
-    }
+    const rawSession =
+      this.sessionStorageRef()?.getItem(this.storageKey) ??
+      this.legacyStorageRef()?.getItem(this.storageKey);
 
-    const rawSession = localStorage.getItem(this.storageKey);
     if (!rawSession) {
       return null;
     }
@@ -104,27 +125,43 @@ export class AuthService {
     try {
       const session = JSON.parse(rawSession) as AuthResponse;
       if (!session?.token || !session?.expiresAt || !session?.user) {
-        this.clearSession();
+        this.invalidateSession();
         return null;
       }
 
-      if (this.isExpired(session.expiresAt)) {
-        this.clearSession();
+      if (!this.isAdministrativeSession(session)) {
+        this.invalidateSession();
         return null;
       }
 
+      this.sessionStorageRef()?.setItem(this.storageKey, JSON.stringify(session));
+      this.legacyStorageRef()?.removeItem(this.storageKey);
       return session;
     } catch {
-      this.clearSession();
+      this.invalidateSession();
       return null;
     }
   }
 
   private clearSession(): void {
     this.sessionState.set(null);
+    this.sessionStorageRef()?.removeItem(this.storageKey);
+    this.legacyStorageRef()?.removeItem(this.storageKey);
+  }
 
-    if (this.canUseStorage()) {
-      localStorage.removeItem(this.storageKey);
+  private async clearBrowserState(): Promise<void> {
+    this.clearSession();
+
+    const cacheStorage = this.cacheStorageRef();
+    if (!cacheStorage) {
+      return;
+    }
+
+    try {
+      const cacheKeys = await cacheStorage.keys();
+      await Promise.all(cacheKeys.map((key) => cacheStorage.delete(key)));
+    } catch {
+      // Best-effort cleanup for browsers that do not allow cache deletion here.
     }
   }
 
@@ -133,7 +170,27 @@ export class AuthService {
     return Number.isNaN(expiryTime) || expiryTime <= Date.now();
   }
 
-  private canUseStorage(): boolean {
-    return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  private isAdministrativeSession(session: AuthResponse): boolean {
+    return !this.isExpired(session.expiresAt) && this.isAdministratorUser(session.user);
+  }
+
+  private isAdministratorUser(user: AdminUser | null | undefined): boolean {
+    return user?.role?.trim().toLowerCase() === ADMINISTRATOR_ROLE.toLowerCase();
+  }
+
+  private sessionStorageRef(): Storage | null {
+    return typeof window !== 'undefined' && typeof sessionStorage !== 'undefined'
+      ? sessionStorage
+      : null;
+  }
+
+  private legacyStorageRef(): Storage | null {
+    return typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+      ? localStorage
+      : null;
+  }
+
+  private cacheStorageRef(): CacheStorage | null {
+    return typeof window !== 'undefined' && 'caches' in window ? window.caches : null;
   }
 }

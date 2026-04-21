@@ -1,12 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
-
-type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-auth-shell',
@@ -16,36 +14,31 @@ type AuthMode = 'login' | 'register';
   styleUrl: './auth-shell.component.css'
 })
 export class AuthShellComponent {
+  private readonly usernamePattern = /^[a-zA-Z0-9._-]{4,50}$/;
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly mode = signal<AuthMode>('login');
   readonly submitting = signal(false);
   readonly errorMessage = signal('');
 
   readonly loginForm = this.formBuilder.nonNullable.group({
-    username: ['', [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(8)]]
-  });
-
-  readonly registerForm = this.formBuilder.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(6)]],
-    username: ['', [Validators.required, Validators.minLength(4)]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
+    username: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(4),
+        Validators.maxLength(50),
+        Validators.pattern(this.usernamePattern)
+      ]
+    ],
+    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(255)]]
   });
 
   constructor() {
     if (this.authService.hasValidSession()) {
-      void this.router.navigate(['/panel']);
+      void this.router.navigate(['/panel'], { replaceUrl: true });
     }
-  }
-
-  setMode(mode: AuthMode): void {
-    this.mode.set(mode);
-    this.errorMessage.set('');
   }
 
   async submitLogin(): Promise<void> {
@@ -58,8 +51,14 @@ export class AuthShellComponent {
     this.errorMessage.set('');
 
     try {
-      await firstValueFrom(this.authService.login(this.loginForm.getRawValue()));
-      await this.router.navigate(['/panel']);
+      const { username, password } = this.loginForm.getRawValue();
+      await firstValueFrom(
+        this.authService.login({
+          username: username.trim(),
+          password
+        })
+      );
+      await this.router.navigate(['/panel'], { replaceUrl: true });
     } catch (error) {
       this.errorMessage.set(this.resolveError(error, 'No fue posible iniciar sesion.'));
     } finally {
@@ -67,51 +66,8 @@ export class AuthShellComponent {
     }
   }
 
-  async submitRegister(): Promise<void> {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    const { password, confirmPassword } = this.registerForm.getRawValue();
-    if (password !== confirmPassword) {
-      this.registerForm.controls.confirmPassword.setErrors({ mismatch: true });
-      this.registerForm.controls.confirmPassword.markAsTouched();
-      return;
-    }
-
-    this.submitting.set(true);
-    this.errorMessage.set('');
-
-    try {
-      const { fullName, username, email } = this.registerForm.getRawValue();
-      await firstValueFrom(
-        this.authService.register({
-          fullName,
-          username,
-          email,
-          password,
-          role: 'Administrador'
-        })
-      );
-
-      await this.router.navigate(['/panel']);
-    } catch (error) {
-      this.errorMessage.set(this.resolveError(error, 'No fue posible registrar el usuario.'));
-    } finally {
-      this.submitting.set(false);
-    }
-  }
-
   hasLoginError(controlName: 'username' | 'password'): boolean {
     const control = this.loginForm.controls[controlName];
-    return control.invalid && (control.dirty || control.touched);
-  }
-
-  hasRegisterError(
-    controlName: 'fullName' | 'username' | 'email' | 'password' | 'confirmPassword'
-  ): boolean {
-    const control = this.registerForm.controls[controlName];
     return control.invalid && (control.dirty || control.touched);
   }
 

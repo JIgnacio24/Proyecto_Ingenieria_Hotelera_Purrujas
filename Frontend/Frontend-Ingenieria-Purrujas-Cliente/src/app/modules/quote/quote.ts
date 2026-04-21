@@ -13,8 +13,8 @@ interface Room {
   nombre: string;
   descripcion: string;
   capacidad: string;
-  precioBaja: number; // precio por noche en temporada baja
-  multiplicadorAlta: number; // multiplicador para temporada alta
+  precioBaja: number;
+  multiplicadorAlta: number;
 }
 
 @Component({
@@ -24,20 +24,22 @@ interface Room {
   templateUrl: './quote.html',
   styleUrl: './quote.css'
 })
-export class QuoteComponent implements OnInit {
+export class QuoteComponent implements OnInit, OnDestroy {
+  readonly minStartDate = this.formatDateForInput(new Date());
+
   habitaciones: Room[] = [
     {
       id: 'doble',
-      nombre: 'Habitación Doble',
-      descripcion: 'Cama queen, balcón al bosque y café de cortesía.',
+      nombre: 'Habitacion Doble',
+      descripcion: 'Cama queen, balcon al bosque y cafe de cortesia.',
       capacidad: '2 personas',
       precioBaja: 95,
       multiplicadorAlta: 1.25
     },
     {
       id: 'suite',
-      nombre: 'Suite Volcán',
-      descripcion: 'Jacuzzi, terraza panorámica y cóctel de bienvenida.',
+      nombre: 'Suite Volcan',
+      descripcion: 'Jacuzzi, terraza panoramica y coctel de bienvenida.',
       capacidad: 'Hasta 4 personas',
       precioBaja: 135,
       multiplicadorAlta: 1.25
@@ -45,7 +47,7 @@ export class QuoteComponent implements OnInit {
     {
       id: 'villa',
       nombre: 'Villa Familiar',
-      descripcion: 'Hasta 5 huéspedes, cocina equipada y chimenea.',
+      descripcion: 'Hasta 5 huespedes, cocina equipada y chimenea.',
       capacidad: 'Hasta 7 personas',
       precioBaja: 180,
       multiplicadorAlta: 1.25
@@ -72,18 +74,23 @@ export class QuoteComponent implements OnInit {
     public currencyService: CurrencyService
   ) {}
 
+  get minEndDate(): string {
+    return this.fechaInicio || this.minStartDate;
+  }
+
   ngOnInit(): void {
     const roomParam = this.route.snapshot.queryParamMap.get('habitacion') as RoomId | null;
     if (roomParam) {
-      const encontrada = this.habitaciones.find(h => h.id === roomParam);
-      if (encontrada) this.habitacionSeleccionada = encontrada;
+      const encontrada = this.habitaciones.find((habitacion) => habitacion.id === roomParam);
+      if (encontrada) {
+        this.habitacionSeleccionada = encontrada;
+      }
     }
 
     this.subs.add(
-      this.currencyService.currencyChanges$.subscribe(curr => {
+      this.currencyService.currencyChanges$.subscribe((curr) => {
         this.currency = curr;
         this.currencySymbol = this.currencyService.symbol(curr);
-        // Recalcular con el backend al cambiar moneda
         this.calcular();
       })
     );
@@ -94,7 +101,7 @@ export class QuoteComponent implements OnInit {
   }
 
   onRoomChange(id: string): void {
-    const encontrada = this.habitaciones.find(h => h.id === id);
+    const encontrada = this.habitaciones.find((habitacion) => habitacion.id === id);
     if (encontrada) {
       this.habitacionSeleccionada = encontrada;
       this.calcular();
@@ -107,38 +114,42 @@ export class QuoteComponent implements OnInit {
   }
 
   private ajustarFechaSalida(): void {
-    if (!this.fechaInicio) return;
-    const inicio = new Date(this.fechaInicio);
-    if (!this.fechaFin) {
-      const siguiente = new Date(inicio);
-      siguiente.setDate(inicio.getDate() + 1);
-      this.fechaFin = siguiente.toISOString().substring(0, 10);
+    if (!this.fechaInicio) {
       return;
     }
 
-    const fin = new Date(this.fechaFin);
-    if (fin <= inicio) {
+    const inicio = this.parseDateInput(this.fechaInicio);
+    if (!inicio) {
+      return;
+    }
+
+    if (!this.fechaFin) {
       const siguiente = new Date(inicio);
       siguiente.setDate(inicio.getDate() + 1);
-      this.fechaFin = siguiente.toISOString().substring(0, 10);
+      this.fechaFin = this.formatDateForInput(siguiente);
+      return;
+    }
+
+    const fin = this.parseDateInput(this.fechaFin);
+    if (!fin || fin <= inicio) {
+      const siguiente = new Date(inicio);
+      siguiente.setDate(inicio.getDate() + 1);
+      this.fechaFin = this.formatDateForInput(siguiente);
     }
   }
 
   private calcular(): void {
     this.mensajeError = '';
-    if (!this.fechaInicio || !this.fechaFin) {
-      this.total = 0;
-      this.nochesTotales = 0;
-      this.nochesAlta = 0;
-      this.nochesBaja = 0;
+
+    const validationError = this.validateQuoteInput();
+    if (validationError) {
+      this.resetQuote();
+      this.mensajeError = validationError;
       return;
     }
 
-    const inicio = new Date(this.fechaInicio);
-    const fin = new Date(this.fechaFin);
-    if (fin <= inicio) {
-      this.mensajeError = 'La fecha de salida debe ser posterior a la de entrada.';
-      this.total = 0;
+    if (!this.fechaInicio && !this.fechaFin) {
+      this.resetQuote();
       return;
     }
 
@@ -149,27 +160,90 @@ export class QuoteComponent implements OnInit {
       currency: this.currency
     };
 
-    this.http.post<{
-      roomTypeKey: string;
-      nightsTotal: number;
-      nightsHigh: number;
-      nightsLow: number;
-      basePricePerNight: number;
-      highSeasonMultiplier: number;
-      total: number;
-      currency: Currency;
-    }>('/api/quote/calculate', payload).subscribe({
-      next: (res) => {
-        this.nochesTotales = res.nightsTotal;
-        this.nochesAlta = res.nightsHigh;
-        this.nochesBaja = res.nightsLow;
-        this.total = res.total;
-      },
-      error: (err) => {
-        const msg = err?.error?.message ?? 'No se pudo calcular la cotización.';
-        this.mensajeError = msg;
-        this.total = 0;
-      }
-    });
+    this.http
+      .post<{
+        roomTypeKey: string;
+        nightsTotal: number;
+        nightsHigh: number;
+        nightsLow: number;
+        basePricePerNight: number;
+        highSeasonMultiplier: number;
+        total: number;
+        currency: Currency;
+      }>('/api/quote/calculate', payload)
+      .subscribe({
+        next: (response) => {
+          this.nochesTotales = response.nightsTotal;
+          this.nochesAlta = response.nightsHigh;
+          this.nochesBaja = response.nightsLow;
+          this.total = response.total;
+        },
+        error: (error) => {
+          this.resetQuote();
+          this.mensajeError = error?.error?.message ?? 'No se pudo calcular la cotizacion.';
+        }
+      });
+  }
+
+  private validateQuoteInput(): string {
+    if (!this.habitacionSeleccionada?.id) {
+      return 'Debe seleccionar un tipo de habitacion valido.';
+    }
+
+    if (!this.currencyService.isValidCurrency(this.currency)) {
+      return 'La moneda seleccionada no es valida.';
+    }
+
+    if (!this.fechaInicio && !this.fechaFin) {
+      return '';
+    }
+
+    if (!this.fechaInicio || !this.fechaFin) {
+      return 'Debe completar la fecha de entrada y la fecha de salida.';
+    }
+
+    const inicio = this.parseDateInput(this.fechaInicio);
+    const fin = this.parseDateInput(this.fechaFin);
+    if (!inicio || !fin) {
+      return 'Las fechas ingresadas no son validas.';
+    }
+
+    const hoy = this.parseDateInput(this.minStartDate);
+    if (!hoy) {
+      return 'No fue posible validar la fecha actual.';
+    }
+
+    if (inicio < hoy) {
+      return 'La fecha de entrada no puede estar en el pasado.';
+    }
+
+    if (fin <= inicio) {
+      return 'La fecha de salida debe ser posterior a la de entrada.';
+    }
+
+    return '';
+  }
+
+  private resetQuote(): void {
+    this.total = 0;
+    this.nochesTotales = 0;
+    this.nochesAlta = 0;
+    this.nochesBaja = 0;
+  }
+
+  private parseDateInput(value: string): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private formatDateForInput(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

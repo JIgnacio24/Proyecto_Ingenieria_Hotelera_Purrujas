@@ -14,8 +14,12 @@ export class CurrencyService {
     return this.currencySubject.value;
   }
 
+  isValidCurrency(currency: string | null | undefined): currency is Currency {
+    return currency === 'USD' || currency === 'CRC';
+  }
+
   setCurrency(currency: Currency): void {
-    if (currency !== this.current) {
+    if (this.isValidCurrency(currency) && currency !== this.current) {
       this.currencySubject.next(currency);
     }
   }

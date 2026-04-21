@@ -15,8 +15,8 @@
         </p>
 
         <div class="brand-note">
-          <span>Área privada</span>
-          <p>Reservada para la gestión interna y el personal autorizado.</p>
+          <span>Area privada</span>
+          <p>Reservada para la gestion interna y el personal autorizado.</p>
         </div>
       </div>
     </aside>
@@ -24,25 +24,8 @@
     <section class="form-panel">
       <div class="panel-top">
         <div class="panel-heading">
-          <p class="form-kicker">Área interna</p>
-          <h2>{{ mode() === 'login' ? 'Iniciar sesión' : 'Registrar usuario' }}</h2>
-        </div>
-
-        <div class="mode-switch" role="tablist" aria-label="Cambiar modo de autenticacion">
-          <button
-            type="button"
-            class="mode-button"
-            [class.active]="mode() === 'login'"
-            (click)="setMode('login')">
-            Ingresar
-          </button>
-          <button
-            type="button"
-            class="mode-button"
-            [class.active]="mode() === 'register'"
-            (click)="setMode('register')">
-            Registrar
-          </button>
+          <p class="form-kicker">Area interna</p>
+          <h2>Iniciar sesion</h2>
         </div>
       </div>
 
@@ -50,92 +33,41 @@
         <p class="feedback error">{{ errorMessage() }}</p>
       }
 
-      @if (mode() === 'login') {
-        <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
-          <label class="field">
-            <span>Nombre de usuario</span>
-            <input
-              type="text"
-              formControlName="username"
-              placeholder="Ingrese su usuario" />
-            @if (hasLoginError('username')) {
-              <small>Ingrese un nombre de usuario válido.</small>
-            }
-          </label>
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <label class="field">
+          <span>Nombre de usuario</span>
+          <input
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            maxlength="50"
+            placeholder="Ingrese su usuario" />
+          @if (hasLoginError('username')) {
+            <small>Use entre 4 y 50 caracteres validos: letras, numeros, punto, guion o guion bajo.</small>
+          }
+        </label>
 
-          <label class="field">
-            <span>Password</span>
-            <input
-              type="password"
-              formControlName="password"
-              placeholder="Ingrese su password" />
-            @if (hasLoginError('password')) {
-              <small>La contraseña debe tener al menos 8 caracteres.</small>
-            }
-          </label>
+        <label class="field">
+          <span>Password</span>
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            maxlength="255"
+            placeholder="Ingrese su password" />
+          @if (hasLoginError('password')) {
+            <small>La contrasena debe tener entre 8 y 255 caracteres.</small>
+          }
+        </label>
 
-          <button class="submit-button" type="submit" [disabled]="submitting()">
-            {{ submitting() ? 'Ingresando...' : 'Entrar' }}
-          </button>
-        </form>
-      } @else {
-        <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="submitRegister()">
-          <label class="field">
-            <span>Nombre completo</span>
-            <input type="text" formControlName="fullName" placeholder="Nombre completo" />
-            @if (hasRegisterError('fullName')) {
-              <small>Ingrese un nombre completo mayor a 6 caracteres.</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>Nombre de usuario</span>
-            <input type="text" formControlName="username" placeholder="Nombre de usuario" />
-            @if (hasRegisterError('username')) {
-              <small>El usuario debe tener al menos 4 caracteres.</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>Correo electrónico</span>
-            <input type="email" formControlName="email" placeholder="Correo electrónico" />
-            @if (hasRegisterError('email')) {
-              <small>Ingrese un correo válido.</small>
-            }
-          </label>
-
-          <div class="field-grid">
-            <label class="field">
-              <span>Password</span>
-              <input type="password" formControlName="password" placeholder="Password" />
-              @if (hasRegisterError('password')) {
-                <small>La contraseña debe tener al menos 8 caracteres.</small>
-              }
-            </label>
-
-            <label class="field">
-              <span>Confirmar password</span>
-              <input type="password" formControlName="confirmPassword" placeholder="Confirmar password" />
-              @if (hasRegisterError('confirmPassword')) {
-                <small>
-                  {{
-                    registerForm.controls.confirmPassword.hasError('mismatch')
-                      ? 'Las contraseñas no coinciden.'
-                      : 'Confirme la contraseña.'
-                  }}
-                </small>
-              }
-            </label>
-          </div>
-
-          <button class="submit-button" type="submit" [disabled]="submitting()">
-            {{ submitting() ? 'Registrando...' : 'Crear usuario' }}
-          </button>
-        </form>
-      }
+        <button class="submit-button" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Ingresando...' : 'Entrar' }}
+        </button>
+      </form>
 
       <div class="panel-footer">
-        <p>Acceso reservado para personal autorizado.</p>
+        <p>Acceso reservado exclusivamente para administradores autenticados.</p>
+        <p>El registro de usuarios administrativos ya no esta disponible desde esta pantalla publica.</p>
       </div>
     </section>
   </div>

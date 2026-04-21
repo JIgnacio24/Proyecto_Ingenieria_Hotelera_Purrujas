@@ -1,3 +1,5 @@
+export const ADMINISTRATOR_ROLE = 'Administrador';
+
 export interface AdminUser {
   adminUserId: number;
   fullName: string;

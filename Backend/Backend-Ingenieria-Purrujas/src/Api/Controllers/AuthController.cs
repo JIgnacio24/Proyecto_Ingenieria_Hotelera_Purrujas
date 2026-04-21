@@ -16,6 +16,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterAdminUserRequestDto request, CancellationToken cancellationToken)
     {
@@ -56,7 +57,15 @@ public class AuthController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Headers.Append("Clear-Site-Data", "\"cache\", \"storage\", \"cookies\"");
+        return NoContent();
+    }
+
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet("me")]
     public async Task<ActionResult<AdminUserDto>> Me(CancellationToken cancellationToken)
     {
@@ -69,7 +78,7 @@ public class AuthController : ControllerBase
         var user = await _authService.GetProfileAsync(adminUserId, cancellationToken);
         if (user is null)
         {
-            return NotFound(new { message = "Usuario no encontrado." });
+            return Unauthorized(new { message = "La sesion no corresponde a un administrador activo." });
         }
 
         return Ok(user);
