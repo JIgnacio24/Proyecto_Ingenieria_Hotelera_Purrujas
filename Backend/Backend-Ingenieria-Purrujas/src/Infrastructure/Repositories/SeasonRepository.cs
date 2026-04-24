@@ -29,9 +29,10 @@ public class SeasonRepository : ISeasonRepository
             await conn.OpenAsync(cancellationToken);
 
             const string sql = """
-                SELECT SeasonId, Name, PercentageChange, IsActive
+                SELECT SeasonId, Name, PercentageChange, StartDate, EndDate, IsActive
                 FROM Season
                 WHERE IsActive = 1
+                ORDER BY StartDate ASC
             """;
 
             await using var cmd = new SqlCommand(sql, conn);
@@ -43,7 +44,9 @@ public class SeasonRepository : ISeasonRepository
                     SeasonId = reader.GetInt32(0),
                     Name = reader.GetString(1),
                     PercentageChange = reader.GetInt32(2),
-                    IsActive = reader.GetBoolean(3)
+                    StartDate = DateOnly.FromDateTime(reader.GetDateTime(3)),
+                    EndDate = DateOnly.FromDateTime(reader.GetDateTime(4)),
+                    IsActive = reader.GetBoolean(5)
                 });
             }
         }

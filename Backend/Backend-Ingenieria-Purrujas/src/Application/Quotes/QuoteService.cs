@@ -8,9 +8,7 @@ public class QuoteService : IQuoteService
 {
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
-    private const decimal DefaultHighSeasonMultiplier = 1.25m;
     private const decimal UsdToCrcRate = 500m;
-    private static readonly int[] HighSeasonMonths = { 0, 6, 7, 11 }; // Jan, Jul, Aug, Dec
 
     public QuoteService(IRoomTypeRepository roomTypeRepository, ISeasonRepository seasonRepository)
     {
@@ -29,23 +27,18 @@ public class QuoteService : IQuoteService
                         ?? throw new ArgumentException($"Tipo de habitación '{request.RoomTypeKey}' no encontrado.");
 
         var currency = NormalizeCurrency(request.Currency);
-
-        var highMultiplier = await ResolveHighMultiplier(cancellationToken);
-
-        var (totalNights, highNights, lowNights) = CountNights(request.StartDate, request.EndDate);
-
-        var priceHigh = roomType.BasePrice * highMultiplier;
-        var totalUsd = (lowNights * roomType.BasePrice) + (highNights * priceHigh);
+        var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
+        var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
 
         var (total, basePerNight, multiplier) = currency == "CRC"
-            ? ConvertToCrc(totalUsd, roomType.BasePrice, highMultiplier)
-            : (totalUsd, roomType.BasePrice, highMultiplier);
+            ? ConvertToCrc(quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier)
+            : (quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier);
 
         return new QuoteResponseDto(
             RoomTypeKey: request.RoomTypeKey,
-            NightsTotal: totalNights,
-            NightsHigh: highNights,
-            NightsLow: lowNights,
+            NightsTotal: quoteBreakdown.TotalNights,
+            NightsHigh: quoteBreakdown.HighSeasonNights,
+            NightsLow: quoteBreakdown.LowSeasonNights,
             BasePricePerNight: basePerNight,
             HighSeasonMultiplier: multiplier,
             Total: decimal.Round(total, 2),
@@ -70,41 +63,59 @@ public class QuoteService : IQuoteService
         };
     }
 
-    private async Task<decimal> ResolveHighMultiplier(CancellationToken cancellationToken)
+    private static QuoteBreakdown BuildQuoteBreakdown(
+        DateOnly start,
+        DateOnly end,
+        decimal basePrice,
+        IReadOnlyCollection<Season> seasons)
     {
-        var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
-        // We pick the first active season percentage, fallback to default 25%
-        var percentage = seasons.FirstOrDefault()?.PercentageChange;
-        return percentage.HasValue
-            ? 1 + (percentage.Value / 100m)
-            : DefaultHighSeasonMultiplier;
-    }
-
-    private static (int total, int high, int low) CountNights(DateOnly start, DateOnly end)
-    {
-        var total = 0;
-        var high = 0;
-        var low = 0;
+        var totalNights = 0;
+        var highSeasonNights = 0;
+        var lowSeasonNights = 0;
+        var totalUsd = 0m;
+        var highestMultiplier = 1m;
 
         var cursor = start;
         while (cursor < end)
         {
-            total++;
-            if (IsHighSeason(cursor)) high++; else low++;
+            totalNights++;
+
+            var matchedSeason = seasons
+                .Where(season => cursor >= season.StartDate && cursor <= season.EndDate)
+                .OrderByDescending(season => season.PercentageChange)
+                .FirstOrDefault();
+
+            var multiplier = matchedSeason is null
+                ? 1m
+                : 1m + (matchedSeason.PercentageChange / 100m);
+
+            totalUsd += basePrice * multiplier;
+
+            if (multiplier > 1m)
+            {
+                highSeasonNights++;
+            }
+            else
+            {
+                lowSeasonNights++;
+            }
+
+            if (multiplier > highestMultiplier)
+            {
+                highestMultiplier = multiplier;
+            }
+
             cursor = cursor.AddDays(1);
         }
 
-        return (total, high, low);
+        return new QuoteBreakdown(totalNights, highSeasonNights, lowSeasonNights, totalUsd, highestMultiplier);
     }
 
-    private static bool IsHighSeason(DateOnly date)
-    {
-        var mes = date.Month - 1; // DateOnly Month is 1-12; align to 0-based months used before
-        var dia = date.Day;
-
-        if (HighSeasonMonths.Contains(mes)) return true;
-
-        // Semana Santa aproximada (2026: 29 marzo - 5 abril)
-        return (mes == 2 && dia >= 29) || (mes == 3 && dia <= 5);
-    }
+    private sealed record QuoteBreakdown(
+        int TotalNights,
+        int HighSeasonNights,
+        int LowSeasonNights,
+        decimal TotalUsd,
+        decimal HighestMultiplier
+    );
 }
