@@ -1,4 +1,5 @@
 @Backend_Ingenieria_Purrujas_HostAddress = http://localhost:5232
+@admin_token = REEMPLAZAR_TOKEN_ADMIN
 
 POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/quote/calculate
 Content-Type: application/json
@@ -8,6 +9,12 @@ Content-Type: application/json
   "startDate": "2026-07-10",
   "endDate": "2026-07-13",
   "currency": "USD"
+POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin.purrujas",
+  "password": "Purrujas2026!"
 }
 
 ###
@@ -20,6 +27,16 @@ Content-Type: application/json
   "startDate": "2026-04-01",
   "endDate": "2026-04-04",
   "currency": "CRC"
+POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/auth/register
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "fullName": "Andrea Vargas",
+  "username": "andrea.vargas",
+  "email": "andrea.vargas@laspurrujas.local",
+  "password": "Andres2026!",
+  "role": "Administrador"
 }
 
 ###

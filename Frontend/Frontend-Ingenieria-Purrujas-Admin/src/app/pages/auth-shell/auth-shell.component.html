@@ -1,0 +1,74 @@
+<section class="auth-shell">
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <div class="shell-grid">
+    <aside class="brand-panel">
+      <div class="brand-overlay" aria-hidden="true"></div>
+      <div class="brand-glow" aria-hidden="true"></div>
+
+      <div class="brand-content">
+        <p class="eyebrow">Hotel Las Purrujas</p>
+        <h1>Acceso administrativo</h1>
+        <p class="lead">
+          Un entorno interno con la misma calma visual del proyecto principal.
+        </p>
+
+        <div class="brand-note">
+          <span>Area privada</span>
+          <p>Reservada para la gestion interna y el personal autorizado.</p>
+        </div>
+      </div>
+    </aside>
+
+    <section class="form-panel">
+      <div class="panel-top">
+        <div class="panel-heading">
+          <p class="form-kicker">Area interna</p>
+          <h2>Iniciar sesion</h2>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="feedback error">{{ errorMessage() }}</p>
+      }
+
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <label class="field">
+          <span>Nombre de usuario</span>
+          <input
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            maxlength="50"
+            placeholder="Ingrese su usuario" />
+          @if (hasLoginError('username')) {
+            <small>Use entre 4 y 50 caracteres validos: letras, numeros, punto, guion o guion bajo.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            maxlength="255"
+            placeholder="Ingrese su password" />
+          @if (hasLoginError('password')) {
+            <small>La contrasena debe tener entre 8 y 255 caracteres.</small>
+          }
+        </label>
+
+        <button class="submit-button" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Ingresando...' : 'Entrar' }}
+        </button>
+      </form>
+
+      <div class="panel-footer">
+        <p>Acceso reservado exclusivamente para administradores autenticados.</p>
+        <p>El registro de usuarios administrativos ya no esta disponible desde esta pantalla publica.</p>
+      </div>
+    </section>
+  </div>
+</section>

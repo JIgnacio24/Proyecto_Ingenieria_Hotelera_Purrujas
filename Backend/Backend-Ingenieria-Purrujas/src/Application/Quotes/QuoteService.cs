@@ -1,6 +1,5 @@
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
-using System.Linq;
 
 namespace Backend_Ingenieria_Purrujas.Application.Quotes;
 
@@ -18,14 +17,8 @@ public class QuoteService : IQuoteService
 
     public async Task<QuoteResponseDto> CalculateAsync(QuoteRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (request.EndDate <= request.StartDate)
-        {
-          throw new ArgumentException("La fecha de salida debe ser posterior a la de entrada.");
-        }
-
-        var roomType = await _roomTypeRepository.GetByKeyAsync(request.RoomTypeKey, cancellationToken)
-                        ?? throw new ArgumentException($"Tipo de habitación '{request.RoomTypeKey}' no encontrado.");
-
+        var roomTypeKey = NormalizeRoomTypeKey(request.RoomTypeKey);
+        ValidateStayDates(request.StartDate, request.EndDate);
         var currency = NormalizeCurrency(request.Currency);
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
@@ -46,21 +39,54 @@ public class QuoteService : IQuoteService
         );
     }
 
-    private static (decimal total, decimal basePerNight, decimal multiplier) ConvertToCrc(decimal totalUsd, decimal baseUsd, decimal multiplier)
+    private static (decimal total, decimal basePerNight, decimal multiplier) ConvertToCrc(
+        decimal totalUsd,
+        decimal baseUsd,
+        decimal multiplier)
     {
         return (totalUsd * UsdToCrcRate, baseUsd * UsdToCrcRate, multiplier);
     }
 
     private static string NormalizeCurrency(string requested)
     {
-        if (string.IsNullOrWhiteSpace(requested)) return "USD";
-        var upper = requested.Trim().ToUpperInvariant();
-        return upper switch
+        if (string.IsNullOrWhiteSpace(requested))
         {
-            "USD" => "USD",
-            "CRC" => "CRC",
-            _ => "USD"
-        };
+            throw new ArgumentException("La moneda es obligatoria.");
+        }
+
+        var upper = requested.Trim().ToUpperInvariant();
+        return SupportedCurrencies.Contains(upper)
+            ? upper
+            : throw new ArgumentException("La moneda seleccionada no es valida.");
+    }
+
+    private static string NormalizeRoomTypeKey(string roomTypeKey)
+    {
+        if (string.IsNullOrWhiteSpace(roomTypeKey))
+        {
+            throw new ArgumentException("El tipo de habitacion es obligatorio.");
+        }
+
+        return roomTypeKey.Trim().ToLowerInvariant();
+    }
+
+    private static void ValidateStayDates(DateOnly startDate, DateOnly endDate)
+    {
+        if (startDate == default || endDate == default)
+        {
+            throw new ArgumentException("Debe seleccionar una fecha de entrada y una fecha de salida.");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (startDate < today)
+        {
+            throw new ArgumentException("La fecha de entrada no puede estar en el pasado.");
+        }
+
+        if (endDate <= startDate)
+        {
+            throw new ArgumentException("La fecha de salida debe ser posterior a la de entrada.");
+        }
     }
 
     private static QuoteBreakdown BuildQuoteBreakdown(

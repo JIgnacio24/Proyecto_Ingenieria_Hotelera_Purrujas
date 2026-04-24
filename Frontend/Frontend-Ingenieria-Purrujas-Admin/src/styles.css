@@ -1,3 +1,38 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+:root {
+  --verde-bosque: #1a3a2a;
+  --verde-medio: #2d6a4f;
+  --verde-claro: #52b788;
+  --verde-suave: #d8f3dc;
+  --dorado: #c9a84c;
+  --dorado-suave: #f0e0a8;
+  --crema: #faf7f0;
+  --texto-oscuro: #183726;
+  --texto-medio: #486151;
+  --font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --font-body: 'Trebuchet MS', 'Gill Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--texto-oscuro);
+  background: var(--crema);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

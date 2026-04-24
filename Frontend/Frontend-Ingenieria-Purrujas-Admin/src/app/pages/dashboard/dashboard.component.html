@@ -1,0 +1,99 @@
+<section class="dashboard-shell">
+  <div class="dashboard-veil" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Hotel Las Purrujas</p>
+      <h1>Panel administrativo</h1>
+    </div>
+
+    <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="feedback">{{ errorMessage() }}</p>
+  }
+
+  <div class="dashboard-grid">
+    <section class="hero-card">
+      <div class="hero-media" aria-hidden="true"></div>
+
+      <div class="hero-copy">
+        <p class="hero-kicker">Administración</p>
+        @if (loading()) {
+          <h2>Cargando la sesión del administrador...</h2>
+          <p>Espere un momento mientras se actualiza la información del acceso.</p>
+        } @else if (profile()) {
+          <h2>Bienvenido, {{ profile()?.fullName }}.</h2>
+          <p>La sesión está activa y el panel interno se encuentra disponible.</p>
+        } @else {
+          <h2>No se pudo cargar el perfil.</h2>
+          <p>Revise la sesión actual y vuelva a intentarlo.</p>
+        }
+
+        <div class="hero-actions">
+          <button type="button" class="primary-button" (click)="loadProfile()">Actualizar</button>
+          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesión activa' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-card">
+      <div class="section-head">
+        <p>Perfil de acceso</p>
+        <span>Información del usuario actual</span>
+      </div>
+
+      <dl class="profile-list">
+        <div>
+          <dt>Nombre completo</dt>
+          <dd>{{ profile()?.fullName || 'Sin datos' }}</dd>
+        </div>
+        <div>
+          <dt>Usuario</dt>
+          <dd>{{ profile()?.username || 'Sin datos' }}</dd>
+        </div>
+        <div>
+          <dt>Correo</dt>
+          <dd>{{ profile()?.email || 'Sin datos' }}</dd>
+        </div>
+        <div>
+          <dt>Rol</dt>
+          <dd>{{ profile()?.role || 'Sin datos' }}</dd>
+        </div>
+        <div>
+          <dt>Creado</dt>
+          <dd>{{ formatDate(profile()?.createdAt) }}</dd>
+        </div>
+        <div>
+          <dt>Último acceso</dt>
+          <dd>{{ formatDate(profile()?.lastLoginAt) }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="summary-card">
+      <div class="section-head">
+        <p>Estado actual</p>
+        <span>Resumen del entorno interno</span>
+      </div>
+
+      <div class="summary-stack">
+        <article class="summary-item">
+          <span>Rol</span>
+          <strong>{{ profile()?.role || 'Sin asignar' }}</strong>
+        </article>
+
+        <article class="summary-item">
+          <span>Estado</span>
+          <strong>{{ loading() ? 'Sincronizando' : 'Activo' }}</strong>
+        </article>
+
+        <article class="summary-item">
+          <span>Último acceso</span>
+          <strong>{{ formatDate(profile()?.lastLoginAt) }}</strong>
+        </article>
+      </div>
+    </section>
+  </div>
+</section>
