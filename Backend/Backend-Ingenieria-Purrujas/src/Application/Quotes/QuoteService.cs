@@ -7,7 +7,6 @@ public class QuoteService : IQuoteService
 {
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
-    private const decimal DefaultHighSeasonMultiplier = 1.25m;
     private const decimal UsdToCrcRate = 500m;
     private static readonly int[] HighSeasonMonths = { 0, 6, 7, 11 }; // Jan, Jul, Aug, Dec
     private static readonly HashSet<string> SupportedCurrencies = new(StringComparer.OrdinalIgnoreCase)
@@ -36,16 +35,22 @@ public class QuoteService : IQuoteService
 
         var priceHigh = roomType.BasePrice * highMultiplier;
         var totalUsd = (lowNights * roomType.BasePrice) + (highNights * priceHigh);
+        var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
+        var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
 
         var (total, basePerNight, multiplier) = currency == "CRC"
-            ? ConvertToCrc(totalUsd, roomType.BasePrice, highMultiplier)
-            : (totalUsd, roomType.BasePrice, highMultiplier);
+            ? ConvertToCrc(quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier)
+            : (quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier);
 
         return new QuoteResponseDto(
             RoomTypeKey: roomTypeKey,
             NightsTotal: totalNights,
             NightsHigh: highNights,
             NightsLow: lowNights,
+            RoomTypeKey: request.RoomTypeKey,
+            NightsTotal: quoteBreakdown.TotalNights,
+            NightsHigh: quoteBreakdown.HighSeasonNights,
+            NightsLow: quoteBreakdown.LowSeasonNights,
             BasePricePerNight: basePerNight,
             HighSeasonMultiplier: multiplier,
             Total: decimal.Round(total, 2),
@@ -103,7 +108,11 @@ public class QuoteService : IQuoteService
         }
     }
 
-    private async Task<decimal> ResolveHighMultiplier(CancellationToken cancellationToken)
+    private static QuoteBreakdown BuildQuoteBreakdown(
+        DateOnly start,
+        DateOnly end,
+        decimal basePrice,
+        IReadOnlyCollection<Season> seasons)
     {
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var percentage = seasons.FirstOrDefault()?.PercentageChange;
@@ -117,6 +126,11 @@ public class QuoteService : IQuoteService
         var total = 0;
         var high = 0;
         var low = 0;
+        var totalNights = 0;
+        var highSeasonNights = 0;
+        var lowSeasonNights = 0;
+        var totalUsd = 0m;
+        var highestMultiplier = 1m;
 
         var cursor = start;
         while (cursor < end)
@@ -129,12 +143,38 @@ public class QuoteService : IQuoteService
             else
             {
                 low++;
+            totalNights++;
+
+            var matchedSeason = seasons
+                .Where(season => cursor >= season.StartDate && cursor <= season.EndDate)
+                .OrderByDescending(season => season.PercentageChange)
+                .FirstOrDefault();
+
+            var multiplier = matchedSeason is null
+                ? 1m
+                : 1m + (matchedSeason.PercentageChange / 100m);
+
+            totalUsd += basePrice * multiplier;
+
+            if (multiplier > 1m)
+            {
+                highSeasonNights++;
+            }
+            else
+            {
+                lowSeasonNights++;
+            }
+
+            if (multiplier > highestMultiplier)
+            {
+                highestMultiplier = multiplier;
             }
 
             cursor = cursor.AddDays(1);
         }
 
-        return (total, high, low);
+        return new QuoteBreakdown(totalNights, highSeasonNights, lowSeasonNights, totalUsd, highestMultiplier);
+        }
     }
 
     private static bool IsHighSeason(DateOnly date)
@@ -149,4 +189,11 @@ public class QuoteService : IQuoteService
 
         return (month == 2 && day >= 29) || (month == 3 && day <= 5);
     }
+    private sealed record QuoteBreakdown(
+        int TotalNights,
+        int HighSeasonNights,
+        int LowSeasonNights,
+        decimal TotalUsd,
+        decimal HighestMultiplier
+    );
 }

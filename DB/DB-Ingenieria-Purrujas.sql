@@ -117,6 +117,9 @@ CREATE TABLE Season (
     SeasonId INT PRIMARY KEY IDENTITY,
     Name NVARCHAR(255) NOT NULL,
     PercentageChange INT NOT NULL,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    CONSTRAINT CK_Season_Dates CHECK (EndDate >= StartDate),
     IsActive BIT NOT NULL DEFAULT 1
 );
 GO
@@ -1216,7 +1219,9 @@ GO
 
 CREATE OR ALTER PROCEDURE usp_Season_Create
     @Name NVARCHAR(255),
-    @PercentageChange INT
+    @PercentageChange INT,
+    @StartDate DATE,
+    @EndDate DATE
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1225,8 +1230,11 @@ BEGIN
     BEGIN TRY
         BEGIN TRAN;
 
-        INSERT INTO Season (Name, PercentageChange, IsActive)
-        VALUES (@Name, @PercentageChange, 1);
+        IF @EndDate < @StartDate
+            THROW 50030, 'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
+
+        INSERT INTO Season (Name, PercentageChange, StartDate, EndDate, IsActive)
+        VALUES (@Name, @PercentageChange, @StartDate, @EndDate, 1);
 
         SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewSeasonId;
 
@@ -1244,10 +1252,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT SeasonId, Name, PercentageChange, IsActive
+    SELECT SeasonId, Name, PercentageChange, StartDate, EndDate, IsActive
     FROM Season
     WHERE IsActive = 1
-    ORDER BY SeasonId DESC;
+    ORDER BY StartDate ASC, SeasonId DESC;
 END;
 GO
 
@@ -1257,7 +1265,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT SeasonId, Name, PercentageChange, IsActive
+    SELECT SeasonId, Name, PercentageChange, StartDate, EndDate, IsActive
     FROM Season
     WHERE SeasonId = @SeasonId
       AND IsActive = 1;
@@ -1267,7 +1275,9 @@ GO
 CREATE OR ALTER PROCEDURE usp_Season_Update
     @SeasonId INT,
     @Name NVARCHAR(255),
-    @PercentageChange INT
+    @PercentageChange INT,
+    @StartDate DATE,
+    @EndDate DATE
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1279,9 +1289,14 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM Season WHERE SeasonId = @SeasonId AND IsActive = 1)
             THROW 50015, 'Temporada no encontrada.', 1;
 
+        IF @EndDate < @StartDate
+            THROW 50031, 'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
+
         UPDATE Season
         SET Name = @Name,
-            PercentageChange = @PercentageChange
+            PercentageChange = @PercentageChange,
+            StartDate = @StartDate,
+            EndDate = @EndDate
         WHERE SeasonId = @SeasonId
           AND IsActive = 1;
 
@@ -1602,4 +1617,87 @@ BEGIN
         THROW;
     END CATCH
 END;
+GO
+
+-- =========================================
+-- DATOS SEMILLA PARA PRUEBAS
+-- =========================================
+
+INSERT INTO RoomType (Name, BasePrice, IsActive)
+VALUES
+    ('Habitación Doble', 95.00, 1),
+    ('Suite Volcán', 135.00, 1),
+    ('Villa Familiar', 180.00, 1);
+GO
+
+INSERT INTO RoomStatus (Name, Description, IsAvailableForBooking)
+VALUES
+    ('Disponible', 'Habitación lista para reservar.', 1),
+    ('Limpieza', 'Habitación en proceso de limpieza.', 0),
+    ('Mantenimiento', 'Habitación fuera de servicio temporalmente.', 0);
+GO
+
+INSERT INTO Room (RoomNumber, IsActive, RoomTypeId, RoomStatusId)
+VALUES
+    ('101', 1, 1, 1),
+    ('102', 1, 1, 1),
+    ('201', 1, 2, 1),
+    ('202', 1, 2, 1),
+    ('301', 1, 3, 1);
+GO
+
+INSERT INTO ReservationStatus (Name, Description, IsFinal)
+VALUES
+    ('Pendiente', 'Reserva creada y pendiente de confirmación.', 0),
+    ('Confirmada', 'Reserva confirmada por el hotel.', 0),
+    ('Finalizada', 'La estadía finalizó.', 1),
+    ('Cancelada', 'Reserva cancelada.', 1);
+GO
+
+INSERT INTO Customer (Name, LastName, Email, Phone, CreditCard, IsActive)
+VALUES
+    ('María', 'Jiménez', 'maria.jimenez@demo.com', '8888-1111', '4111111111111111', 1),
+    ('Carlos', 'Rodríguez', 'carlos.rodriguez@demo.com', '8888-2222', '5555555555554444', 1);
+GO
+
+INSERT INTO Season (Name, PercentageChange, StartDate, EndDate, IsActive)
+VALUES
+    ('Temporada alta inicio de año 2026', 25, '2026-01-01', '2026-01-31', 1),
+    ('Semana Santa 2026', 35, '2026-03-29', '2026-04-05', 1),
+    ('Vacaciones de medio año 2026', 25, '2026-07-01', '2026-08-31', 1),
+    ('Temporada alta fin de año 2026', 30, '2026-12-01', '2026-12-31', 1);
+GO
+
+INSERT INTO Promotion (Name, Discount, StartDate, EndDate, RoomTypeId, IsActive)
+VALUES
+    ('Escapada Romántica', 25, '2026-04-01', '2026-05-31', 2, 1),
+    ('Semana Ecológica', 20, '2026-04-15', '2026-06-30', 1, 1),
+    ('Aventura Familiar', 30, '2026-05-01', '2026-07-15', 3, 1);
+GO
+
+INSERT INTO Reservation
+(
+    ReservationDate,
+    StartDate,
+    EndDate,
+    CustomerId,
+    RoomId,
+    ReservationStatusId,
+    IsActive
+)
+VALUES
+    ('2026-04-10T09:00:00', '2026-07-10T15:00:00', '2026-07-13T12:00:00', 1, 1, 2, 1),
+    ('2026-04-11T10:30:00', '2026-04-01T15:00:00', '2026-04-04T12:00:00', 2, 5, 2, 1);
+GO
+
+INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount)
+VALUES
+    (1, 285.00, 0.00, 71.25),
+    (2, 540.00, 0.00, 189.00);
+GO
+
+INSERT INTO Payment (ReservationId, Amount, PaymentMethod, PaymentDate, IsPaid, IsActive)
+VALUES
+    (1, 356.25, 'Tarjeta', '2026-04-10T09:15:00', 1, 1),
+    (2, 729.00, 'Tarjeta', '2026-04-11T10:45:00', 1, 1);
 GO
