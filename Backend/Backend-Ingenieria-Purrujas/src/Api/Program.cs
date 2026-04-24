@@ -91,18 +91,29 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+var httpsEnabled = app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) ||
+                   builder.Configuration["ASPNETCORE_URLS"]?.Contains("https://", StringComparison.OrdinalIgnoreCase) == true;
+
+if (httpsEnabled)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("ClientApp");
 app.Use(async (context, next) =>
 {
-    await next();
-
     if (context.Request.Path.StartsWithSegments("/api/auth", StringComparison.OrdinalIgnoreCase))
     {
-        context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
-        context.Response.Headers.Pragma = "no-cache";
-        context.Response.Headers.Expires = "0";
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
+            context.Response.Headers.Pragma = "no-cache";
+            context.Response.Headers.Expires = "0";
+            return Task.CompletedTask;
+        });
     }
+
+    await next();
 });
 app.UseAuthentication();
 app.UseAuthorization();
