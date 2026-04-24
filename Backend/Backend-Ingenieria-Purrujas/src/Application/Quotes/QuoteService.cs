@@ -13,6 +13,7 @@ public class QuoteService : IQuoteService
         "USD",
         "CRC"
     };
+    private static readonly HashSet<string> SupportedCurrencies = ["USD", "CRC"];
 
     public QuoteService(IRoomTypeRepository roomTypeRepository, ISeasonRepository seasonRepository)
     {
@@ -29,6 +30,9 @@ public class QuoteService : IQuoteService
         var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
             ?? throw new ArgumentException($"Tipo de habitacion '{roomTypeKey}' no encontrado.");
 
+        var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
+            ?? throw new ArgumentException($"Tipo de habitación '{request.RoomTypeKey}' no encontrado.");
+        var currency = NormalizeCurrency(request.Currency);
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
 
@@ -43,6 +47,12 @@ public class QuoteService : IQuoteService
             NightsLow: quoteBreakdown.LowSeasonNights,
             BasePricePerNight: decimal.Round(basePerNight, 2),
             HighSeasonMultiplier: quoteBreakdown.HighestMultiplier,
+            RoomTypeKey: request.RoomTypeKey,
+            NightsTotal: quoteBreakdown.TotalNights,
+            NightsHigh: quoteBreakdown.HighSeasonNights,
+            NightsLow: quoteBreakdown.LowSeasonNights,
+            BasePricePerNight: basePerNight,
+            HighSeasonMultiplier: multiplier,
             Total: decimal.Round(total, 2),
             Currency: currency
         );

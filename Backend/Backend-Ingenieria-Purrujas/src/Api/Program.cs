@@ -112,6 +112,13 @@ app.Use(async (context, next) =>
             response.Headers.Expires = "0";
             return Task.CompletedTask;
         }, context.Response);
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
+            context.Response.Headers.Pragma = "no-cache";
+            context.Response.Headers.Expires = "0";
+            return Task.CompletedTask;
+        });
     }
 
     await next();
