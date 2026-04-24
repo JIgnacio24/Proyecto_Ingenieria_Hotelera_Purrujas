@@ -81,29 +81,44 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
 
 var app = builder.Build();
+var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
+var hasHttpsEndpoint = configuredUrls
+    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("ClientApp");
 app.Use(async (context, next) =>
 {
-    await next();
-
     if (context.Request.Path.StartsWithSegments("/api/auth", StringComparison.OrdinalIgnoreCase))
     {
-        context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
-        context.Response.Headers.Pragma = "no-cache";
-        context.Response.Headers.Expires = "0";
+        context.Response.OnStarting(static state =>
+        {
+            var response = (HttpResponse)state;
+            response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
+            response.Headers.Pragma = "no-cache";
+            response.Headers.Expires = "0";
+            return Task.CompletedTask;
+        }, context.Response);
     }
+
+    await next();
 });
+
+if (hasHttpsEndpoint)
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseCors("ClientApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

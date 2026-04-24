@@ -7,7 +7,7 @@
       <h1>Panel administrativo</h1>
     </div>
 
-    <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+    <button type="button" class="logout-button" (click)="logout()">Cerrar sesion</button>
   </header>
 
   @if (errorMessage()) {
@@ -19,21 +19,21 @@
       <div class="hero-media" aria-hidden="true"></div>
 
       <div class="hero-copy">
-        <p class="hero-kicker">Administración</p>
+        <p class="hero-kicker">Administracion</p>
         @if (loading()) {
-          <h2>Cargando la sesión del administrador...</h2>
-          <p>Espere un momento mientras se actualiza la información del acceso.</p>
+          <h2>Cargando la sesion del administrador...</h2>
+          <p>Espere un momento mientras se actualiza la informacion del acceso.</p>
         } @else if (profile()) {
           <h2>Bienvenido, {{ profile()?.fullName }}.</h2>
-          <p>La sesión está activa y el panel interno se encuentra disponible.</p>
+          <p>La sesion esta activa y ya puedes administrar el contenido del sitio.</p>
         } @else {
           <h2>No se pudo cargar el perfil.</h2>
-          <p>Revise la sesión actual y vuelva a intentarlo.</p>
+          <p>Revise la sesion actual y vuelva a intentarlo.</p>
         }
 
         <div class="hero-actions">
           <button type="button" class="primary-button" (click)="loadProfile()">Actualizar</button>
-          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesión activa' }}</span>
+          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesion activa' }}</span>
         </div>
       </div>
     </section>
@@ -41,7 +41,7 @@
     <section class="profile-card">
       <div class="section-head">
         <p>Perfil de acceso</p>
-        <span>Información del usuario actual</span>
+        <span>Informacion del usuario actual</span>
       </div>
 
       <dl class="profile-list">
@@ -66,7 +66,7 @@
           <dd>{{ formatDate(profile()?.createdAt) }}</dd>
         </div>
         <div>
-          <dt>Último acceso</dt>
+          <dt>Ultimo acceso</dt>
           <dd>{{ formatDate(profile()?.lastLoginAt) }}</dd>
         </div>
       </dl>
@@ -90,10 +90,187 @@
         </article>
 
         <article class="summary-item">
-          <span>Último acceso</span>
+          <span>Ultimo acceso</span>
           <strong>{{ formatDate(profile()?.lastLoginAt) }}</strong>
         </article>
       </div>
+    </section>
+
+    <section class="editor-card">
+      <div class="editor-header">
+        <div class="section-head">
+          <p>Contenido web</p>
+          <span>Edita los textos visibles de la seccion Facilidades del sitio cliente.</span>
+        </div>
+
+        <div class="editor-toolbar">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadFacilitiesContent()"
+            [disabled]="facilitiesLoading() || facilitiesSaving()"
+          >
+            Recargar
+          </button>
+
+          <button
+            type="submit"
+            form="facilities-content-form"
+            class="primary-button"
+            [disabled]="facilitiesLoading() || facilitiesSaving()"
+          >
+            {{ facilitiesSaving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+
+      @if (facilitiesFeedback()) {
+        <p
+          class="form-feedback"
+          [class.success-feedback]="facilitiesFeedbackTone() === 'success'"
+          [class.error-feedback]="facilitiesFeedbackTone() === 'error'"
+        >
+          {{ facilitiesFeedback() }}
+        </p>
+      }
+
+      <form id="facilities-content-form" class="editor-form" (ngSubmit)="saveFacilitiesContent()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Etiqueta de seccion</span>
+            <input
+              type="text"
+              name="sectionTag"
+              [(ngModel)]="facilitiesContent.sectionTag"
+              [disabled]="facilitiesLoading() || facilitiesSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Titulo de seccion</span>
+            <input
+              type="text"
+              name="sectionTitle"
+              [(ngModel)]="facilitiesContent.sectionTitle"
+              [disabled]="facilitiesLoading() || facilitiesSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Titulo destacado</span>
+            <input
+              type="text"
+              name="highlightTitle"
+              [(ngModel)]="facilitiesContent.highlightTitle"
+              [disabled]="facilitiesLoading() || facilitiesSaving()"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Descripcion destacada</span>
+            <textarea
+              rows="4"
+              name="highlightDescription"
+              [(ngModel)]="facilitiesContent.highlightDescription"
+              [disabled]="facilitiesLoading() || facilitiesSaving()"
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="list-editors">
+          <article class="list-editor-card">
+            <div class="group-head">
+              <h3>Bloque principal</h3>
+              <p>Un elemento por linea.</p>
+            </div>
+
+            <label class="field">
+              <span>Titulo del bloque</span>
+              <input
+                type="text"
+                name="primaryListTitle"
+                [(ngModel)]="facilitiesContent.primaryListTitle"
+                [disabled]="facilitiesLoading() || facilitiesSaving()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Elementos del bloque</span>
+              <textarea
+                rows="7"
+                name="primaryListItems"
+                [(ngModel)]="primaryListItemsText"
+                [disabled]="facilitiesLoading() || facilitiesSaving()"
+              ></textarea>
+            </label>
+          </article>
+
+          <article class="list-editor-card">
+            <div class="group-head">
+              <h3>Bloque secundario</h3>
+              <p>Un elemento por linea.</p>
+            </div>
+
+            <label class="field">
+              <span>Titulo del bloque</span>
+              <input
+                type="text"
+                name="secondaryListTitle"
+                [(ngModel)]="facilitiesContent.secondaryListTitle"
+                [disabled]="facilitiesLoading() || facilitiesSaving()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Elementos del bloque</span>
+              <textarea
+                rows="7"
+                name="secondaryListItems"
+                [(ngModel)]="secondaryListItemsText"
+                [disabled]="facilitiesLoading() || facilitiesSaving()"
+              ></textarea>
+            </label>
+          </article>
+        </div>
+
+        <div class="services-editor">
+          <div class="group-head">
+            <h3>Tarjetas de servicios</h3>
+            <p>Estas tarjetas conservan las imagenes actuales del cliente y solo cambian el texto.</p>
+          </div>
+
+          <div class="services-grid">
+            @for (service of facilitiesContent.serviceCards; track $index; let index = $index) {
+              <article class="service-editor-card">
+                <div class="service-editor-head">
+                  <strong>Tarjeta {{ index + 1 }}</strong>
+                  <span>{{ serviceReferenceLabels[index] || 'Servicio adicional' }}</span>
+                </div>
+
+                <label class="field">
+                  <span>Titulo</span>
+                  <input
+                    type="text"
+                    [name]="'serviceTitle' + index"
+                    [(ngModel)]="service.title"
+                    [disabled]="facilitiesLoading() || facilitiesSaving()"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Descripcion</span>
+                  <textarea
+                    rows="4"
+                    [name]="'serviceDescription' + index"
+                    [(ngModel)]="service.description"
+                    [disabled]="facilitiesLoading() || facilitiesSaving()"
+                  ></textarea>
+                </label>
+              </article>
+            }
+          </div>
+        </div>
+      </form>
     </section>
   </div>
 </section>

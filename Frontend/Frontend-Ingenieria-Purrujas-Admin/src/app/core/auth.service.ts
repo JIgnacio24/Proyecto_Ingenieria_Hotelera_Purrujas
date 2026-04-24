@@ -125,12 +125,12 @@ export class AuthService {
     try {
       const session = JSON.parse(rawSession) as AuthResponse;
       if (!session?.token || !session?.expiresAt || !session?.user) {
-        this.invalidateSession();
+        this.clearStoredSession();
         return null;
       }
 
       if (!this.isAdministrativeSession(session)) {
-        this.invalidateSession();
+        this.clearStoredSession();
         return null;
       }
 
@@ -138,13 +138,17 @@ export class AuthService {
       this.legacyStorageRef()?.removeItem(this.storageKey);
       return session;
     } catch {
-      this.invalidateSession();
+      this.clearStoredSession();
       return null;
     }
   }
 
   private clearSession(): void {
     this.sessionState.set(null);
+    this.clearStoredSession();
+  }
+
+  private clearStoredSession(): void {
     this.sessionStorageRef()?.removeItem(this.storageKey);
     this.legacyStorageRef()?.removeItem(this.storageKey);
   }

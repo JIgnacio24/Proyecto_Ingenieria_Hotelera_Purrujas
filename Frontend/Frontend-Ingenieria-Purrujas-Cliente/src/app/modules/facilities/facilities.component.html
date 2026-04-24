@@ -1,19 +1,15 @@
 <section id="facilidades" class="section section-caracteristicas">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Lo que nos distingue</span>
-      <h2 class="section-title centered">Características Principales</h2>
+      <span class="section-tag">{{ content().sectionTag }}</span>
+      <h2 class="section-title centered">{{ content().sectionTitle }}</h2>
     </div>
 
     <div class="feature-highlight animate-up">
       <div class="feature-icon-large"><span class="material-icons">place</span></div>
       <div class="feature-highlight-text">
-        <h3>Ubicación Privilegiada</h3>
-        <p>
-          Situado a solo 45 minutos de San José, en las verdes montañas de Cartago, el hotel ofrece
-          vistas panorámicas al Volcán Turrialba y está rodeado de bosques nubosos y ríos cristalinos.
-          Una combinación única de accesibilidad y tranquilidad absoluta.
-        </p>
+        <h3>{{ content().highlightTitle }}</h3>
+        <p>{{ content().highlightDescription }}</p>
       </div>
     </div>
 
@@ -21,153 +17,40 @@
       <div class="feature-card animate-up delay-1">
         <div class="feature-top">
           <span class="material-icons">home</span>
-          <h4>Instalaciones</h4>
+          <h4>{{ content().primaryListTitle }}</h4>
         </div>
         <ul>
-          <li>18 habitaciones temáticas</li>
-          <li>Restaurante "La Ceiba"</li>
-          <li>Piscina natural de manantial</li>
-          <li>Senderos ecológicos (5 km)</li>
-          <li>Salón de eventos</li>
-          <li>Spa con plantas locales</li>
+          @for (item of content().primaryListItems; track $index) {
+            <li>{{ item }}</li>
+          }
         </ul>
       </div>
+
       <div class="feature-card animate-up delay-2">
         <div class="feature-top">
           <span class="material-icons">forest</span>
-          <h4>Servicios Destacados</h4>
+          <h4>{{ content().secondaryListTitle }}</h4>
         </div>
         <ul>
-          <li>Tours al Volcán Turrialba e Irazú</li>
-          <li>Birdwatching con guías certificados</li>
-          <li>Talleres de gastronomía típica</li>
-          <li>Transporte desde San José</li>
-          <li>Wi-Fi de alta velocidad</li>
-          <li>Atención personalizada 24/7</li>
+          @for (item of content().secondaryListItems; track $index) {
+            <li>{{ item }}</li>
+          }
         </ul>
       </div>
     </div>
 
     <div class="servicios-list">
-      <article class="servicio-card animate-up">
-        <div class="servicio-media">
-          <img src="/images/habitacion_doble_2.png" alt="Habitaciones temáticas con vista al bosque" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>18 habitaciones temáticas</h3>
-          <p>Ambientes con personalidad propia, balcones al bosque nuboso y textiles artesanales inspirados en Cartago.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-1">
-        <div class="servicio-media">
-          <img src="/images/restaurante_la_ceiba.png" alt="Restaurante La Ceiba con ingredientes de finca" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Restaurante "La Ceiba"</h3>
-          <p>Cocina de finca a la mesa, café chorreado y menús de temporada que celebran los sabores locales.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-2">
-        <div class="servicio-media">
-          <img src="/images/piscinas_naturales.png" alt="Piscina natural de manantial" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Piscina natural de manantial</h3>
-          <p>Agua cristalina, temperatura agradable y vistas verdes para recargar energía de forma natural.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-3">
-        <div class="servicio-media">
-          <img src="/images/senderos.png" alt="Senderos ecológicos privados" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Senderos ecológicos (5 km)</h3>
-          <p>Rutas señalizadas entre bosque nuboso, ideales para caminatas al amanecer y observación de flora.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up">
-        <div class="servicio-media">
-          <img src="/images/salon_eventos.png" alt="Salón de eventos rodeado de naturaleza" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Salón de eventos</h3>
-          <p>Espacio versátil con luz natural, perfecto para retiros corporativos, bodas boutique y talleres.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-1">
-        <div class="servicio-media">
-          <img src="/images/spa.png" alt="Spa con plantas locales" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Spa con plantas locales</h3>
-          <p>Tratamientos herbales, masajes relajantes y aromaterapia con esencias del bosque costarricense.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-2">
-        <div class="servicio-media">
-          <img src="/images/senderismo_volcan.png" alt="Tour al Volcán Turrialba e Irazú" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Tours al Volcán Turrialba e Irazú</h3>
-          <p>Excursiones guiadas para explorar dos volcanes icónicos con logística y transporte incluidos.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-3">
-        <div class="servicio-media">
-          <img src="/images/avistamiento_aves.png" alt="Birdwatching con guías certificados" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Birdwatching con guías certificados</h3>
-          <p>Avistamiento de purrujas y más de 120 especies con especialistas locales y equipo óptico.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up">
-        <div class="servicio-media">
-          <img src="/images/gastronomia_tipica.png" alt="Talleres de gastronomía típica" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Talleres de gastronomía típica</h3>
-          <p>Aprende a preparar tortillas palmeadas, gallo pinto y salsas caseras con cocineras de la zona.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-1">
-        <div class="servicio-media">
-          <img src="/images/transporte.png" alt="Transporte privado desde San José" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Transporte desde San José</h3>
-          <p>Traslados seguros puerta a puerta para que llegues sin preocupaciones desde el aeropuerto o la ciudad.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-2">
-        <div class="servicio-media">
-          <img src="/images/internet.png" alt="Wi-Fi de alta velocidad en el hotel" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Wi-Fi de alta velocidad</h3>
-          <p>Conectividad confiable en habitaciones y áreas comunes para trabajar o compartir tu experiencia.</p>
-        </div>
-      </article>
-
-      <article class="servicio-card animate-up delay-3">
-        <div class="servicio-media">
-          <img src="/images/atencion_personalizada.png" alt="Atención personalizada todo el día" loading="lazy">
-        </div>
-        <div class="servicio-body">
-          <h3>Atención personalizada 24/7</h3>
-          <p>Equipo disponible todo el día para ayudarte con reservas, recomendaciones y soporte durante tu estadía.</p>
-        </div>
-      </article>
+      @for (service of serviceCards(); track service.imageUrl) {
+        <article class="servicio-card animate-up" [ngClass]="service.animationClass">
+          <div class="servicio-media">
+            <img [src]="service.imageUrl" [alt]="service.imageAlt" loading="lazy" />
+          </div>
+          <div class="servicio-body">
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+          </div>
+        </article>
+      }
     </div>
   </div>
 </section>
