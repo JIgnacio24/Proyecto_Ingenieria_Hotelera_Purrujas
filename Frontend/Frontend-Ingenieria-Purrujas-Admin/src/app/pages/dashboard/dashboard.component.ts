@@ -121,12 +121,14 @@ export class DashboardComponent {
     } finally {
       this.facilitiesSaving.set(false);
     }
+  }
+
   setActiveMenuItem(menuKey: (typeof this.menuItems)[number]['key']): void {
     this.activeMenuItem.set(menuKey);
   }
 
   activeMenuLabel(): string {
-    return this.menuItems.find(item => item.key === this.activeMenuItem())?.label ?? 'Home';
+    return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Home';
   }
 
   formatDate(value: string | null | undefined): string {
@@ -143,6 +145,27 @@ export class DashboardComponent {
       dateStyle: 'medium',
       timeStyle: 'short'
     }).format(date);
+  }
+
+  iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
+    switch (icon) {
+      case 'home':
+        return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z';
+      case 'pages':
+        return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
+      case 'reservations':
+        return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
+      case 'rooms':
+        return 'M5 20V7.5A1.5 1.5 0 0 1 6.5 6h11A1.5 1.5 0 0 1 19 7.5V20M3 20h18M8 10h8M8 14h5';
+      case 'status':
+        return 'M12 4a8 8 0 1 0 8 8h-8zM12 4a8 8 0 0 1 8 8M12 8v4l2.5 2.5';
+      case 'availability':
+        return 'M4 12h5l2 5 3-10 2 5h4';
+      case 'ads':
+        return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
+      default:
+        return '';
+    }
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {
@@ -185,24 +208,5 @@ export class DashboardComponent {
   private clearFacilitiesFeedback(): void {
     this.facilitiesFeedback.set('');
     this.facilitiesFeedbackTone.set('');
-  iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
-    switch (icon) {
-      case 'home':
-        return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z';
-      case 'pages':
-        return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
-      case 'reservations':
-        return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
-      case 'rooms':
-        return 'M5 20V7.5A1.5 1.5 0 0 1 6.5 6h11A1.5 1.5 0 0 1 19 7.5V20M3 20h18M8 10h8M8 14h5';
-      case 'status':
-        return 'M12 4a8 8 0 1 0 8 8h-8zM12 4a8 8 0 0 1 8 8M12 8v4l2.5 2.5';
-      case 'availability':
-        return 'M4 12h5l2 5 3-10 2 5h4';
-      case 'ads':
-        return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
-      default:
-        return '';
-    }
   }
 }

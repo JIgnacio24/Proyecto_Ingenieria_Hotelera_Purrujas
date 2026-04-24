@@ -5,7 +5,38 @@
       <div class="brand-monogram">LP</div>
     </div>
 
-    <button type="button" class="logout-button" (click)="logout()">Cerrar sesion</button>
+    <nav class="side-nav__menu">
+      @for (item of menuItems; track item.key) {
+        <button
+          type="button"
+          class="side-nav__item"
+          [class.side-nav__item--active]="activeMenuItem() === item.key"
+          [attr.aria-label]="item.label"
+          [attr.data-label]="item.label"
+          (click)="setActiveMenuItem(item.key)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="iconPath(item.icon)"></path>
+          </svg>
+        </button>
+      }
+    </nav>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-copy">
+      <p class="eyebrow">Hotel Las Purrujas</p>
+      <h1>Panel administrativo</h1>
+      <p class="topbar-subtitle">{{ activeMenuLabel() }}</p>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="hotel-chip">
+        <span class="hotel-chip__label">Sistema interno</span>
+        <strong>Las Purrujas</strong>
+      </div>
+      <button type="button" class="logout-button" (click)="logout()">Cerrar sesion</button>
+    </div>
   </header>
 
   @if (errorMessage()) {
