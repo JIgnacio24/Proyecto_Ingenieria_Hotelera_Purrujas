@@ -3,13 +3,14 @@ using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Data;
 
 namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 
 public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepository
 {
-    private const string FacilitiesPageName = "Facilidades";
-    private const string FacilitiesPageLink = "/about-us#facilidades";
+    private const string GetContentProcedureName = "usp_FacilitiesPageContent_Get";
+    private const string UpsertContentProcedureName = "usp_FacilitiesPageContent_Upsert";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -36,20 +37,10 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
         {
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
-
-            const string sql = """
-                SELECT TOP 1
-                    p.Title,
-                    pi.Subtitle,
-                    pi.Description
-                FROM Page p
-                LEFT JOIN PageInformation pi ON pi.PageId = p.PageId
-                WHERE LOWER(p.Name) = LOWER(@pageName)
-                ORDER BY pi.PageInformationId
-                """;
-
-            await using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@pageName", FacilitiesPageName);
+            await using var command = new SqlCommand(GetContentProcedureName, connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             if (!await reader.ReadAsync(cancellationToken))
@@ -82,34 +73,27 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
         {
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
-            await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
+            await using var command = new SqlCommand(UpsertContentProcedureName, connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            command.Parameters.AddWithValue("@SectionTitle", normalizedContent.SectionTitle);
+            command.Parameters.AddWithValue("@SectionTag", normalizedContent.SectionTag);
+            var descriptionParameter = command.Parameters.Add("@DescriptionJson", SqlDbType.NVarChar, -1);
+            descriptionParameter.Value = serializedContent;
 
-            var pageId = await GetPageIdAsync(connection, transaction, cancellationToken);
-            if (pageId is null)
-            {
-                pageId = await InsertPageAsync(connection, transaction, normalizedContent.SectionTitle, cancellationToken);
-            }
-            else
-            {
-                await UpdatePageAsync(connection, transaction, pageId.Value, normalizedContent.SectionTitle, cancellationToken);
-            }
-
-            var pageInformationId = await GetPageInformationIdAsync(connection, transaction, pageId.Value, cancellationToken);
-            if (pageInformationId is null)
-            {
-                await InsertPageInformationAsync(connection, transaction, pageId.Value, normalizedContent.SectionTag, serializedContent, cancellationToken);
-            }
-            else
-            {
-                await UpdatePageInformationAsync(connection, transaction, pageInformationId.Value, normalizedContent.SectionTag, serializedContent, cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
+            await command.ExecuteNonQueryAsync(cancellationToken);
             return normalizedContent;
         }
         catch (ArgumentException)
         {
             throw;
+        }
+        catch (SqlException ex) when (ex.Message.Contains(UpsertContentProcedureName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"La base de datos no tiene el procedimiento {UpsertContentProcedureName}. Ejecuta DB/DB-Ingenieria-Purrujas.sql para integrar la persistencia de Facilidades.",
+                ex);
         }
         catch (Exception ex)
         {
@@ -379,125 +363,4 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
         };
     }
 
-    private static async Task<int?> GetPageIdAsync(SqlConnection connection, SqlTransaction transaction, CancellationToken cancellationToken)
-    {
-        const string sql = """
-            SELECT TOP 1 PageId
-            FROM Page
-            WHERE LOWER(Name) = LOWER(@pageName)
-            ORDER BY PageId
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@pageName", FacilitiesPageName);
-
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is int pageId ? pageId : null;
-    }
-
-    private static async Task<int> InsertPageAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        string sectionTitle,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            INSERT INTO Page (Name, Title, Link)
-            VALUES (@pageName, @title, @link);
-
-            SELECT CAST(SCOPE_IDENTITY() AS INT);
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@pageName", FacilitiesPageName);
-        command.Parameters.AddWithValue("@title", sectionTitle);
-        command.Parameters.AddWithValue("@link", FacilitiesPageLink);
-        return (int)(await command.ExecuteScalarAsync(cancellationToken)
-            ?? throw new InvalidOperationException("No fue posible crear la pagina de Facilidades."));
-    }
-
-    private static async Task UpdatePageAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        int pageId,
-        string sectionTitle,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            UPDATE Page
-            SET Title = @title,
-                Link = @link
-            WHERE PageId = @pageId
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@pageId", pageId);
-        command.Parameters.AddWithValue("@title", sectionTitle);
-        command.Parameters.AddWithValue("@link", FacilitiesPageLink);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task<int?> GetPageInformationIdAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        int pageId,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            SELECT TOP 1 PageInformationId
-            FROM PageInformation
-            WHERE PageId = @pageId
-            ORDER BY PageInformationId
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@pageId", pageId);
-
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-        return result is int pageInformationId ? pageInformationId : null;
-    }
-
-    private static async Task InsertPageInformationAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        int pageId,
-        string sectionTag,
-        string serializedContent,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            INSERT INTO PageInformation (Subtitle, Description, PageId)
-            VALUES (@subtitle, @description, @pageId)
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@subtitle", sectionTag);
-        var descriptionParameter = command.Parameters.Add("@description", System.Data.SqlDbType.NVarChar, -1);
-        descriptionParameter.Value = serializedContent;
-        command.Parameters.AddWithValue("@pageId", pageId);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task UpdatePageInformationAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        int pageInformationId,
-        string sectionTag,
-        string serializedContent,
-        CancellationToken cancellationToken)
-    {
-        const string sql = """
-            UPDATE PageInformation
-            SET Subtitle = @subtitle,
-                Description = @description
-            WHERE PageInformationId = @pageInformationId
-            """;
-
-        await using var command = new SqlCommand(sql, connection, transaction);
-        command.Parameters.AddWithValue("@subtitle", sectionTag);
-        var descriptionParameter = command.Parameters.Add("@description", System.Data.SqlDbType.NVarChar, -1);
-        descriptionParameter.Value = serializedContent;
-        command.Parameters.AddWithValue("@pageInformationId", pageInformationId);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
 }

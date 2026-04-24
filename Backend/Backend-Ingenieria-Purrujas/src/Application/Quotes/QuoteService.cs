@@ -8,7 +8,6 @@ public class QuoteService : IQuoteService
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
     private const decimal UsdToCrcRate = 500m;
-    private static readonly int[] HighSeasonMonths = { 0, 6, 7, 11 }; // Jan, Jul, Aug, Dec
     private static readonly HashSet<string> SupportedCurrencies = new(StringComparer.OrdinalIgnoreCase)
     {
         "USD",
@@ -30,40 +29,28 @@ public class QuoteService : IQuoteService
         var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
             ?? throw new ArgumentException($"Tipo de habitacion '{roomTypeKey}' no encontrado.");
 
-        var highMultiplier = await ResolveHighMultiplier(cancellationToken);
-        var (totalNights, highNights, lowNights) = CountNights(request.StartDate, request.EndDate);
-
-        var priceHigh = roomType.BasePrice * highMultiplier;
-        var totalUsd = (lowNights * roomType.BasePrice) + (highNights * priceHigh);
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
 
-        var (total, basePerNight, multiplier) = currency == "CRC"
-            ? ConvertToCrc(quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier)
-            : (quoteBreakdown.TotalUsd, roomType.BasePrice, quoteBreakdown.HighestMultiplier);
+        var (total, basePerNight) = currency == "CRC"
+            ? ConvertToCrc(quoteBreakdown.TotalUsd, roomType.BasePrice)
+            : (quoteBreakdown.TotalUsd, roomType.BasePrice);
 
         return new QuoteResponseDto(
             RoomTypeKey: roomTypeKey,
-            NightsTotal: totalNights,
-            NightsHigh: highNights,
-            NightsLow: lowNights,
-            RoomTypeKey: request.RoomTypeKey,
             NightsTotal: quoteBreakdown.TotalNights,
             NightsHigh: quoteBreakdown.HighSeasonNights,
             NightsLow: quoteBreakdown.LowSeasonNights,
-            BasePricePerNight: basePerNight,
-            HighSeasonMultiplier: multiplier,
+            BasePricePerNight: decimal.Round(basePerNight, 2),
+            HighSeasonMultiplier: quoteBreakdown.HighestMultiplier,
             Total: decimal.Round(total, 2),
             Currency: currency
         );
     }
 
-    private static (decimal total, decimal basePerNight, decimal multiplier) ConvertToCrc(
-        decimal totalUsd,
-        decimal baseUsd,
-        decimal multiplier)
+    private static (decimal total, decimal basePerNight) ConvertToCrc(decimal totalUsd, decimal baseUsd)
     {
-        return (totalUsd * UsdToCrcRate, baseUsd * UsdToCrcRate, multiplier);
+        return (totalUsd * UsdToCrcRate, baseUsd * UsdToCrcRate);
     }
 
     private static string NormalizeCurrency(string requested)
@@ -114,18 +101,6 @@ public class QuoteService : IQuoteService
         decimal basePrice,
         IReadOnlyCollection<Season> seasons)
     {
-        var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
-        var percentage = seasons.FirstOrDefault()?.PercentageChange;
-        return percentage.HasValue
-            ? 1 + (percentage.Value / 100m)
-            : DefaultHighSeasonMultiplier;
-    }
-
-    private static (int total, int high, int low) CountNights(DateOnly start, DateOnly end)
-    {
-        var total = 0;
-        var high = 0;
-        var low = 0;
         var totalNights = 0;
         var highSeasonNights = 0;
         var lowSeasonNights = 0;
@@ -135,25 +110,9 @@ public class QuoteService : IQuoteService
         var cursor = start;
         while (cursor < end)
         {
-            total++;
-            if (IsHighSeason(cursor))
-            {
-                high++;
-            }
-            else
-            {
-                low++;
             totalNights++;
 
-            var matchedSeason = seasons
-                .Where(season => cursor >= season.StartDate && cursor <= season.EndDate)
-                .OrderByDescending(season => season.PercentageChange)
-                .FirstOrDefault();
-
-            var multiplier = matchedSeason is null
-                ? 1m
-                : 1m + (matchedSeason.PercentageChange / 100m);
-
+            var multiplier = ResolveMultiplier(cursor, seasons);
             totalUsd += basePrice * multiplier;
 
             if (multiplier > 1m)
@@ -174,21 +133,20 @@ public class QuoteService : IQuoteService
         }
 
         return new QuoteBreakdown(totalNights, highSeasonNights, lowSeasonNights, totalUsd, highestMultiplier);
-        }
     }
 
-    private static bool IsHighSeason(DateOnly date)
+    private static decimal ResolveMultiplier(DateOnly date, IReadOnlyCollection<Season> seasons)
     {
-        var month = date.Month - 1;
-        var day = date.Day;
+        var matchedSeason = seasons
+            .Where(season => date >= season.StartDate && date <= season.EndDate)
+            .OrderByDescending(season => season.PercentageChange)
+            .FirstOrDefault();
 
-        if (HighSeasonMonths.Contains(month))
-        {
-            return true;
-        }
-
-        return (month == 2 && day >= 29) || (month == 3 && day <= 5);
+        return matchedSeason is null
+            ? 1m
+            : 1m + (matchedSeason.PercentageChange / 100m);
     }
+
     private sealed record QuoteBreakdown(
         int TotalNights,
         int HighSeasonNights,

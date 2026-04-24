@@ -33,6 +33,8 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
     "http://127.0.0.1:4200",
     "http://127.0.0.1:4201"
 ];
+var allowedOriginsSet = new HashSet<string>(allowedOrigins, StringComparer.OrdinalIgnoreCase);
+var allowLocalDevelopmentOrigins = builder.Environment.IsDevelopment();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("No se configuro Jwt:Key.");
@@ -71,7 +73,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ClientApp", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+                  allowedOriginsSet.Contains(origin)
+                  || (allowLocalDevelopmentOrigins && IsLocalDevelopmentOrigin(origin)))
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -124,3 +128,18 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static bool IsLocalDevelopmentOrigin(string origin)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    var isHttp = uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+        || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+    var isLocalHost = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+        || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
+    return isHttp && isLocalHost;
+}
