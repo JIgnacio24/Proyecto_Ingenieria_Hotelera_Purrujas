@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
@@ -13,6 +13,30 @@ import {
   FacilitiesPageContent
 } from '../../core/facilities-content.service';
 
+type DashboardMenuKey =
+  | 'home'
+  | 'pages'
+  | 'reservations'
+  | 'rooms'
+  | 'status'
+  | 'availability'
+  | 'ads';
+
+interface DashboardMenuItem {
+  key: DashboardMenuKey;
+  label: string;
+  compactLabel: string;
+  icon: string;
+  targetId: string;
+}
+
+interface DashboardModuleCard {
+  key: Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
+  title: string;
+  status: string;
+  description: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -20,20 +44,93 @@ import {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent {
+export class DashboardComponent implements AfterViewInit {
+  private readonly document = inject(DOCUMENT);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
 
-  readonly menuItems = [
-    { key: 'home', label: 'Home', icon: 'home' },
-    { key: 'pages', label: 'Modificar Paginas', icon: 'pages' },
-    { key: 'reservations', label: 'Listado de reservaciones', icon: 'reservations' },
-    { key: 'rooms', label: 'Administrar habitaciones', icon: 'rooms' },
-    { key: 'status', label: 'Ver estado del hotel hoy', icon: 'status' },
-    { key: 'availability', label: 'Consultar disponibilidad de habitaciones', icon: 'availability' },
-    { key: 'ads', label: 'Publicidad', icon: 'ads' }
-  ] as const;
-  readonly activeMenuItem = signal<(typeof this.menuItems)[number]['key']>('home');
+  readonly menuItems: readonly DashboardMenuItem[] = [
+    {
+      key: 'home',
+      label: 'Inicio del panel',
+      compactLabel: 'Inicio',
+      icon: 'home',
+      targetId: 'dashboard-home'
+    },
+    {
+      key: 'pages',
+      label: 'Modificar paginas',
+      compactLabel: 'Paginas',
+      icon: 'pages',
+      targetId: 'dashboard-content'
+    },
+    {
+      key: 'reservations',
+      label: 'Listado de reservaciones',
+      compactLabel: 'Reservas',
+      icon: 'reservations',
+      targetId: 'dashboard-reservations'
+    },
+    {
+      key: 'rooms',
+      label: 'Administrar habitaciones',
+      compactLabel: 'Habitaciones',
+      icon: 'rooms',
+      targetId: 'dashboard-rooms'
+    },
+    {
+      key: 'status',
+      label: 'Ver estado del hotel hoy',
+      compactLabel: 'Estado',
+      icon: 'status',
+      targetId: 'dashboard-status'
+    },
+    {
+      key: 'availability',
+      label: 'Consultar disponibilidad de habitaciones',
+      compactLabel: 'Disponibilidad',
+      icon: 'availability',
+      targetId: 'dashboard-availability'
+    },
+    {
+      key: 'ads',
+      label: 'Publicidad',
+      compactLabel: 'Publicidad',
+      icon: 'ads',
+      targetId: 'dashboard-ads'
+    }
+  ];
+  readonly activeMenuItem = signal<DashboardMenuKey>('home');
+  readonly moduleCards: readonly DashboardModuleCard[] = [
+    {
+      key: 'reservations',
+      title: 'Listado de reservaciones',
+      status: 'Pendiente de interfaz',
+      description:
+        'Espacio reservado para mostrar reservas, filtros por fecha y detalle del cliente cuando ese modulo se conecte.'
+    },
+    {
+      key: 'rooms',
+      title: 'Administrar habitaciones',
+      status: 'Pendiente de interfaz',
+      description:
+        'Aqui ira la administracion de tipos de habitacion, tarifas base y estado operativo cuando el modulo exista.'
+    },
+    {
+      key: 'availability',
+      title: 'Disponibilidad de habitaciones',
+      status: 'Pendiente de interfaz',
+      description:
+        'Zona prevista para consultar ocupacion, cupos por fecha y validaciones de disponibilidad desde el panel.'
+    },
+    {
+      key: 'ads',
+      title: 'Publicidad',
+      status: 'Interfaz pendiente',
+      description:
+        'El menu ya apunta a esta seccion. Falta construir aqui el CRUD para administrar la publicidad del sitio.'
+    }
+  ];
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
@@ -51,6 +148,10 @@ export class DashboardComponent {
   constructor() {
     void this.loadProfile();
     void this.loadFacilitiesContent();
+  }
+
+  ngAfterViewInit(): void {
+    this.syncActiveMenuItem();
   }
 
   async loadProfile(): Promise<void> {
@@ -123,12 +224,26 @@ export class DashboardComponent {
     }
   }
 
-  setActiveMenuItem(menuKey: (typeof this.menuItems)[number]['key']): void {
+  setActiveMenuItem(menuKey: DashboardMenuKey): void {
     this.activeMenuItem.set(menuKey);
+    const targetId = this.menuItems.find((item) => item.key === menuKey)?.targetId;
+
+    if (!targetId) {
+      return;
+    }
+
+    this.document.getElementById(targetId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
   }
 
   activeMenuLabel(): string {
     return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Home';
+  }
+
+  moduleSectionId(menuKey: DashboardModuleCard['key']): string {
+    return this.menuItems.find((item) => item.key === menuKey)?.targetId ?? '';
   }
 
   formatDate(value: string | null | undefined): string {
@@ -166,6 +281,11 @@ export class DashboardComponent {
       default:
         return '';
     }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.syncActiveMenuItem();
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {
@@ -208,5 +328,42 @@ export class DashboardComponent {
   private clearFacilitiesFeedback(): void {
     this.facilitiesFeedback.set('');
     this.facilitiesFeedbackTone.set('');
+  }
+
+  private syncActiveMenuItem(): void {
+    const marker = 180;
+    const sections = this.menuItems
+      .map((item) => ({
+        key: item.key,
+        element: this.document.getElementById(item.targetId)
+      }))
+      .filter((section): section is { key: DashboardMenuKey; element: HTMLElement } => !!section.element);
+
+    if (sections.length === 0) {
+      return;
+    }
+
+    const visibleSection = sections.find(({ element }) => {
+      const rect = element.getBoundingClientRect();
+      return rect.top <= marker && rect.bottom > marker;
+    });
+
+    if (visibleSection) {
+      if (this.activeMenuItem() !== visibleSection.key) {
+        this.activeMenuItem.set(visibleSection.key);
+      }
+
+      return;
+    }
+
+    const closestSection = sections.reduce((closest, current) => {
+      const currentDistance = Math.abs(current.element.getBoundingClientRect().top - marker);
+      const closestDistance = Math.abs(closest.element.getBoundingClientRect().top - marker);
+      return currentDistance < closestDistance ? current : closest;
+    });
+
+    if (this.activeMenuItem() !== closestSection.key) {
+      this.activeMenuItem.set(closestSection.key);
+    }
   }
 }
