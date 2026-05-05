@@ -107,6 +107,16 @@
   overflow: hidden;
 }
 
+.small-hero {
+  position: relative;
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--verde-bosque);
+  color: var(--blanco);
+}
+
 .hero-overlay {
   position: absolute;
   inset: 0;
@@ -141,6 +151,7 @@
   text-align: center;
   color: var(--blanco);
   padding: 2rem;
+  margin-top: 80px;
   z-index: 2;
   animation: fadeInUp 1.2s ease both;
 }
@@ -157,7 +168,7 @@
 
 .hero-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(3rem, 8vw, 6rem);
+  font-size: clamp(2rem, 6vw, 4rem);
   font-weight: 700;
   line-height: 1.05;
   margin: 0 0 1rem;
@@ -168,9 +179,9 @@
 
 .hero-subtitle {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-size: clamp(1rem, 2vw, 1.3rem);
   font-style: italic;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.9);
   margin-bottom: 2rem;
   letter-spacing: 0.02em;
 }
@@ -680,9 +691,11 @@
   font-weight: 700;
 }
 
+/* =============================================
+   RESERVAS
+   ============================================= */
 .section-reservas {
-  scroll-margin-top: 88px;
-  background: var(--verde-bosque);
+  background: linear-gradient(135deg, var(--verde-medio), var(--verde-bosque));
   color: var(--blanco);
 }
 
@@ -690,28 +703,45 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 3rem;
+  padding: 3rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.reservas-box > div {
+  flex: 1;
+}
+
+.reservas-box .section-title {
+  color: var(--blanco);
+  margin-bottom: 1rem;
 }
 
 .reservas-box p {
-  max-width: 520px;
-  color: rgba(255,255,255,0.8);
-  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 2rem;
+  line-height: 1.6;
 }
 
 .cta-button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2rem;
   background: var(--dorado);
-  color: var(--verde-bosque);
-  padding: 0.9rem 1.4rem;
-  border-radius: 14px;
+  color: var(--texto-oscuro);
   text-decoration: none;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  border-radius: 999px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.cta-button:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.18); }
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201,168,76,0.4);
+}
 
 @media (max-width: 720px) {
   .reservas-box { flex-direction: column; align-items: flex-start; }

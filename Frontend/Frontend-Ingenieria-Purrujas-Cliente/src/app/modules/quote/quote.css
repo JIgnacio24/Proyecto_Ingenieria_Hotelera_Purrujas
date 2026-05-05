@@ -137,6 +137,7 @@
 
 .quote-hero {
   background: linear-gradient(135deg, rgba(26,58,42,0.06), rgba(82,183,136,0.08));
+  padding-top: 120px !important;
 }
 
 .quote-grid {

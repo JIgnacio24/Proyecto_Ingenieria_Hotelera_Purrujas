@@ -1,21 +1,10 @@
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-
-<section id="home" class="about-hero">
+<!-- Hero pequeño -->
+<section class="small-hero">
   <div class="hero-overlay"></div>
-  <div class="hero-leaves">
-    <span class="leaf leaf-1">🌿</span>
-    <span class="leaf leaf-2">🍃</span>
-    <span class="leaf leaf-3">🌿</span>
-  </div>
   <div class="hero-content">
     <p class="hero-eyebrow">Sobre Nosotros</p>
     <h1 class="hero-title">Hotel Las Purrujas</h1>
-    <p class="hero-subtitle">Donde la naturaleza te abraza y Costa Rica te enamora.</p>
-    <div class="hero-divider"><span></span><span class="diamond">◆</span><span></span></div>
-  </div>
-  <div class="hero-scroll-hint">
-    <span>Descubre nuestra historia</span>
-    <div class="scroll-arrow"></div>
+    <p class="hero-subtitle">Conoce nuestra historia y valores</p>
   </div>
 </section>
 
@@ -59,100 +48,6 @@
             <span>Referente de ecoturismo en Cartago</span>
           </div>
           <div class="historia-year-now">Hoy</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Misión, Visión, Valores -->
-<section class="section section-mision">
-  <div class="mision-bg-pattern"></div>
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag">Quiénes somos</span>
-      <h2 class="section-title centered">Misión, Visión & Valores</h2>
-    </div>
-    <div class="mvv-grid">
-      <div class="mvv-card animate-up delay-1">
-        <span class="material-icons">track_changes</span>
-        <h3>Misión</h3>
-        <p>
-          Brindar a nuestros huéspedes una experiencia de hospedaje auténtica, cálida y sostenible,
-          conectándolos con la riqueza natural y cultural de Costa Rica, a través de un servicio
-          personalizado y comprometido con el bienestar de la comunidad local y el medio ambiente.
-        </p>
-      </div>
-      <div class="mvv-card animate-up delay-2">
-        <span class="material-icons">public</span>
-        <h3>Visión</h3>
-        <p>
-          Ser reconocidos como el principal destino de ecoturismo en la región de Cartago para el
-          año 2030, liderando un modelo de turismo responsable que inspire a otras empresas
-          hoteleras a adoptar prácticas sostenibles.
-        </p>
-      </div>
-      <div class="mvv-card animate-up delay-3">
-        <span class="material-icons">star</span>
-        <h3>Valores</h3>
-        <ul class="values-list">
-          <li><span class="material-icons">eco</span> Sostenibilidad</li>
-          <li><span class="material-icons">favorite</span> Calidez humana</li>
-          <li><span class="material-icons">handshake</span> Compromiso comunitario</li>
-          <li><span class="material-icons">grass</span> Respeto por la naturaleza</li>
-          <li><span class="material-icons">auto_awesome</span> Excelencia en el servicio</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Características / Facilidades extraído a componente -->
-<app-facilities></app-facilities>
-
-<!-- Galería -->
-<section id="galeria" class="section section-galeria">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag">Inspirate</span>
-      <h2 class="section-title centered">Galería</h2>
-      <p class="section-subtext">
-        Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para
-        planificar tu itinerario perfecto.
-      </p>
-    </div>
-
-    <div class="gallery-filters">
-      <button
-        class="gallery-filter-btn"
-        [class.active]="activeFilter === 'todos'"
-        (click)="setFilter('todos')"
-      >
-        Todos
-      </button>
-      <button
-        class="gallery-filter-btn"
-        [class.active]="activeFilter === 'hotel'"
-        (click)="setFilter('hotel')"
-      >
-        <span class="material-icons">hotel</span>
-        Beneficios del Hotel
-      </button>
-      <button
-        class="gallery-filter-btn"
-        [class.active]="activeFilter === 'lugares'"
-        (click)="setFilter('lugares')"
-      >
-        <span class="material-icons">explore</span>
-        Lugares Aledaños
-      </button>
-    </div>
-
-    <div class="gallery-grid">
-      <div class="gallery-card animate-up" *ngFor="let item of filteredItems; trackBy: trackBySrc">
-        <img [src]="item.src" [alt]="item.alt" loading="lazy" />
-        <div class="gallery-overlay">
-          <p class="gallery-caption">{{ item.caption }}</p>
         </div>
       </div>
     </div>
@@ -213,6 +108,97 @@
   </div>
 </section>
 
+<!-- Misión, Visión, Valores -->
+<section class="section section-mision">
+  <div class="mision-bg-pattern"></div>
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Quiénes somos</span>
+      <h2 class="section-title centered">Misión, Visión & Valores</h2>
+    </div>
+    <div class="mvv-grid">
+      <div class="mvv-card animate-up delay-1">
+        <span class="material-icons">track_changes</span>
+        <h3>Misión</h3>
+        <p>
+          Brindar a nuestros huéspedes una experiencia de hospedaje auténtica, cálida y sostenible,
+          conectándolos con la riqueza natural y cultural de Costa Rica, a través de un servicio
+          personalizado y comprometido con el bienestar de la comunidad local y el medio ambiente.
+        </p>
+      </div>
+      <div class="mvv-card animate-up delay-2">
+        <span class="material-icons">public</span>
+        <h3>Visión</h3>
+        <p>
+          Ser reconocidos como el principal destino de ecoturismo en la región de Cartago para el
+          año 2030, liderando un modelo de turismo responsable que inspire a otras empresas
+          hoteleras a adoptar prácticas sostenibles.
+        </p>
+      </div>
+      <div class="mvv-card animate-up delay-3">
+        <span class="material-icons">star</span>
+        <h3>Valores</h3>
+        <ul class="values-list">
+          <li><span class="material-icons">eco</span> Sostenibilidad</li>
+          <li><span class="material-icons">favorite</span> Calidez humana</li>
+          <li><span class="material-icons">handshake</span> Compromiso comunitario</li>
+          <li><span class="material-icons">grass</span> Respeto por la naturaleza</li>
+          <li><span class="material-icons">auto_awesome</span> Excelencia en el servicio</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Galería -->
+<section id="galeria" class="section section-galeria">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Inspirate</span>
+      <h2 class="section-title centered">Galería</h2>
+      <p class="section-subtext">
+        Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para
+        planificar tu itinerario perfecto.
+      </p>
+    </div>
+
+    <div class="gallery-filters">
+      <button
+        class="gallery-filter-btn"
+        [class.active]="activeFilter === 'todos'"
+        (click)="setFilter('todos')"
+      >
+        Todos
+      </button>
+      <button
+        class="gallery-filter-btn"
+        [class.active]="activeFilter === 'hotel'"
+        (click)="setFilter('hotel')"
+      >
+        <span class="material-icons">hotel</span>
+        Beneficios del Hotel
+      </button>
+      <button
+        class="gallery-filter-btn"
+        [class.active]="activeFilter === 'lugares'"
+        (click)="setFilter('lugares')"
+      >
+        <span class="material-icons">explore</span>
+        Lugares Aledaños
+      </button>
+    </div>
+
+    <div class="gallery-grid">
+      <div class="gallery-card animate-up" *ngFor="let item of filteredItems; trackBy: trackBySrc">
+        <img [src]="item.src" [alt]="item.alt" loading="lazy" />
+        <div class="gallery-overlay">
+          <p class="gallery-caption">{{ item.caption }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Cómo llegar -->
 <section id="como-llegar" class="section section-como-llegar">
   <div class="container">
@@ -256,63 +242,6 @@
   </div>
 </section>
 
-<!-- Tarifas -->
-<section id="tarifas" class="section section-tarifas">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag">Transparencia</span>
-      <h2 class="section-title centered">Tarifas 2026</h2>
-      <p class="section-subtext">Incluyen desayuno típico, Wi‑Fi y acceso a senderos ecológicos.</p>
-      <div class="quote-field" style="max-width:260px;margin:0 auto 16px auto;">
-        <label for="currency-selector">Moneda</label>
-        <select id="currency-selector" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)">
-          <option value="USD">Dólares (USD)</option>
-          <option value="CRC">Colones (CRC)</option>
-        </select>
-      </div>
-    </div>
-    <div class="tarifa-grid">
-      <div class="tarifa-card">
-        <h3>Habitación Doble</h3>
-        <p class="price">{{ currencySymbol }}{{ price(95) | number:'1.0-0' }} <span>/ noche</span></p>
-        <ul>
-          <li>Cama queen + balcón</li>
-          <li>Vista al bosque nuboso</li>
-          <li>Café chorreado de cortesía</li>
-        </ul>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'doble' }"
-          >Cotizar</a
-        >
-      </div>
-      <div class="tarifa-card destacada">
-        <h3>Suite Volcán</h3>
-        <p class="price">{{ currencySymbol }}{{ price(135) | number:'1.0-0' }} <span>/ noche</span></p>
-        <ul>
-          <li>Jacuzzi con sales termales</li>
-          <li>Terraza panorámica</li>
-          <li>Coctel de bienvenida</li>
-        </ul>
-        <span class="badge">Más solicitada</span>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'suite' }"
-          >Cotizar</a
-        >
-      </div>
-      <div class="tarifa-card">
-        <h3>Villa Familiar</h3>
-        <p class="price">{{ currencySymbol }}{{ price(180) | number:'1.0-0' }} <span>/ noche</span></p>
-        <ul>
-          <li>Hasta 5 huéspedes</li>
-          <li>Cocina equipada</li>
-          <li>Chimenea y deck privado</li>
-        </ul>
-        <a class="cotizar-button" [routerLink]="'/cotizar'" [queryParams]="{ habitacion: 'villa' }"
-          >Cotizar</a
-        >
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Reservas en línea -->
 <section id="reservas" class="section section-reservas">
   <div class="container reservas-box">
@@ -323,32 +252,10 @@
         Confirma tu habitación en minutos. Pagos seguros y cancelación flexible hasta 7 días antes.
       </p>
     </div>
-    <a class="cta-button" href="#contactenos">Solicitar disponibilidad</a>
+    <a class="cta-button" routerLink="/cotizar">Solicitar disponibilidad</a>
   </div>
 </section>
 
-<!-- Contáctenos -->
-<section id="contactenos" class="section section-contacto">
-  <div class="container contacto-grid">
-    <!-- Información -->
-    <div class="contact-info">
-      <span class="section-tag">Hablemos</span>
-      <h2 class="section-title">Contáctenos</h2>
 
-      <p><strong>Teléfono:</strong> +506 8888 8888</p>
-      <p><strong>Correo:</strong> reservas@laspurrujas.com</p>
-      <p><strong>Horario:</strong> Lunes a domingo · 7:00 a.m. - 9:00 p.m.</p>
-      <p><strong>Ubicación:</strong> Cartago, Costa Rica</p>
-    </div>
 
-    <!-- Acciones -->
-    <div class="contact-actions">
-      <a class="contact-button" href="tel:+50688888888"> Llamar ahora </a>
-
-      <a class="contact-button secondary" href="mailto:reservas@laspurrujas.com"> Enviar correo </a>
-
-      <a class="contact-button" href="https://wa.me/50688888888" target="_blank"> WhatsApp </a>
-    </div>
-  </div>
-</section>
 

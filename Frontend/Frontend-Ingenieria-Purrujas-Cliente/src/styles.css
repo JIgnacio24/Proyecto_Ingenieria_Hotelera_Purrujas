@@ -16,7 +16,6 @@ html, body {
 
 /* Espacio para el footer fijo */
 .page-content {
-  padding-bottom: var(--footer-height);
   min-height: calc(100vh - var(--nav-height));
 }
 

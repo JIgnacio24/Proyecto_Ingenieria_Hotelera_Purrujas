@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { FacilitiesComponent } from '../facilities/facilities.component';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { Subscription } from 'rxjs';
 
@@ -15,7 +14,7 @@ interface GalleryItem {
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FacilitiesComponent],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './about-us.html',
   styleUrl: './about-us.css'
 })

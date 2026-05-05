@@ -23,7 +23,7 @@ export interface FacilitiesPageContent {
 const DEFAULT_FACILITIES_PAGE_CONTENT: FacilitiesPageContent = {
   sectionTag: 'Lo que nos distingue',
   sectionTitle: 'Caracteristicas Principales',
-  highlightTitle: 'Ubicacion Privilegiada',
+  highlightTitle: 'Ubicación Privilegiada',
   highlightDescription:
     'Situado a solo 45 minutos de San Jose, en las verdes montanas de Cartago, el hotel ofrece vistas panoramicas al Volcan Turrialba y esta rodeado de bosques nubosos y rios cristalinos. Una combinacion unica de accesibilidad y tranquilidad absoluta.',
   primaryListTitle: 'Instalaciones',

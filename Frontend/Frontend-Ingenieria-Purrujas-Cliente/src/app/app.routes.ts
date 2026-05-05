@@ -1,17 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { Home } from './modules/home/home';
 import { AboutUs } from './modules/about-us/about-us';
+import { FacilitiesComponent } from './modules/facilities/facilities.component';
 import { QuoteComponent } from './modules/quote/quote';
-import { Narvar } from './modules/narvar/narvar';
 import { Promociones } from './modules/promociones/promociones';
 import { PublicidadComponent } from './modules/publicidad/publicidad';
 
 export const routes: Routes = [
-  { path: '', component: AboutUs },
+  { path: '', component: Home },
   { path: 'about-us', component: AboutUs },
+  { path: 'facilities', component: FacilitiesComponent },
   { path: 'cotizar', component: QuoteComponent },
-  { path: 'navbar', component: Narvar },
   { path: 'promociones', component: Promociones },
-  { path: 'publicidad', component: PublicidadComponent }
+  { path: 'publicidad', component: PublicidadComponent },
+  { path: '**', redirectTo: '' }
 ];
