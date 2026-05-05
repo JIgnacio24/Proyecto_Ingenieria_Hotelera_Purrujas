@@ -12,12 +12,14 @@
           class="side-nav__item"
           [class.side-nav__item--active]="activeMenuItem() === item.key"
           [attr.aria-label]="item.label"
+          [attr.aria-current]="activeMenuItem() === item.key ? 'page' : null"
           [attr.data-label]="item.label"
           (click)="setActiveMenuItem(item.key)"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path [attr.d]="iconPath(item.icon)"></path>
           </svg>
+          <span class="side-nav__item-label">{{ item.compactLabel }}</span>
         </button>
       }
     </nav>
@@ -44,7 +46,7 @@
   }
 
   <div class="dashboard-grid">
-    <section class="hero-card">
+    <section id="dashboard-home" class="hero-card dashboard-section">
       <div class="hero-media" aria-hidden="true"></div>
 
       <div class="hero-copy">
@@ -101,7 +103,7 @@
       </dl>
     </section>
 
-    <section class="summary-card">
+    <section id="dashboard-status" class="summary-card dashboard-section">
       <div class="section-head">
         <p>Estado actual</p>
         <span>Resumen del entorno interno</span>
@@ -125,7 +127,7 @@
       </div>
     </section>
 
-    <section class="editor-card">
+    <section id="dashboard-content" class="editor-card dashboard-section">
       <div class="editor-header">
         <div class="section-head">
           <p>Contenido web</p>
@@ -300,6 +302,29 @@
           </div>
         </div>
       </form>
+    </section>
+
+    <section class="modules-card">
+      <div class="section-head">
+        <p>Modulos del menu</p>
+        <span>
+          Los accesos laterales ya apuntan a la zona correcta del panel. Estos modulos aun no
+          tienen tabla o formulario funcional en esta version.
+        </span>
+      </div>
+
+      <div class="modules-grid">
+        @for (module of moduleCards; track module.key) {
+          <article [id]="moduleSectionId(module.key)" class="module-card dashboard-section">
+            <div class="module-card__head">
+              <h3>{{ module.title }}</h3>
+              <span class="module-status">{{ module.status }}</span>
+            </div>
+
+            <p>{{ module.description }}</p>
+          </article>
+        }
+      </div>
     </section>
   </div>
 </section>
