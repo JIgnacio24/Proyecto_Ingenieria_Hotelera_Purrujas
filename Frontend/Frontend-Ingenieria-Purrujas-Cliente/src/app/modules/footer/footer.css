@@ -57,11 +57,18 @@
   display: flex;
   align-items: center;
   width: max-content;
-  animation: ticker-scroll 28s linear infinite;
+  will-change: transform;
+  animation: ticker-scroll 40s linear infinite;
+  padding: 0;
 }
 
 .ticker-track:hover {
   animation-play-state: paused;
+  cursor: grab;
+}
+
+.ticker-track:active {
+  cursor: grabbing;
 }
 
 /* ── Ítem individual ── */
@@ -158,6 +165,6 @@
 /* ── Animación infinita ── */
 @keyframes ticker-scroll {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(-33.33%); }
 }
 

@@ -6,13 +6,13 @@
       <span>Ofertas & Aliados</span>
     </div>
     <div class="ticker-container">
-      <div class="ticker-track">
+      <div class="ticker-track" #tickerTrack>
         <!-- Debug: Si carouselItems está vacío, mostrar mensaje -->
         @if (carouselItems.length === 0) {
           <div style="color: #aaa; padding: 10px;">Cargando ofertas...</div>
         } @else {
           @for (item of tickerItems; track $index) {
-            <a [routerLink]="item.type === 'publicidad' ? '/publicidad' : item.link"
+            <a [routerLink]="item.type === 'publicidad' ? '/publicidad' : '/promociones'"
                class="ticker-item" [class.promocion]="item.type === 'promocion'"
                [class.publicidad]="item.type === 'publicidad'"
                [class.activa]="item.isActive">
