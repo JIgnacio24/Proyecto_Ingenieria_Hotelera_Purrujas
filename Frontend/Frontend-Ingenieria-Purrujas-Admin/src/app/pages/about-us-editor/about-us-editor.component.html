@@ -1,0 +1,336 @@
+<section class="admin-about-shell">
+  <header class="admin-toolbar">
+    <div>
+      <p class="admin-eyebrow">Modulo editable</p>
+      <h1>Sobre Nosotros</h1>
+      <span>Vista del cliente con controles para actualizar el texto dinamico.</span>
+    </div>
+
+    <div class="admin-actions">
+      <a class="secondary-button" routerLink="/panel">Volver al panel</a>
+      <button type="button" class="secondary-button" (click)="discardChanges()" [disabled]="loading() || saving() || !hasChanges()">
+        Descartar cambios
+      </button>
+      <button type="button" class="primary-button" (click)="saveContent()" [disabled]="loading() || saving() || !hasChanges()">
+        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </header>
+
+  @if (feedback()) {
+    <p class="admin-feedback" [class.success-feedback]="feedbackTone() === 'success'" [class.error-feedback]="feedbackTone() === 'error'">
+      {{ feedback() }}
+    </p>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Cargando contenido de Sobre Nosotros...</div>
+  }
+
+  <section class="small-hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Sobre Nosotros</p>
+      <h1 class="hero-title">Hotel Las Purrujas</h1>
+      <p class="hero-subtitle">Conoce nuestra historia y valores</p>
+    </div>
+  </section>
+
+  <section id="sobre-nosotros" class="section section-historia editable-zone">
+    <button type="button" class="edit-button" (click)="editBlock('history')">Editar</button>
+    <div class="container">
+      @if (editingBlock() === 'history') {
+        <article class="edit-panel">
+          <label class="field">
+            <span>Etiqueta</span>
+            <input type="text" [(ngModel)]="aboutUsContent.historyTag" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo</span>
+            <input type="text" [(ngModel)]="aboutUsContent.historyTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field field-full">
+            <span>Descripcion</span>
+            <textarea rows="7" [(ngModel)]="aboutUsContent.historyDescription" (ngModelChange)="markChanged()"></textarea>
+          </label>
+          <label class="field">
+            <span>Ano inicial de la tarjeta verde</span>
+            <input type="text" [(ngModel)]="aboutUsContent.historyTimelineStartYear" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Etiqueta final de la tarjeta verde</span>
+            <input type="text" [(ngModel)]="aboutUsContent.historyTimelineEndLabel" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field field-full">
+            <span>Hitos de la tarjeta verde (uno por linea)</span>
+            <textarea rows="5" [(ngModel)]="historyMilestonesText" (ngModelChange)="markChanged()"></textarea>
+          </label>
+        </article>
+      }
+
+      <div class="section-grid">
+        <div class="section-text animate-left">
+          <span class="section-tag">{{ aboutUsContent.historyTag }}</span>
+          <h2 class="section-title">{{ aboutUsContent.historyTitle }}</h2>
+          <p [innerHTML]="aboutUsContent.historyDescription | replaceNewlines"></p>
+        </div>
+        <div class="section-visual animate-right">
+          <div class="historia-card">
+            <div class="historia-year">{{ aboutUsContent.historyTimelineStartYear }}</div>
+            @for (milestone of historyMilestonesText.split('\n'); track milestone; let last = $last) {
+              @if (milestone.trim()) {
+                <div class="historia-milestone">
+                  <div class="milestone-dot" [class.active]="last"></div>
+                  <span>{{ milestone }}</span>
+                </div>
+              }
+            }
+            <div class="historia-year-now">{{ aboutUsContent.historyTimelineEndLabel }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-equipo">
+    <div class="container">
+      <article class="editable-zone">
+        <button type="button" class="edit-button" (click)="editBlock('team')">Editar</button>
+        @if (editingBlock() === 'team') {
+          <div class="edit-panel">
+            <label class="field">
+              <span>Etiqueta</span>
+              <input type="text" [(ngModel)]="aboutUsContent.teamTag" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Titulo</span>
+              <input type="text" [(ngModel)]="aboutUsContent.teamTitle" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Colaboradores</span>
+              <input type="number" [(ngModel)]="aboutUsContent.collaboratorsCount" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Talento local (%)</span>
+              <input type="number" [(ngModel)]="aboutUsContent.localTalentPercentage" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Anos de experiencia</span>
+              <input type="number" [(ngModel)]="aboutUsContent.experienceYears" (ngModelChange)="markChanged()" />
+            </label>
+          </div>
+        }
+
+        <div class="section-header">
+          <span class="section-tag">{{ aboutUsContent.teamTag }}</span>
+          <h2 class="section-title centered">{{ aboutUsContent.teamTitle }}</h2>
+        </div>
+        <div class="equipo-grid">
+          <div class="equipo-stat animate-up delay-1">
+            <div class="stat-number">{{ aboutUsContent.collaboratorsCount }}<span>+</span></div>
+            <div class="stat-label">Colaboradores</div>
+          </div>
+          <div class="equipo-stat animate-up delay-2">
+            <div class="stat-number">{{ aboutUsContent.localTalentPercentage }}<span>%</span></div>
+            <div class="stat-label">Talento local de Cartago</div>
+          </div>
+          <div class="equipo-stat animate-up delay-3">
+            <div class="stat-number">{{ aboutUsContent.experienceYears }}<span>+</span></div>
+            <div class="stat-label">Anos de experiencia</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="director-card animate-up editable-zone">
+        <button type="button" class="edit-button" (click)="editBlock('director')">Editar</button>
+        @if (editingBlock() === 'director') {
+          <div class="edit-panel edit-panel-compact">
+            <label class="field">
+              <span>Nombre</span>
+              <input type="text" [(ngModel)]="aboutUsContent.directorName" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Cargo</span>
+              <input type="text" [(ngModel)]="aboutUsContent.directorTitle" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field field-full">
+              <span>Biografia</span>
+              <textarea rows="4" [(ngModel)]="aboutUsContent.directorBiography" (ngModelChange)="markChanged()"></textarea>
+            </label>
+          </div>
+        }
+        <div class="director-avatar">{{ getInitials(aboutUsContent.directorName) }}</div>
+        <div class="director-info">
+          <h3>{{ aboutUsContent.directorName }}</h3>
+          <span class="director-title">{{ aboutUsContent.directorTitle }}</span>
+          <p>{{ aboutUsContent.directorBiography }}</p>
+        </div>
+      </article>
+
+      <article class="filosofia-block animate-up editable-zone">
+        <button type="button" class="edit-button edit-button-light" (click)="editBlock('philosophy')">Editar</button>
+        @if (editingBlock() === 'philosophy') {
+          <div class="edit-panel">
+            <label class="field">
+              <span>Titulo</span>
+              <input type="text" [(ngModel)]="aboutUsContent.philosophyTitle" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field field-full">
+              <span>Descripcion</span>
+              <textarea rows="5" [(ngModel)]="aboutUsContent.philosophyDescription" (ngModelChange)="markChanged()"></textarea>
+            </label>
+            <label class="field field-full">
+              <span>Cita</span>
+              <textarea rows="2" [(ngModel)]="aboutUsContent.philosophyQuote" (ngModelChange)="markChanged()"></textarea>
+            </label>
+          </div>
+        }
+        <div class="filosofia-icon"><span class="material-icons">eco</span></div>
+        <h3>{{ aboutUsContent.philosophyTitle }}</h3>
+        <p [innerHTML]="aboutUsContent.philosophyDescription | replaceNewlines"></p>
+        <blockquote class="filosofia-quote">
+          "{{ aboutUsContent.philosophyQuote }}"
+        </blockquote>
+      </article>
+    </div>
+  </section>
+
+  <section class="section section-mision editable-zone">
+    <button type="button" class="edit-button edit-button-light" (click)="editBlock('mvv')">Editar</button>
+    <div class="mision-bg-pattern"></div>
+    <div class="container">
+      @if (editingBlock() === 'mvv') {
+        <article class="edit-panel">
+          <label class="field">
+            <span>Etiqueta</span>
+            <input type="text" [(ngModel)]="aboutUsContent.mvvTag" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo</span>
+            <input type="text" [(ngModel)]="aboutUsContent.mvvTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo de Mision</span>
+            <input type="text" [(ngModel)]="aboutUsContent.missionTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo de Vision</span>
+            <input type="text" [(ngModel)]="aboutUsContent.visionTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo de Valores</span>
+            <input type="text" [(ngModel)]="aboutUsContent.valuesTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field field-full">
+            <span>Mision</span>
+            <textarea rows="4" [(ngModel)]="aboutUsContent.mission" (ngModelChange)="markChanged()"></textarea>
+          </label>
+          <label class="field field-full">
+            <span>Vision</span>
+            <textarea rows="4" [(ngModel)]="aboutUsContent.vision" (ngModelChange)="markChanged()"></textarea>
+          </label>
+          <label class="field field-full">
+            <span>Valores (uno por linea)</span>
+            <textarea rows="5" [(ngModel)]="aboutUsValuesText" (ngModelChange)="markChanged()"></textarea>
+          </label>
+        </article>
+      }
+
+      <div class="section-header">
+        <span class="section-tag">{{ aboutUsContent.mvvTag }}</span>
+        <h2 class="section-title centered">{{ aboutUsContent.mvvTitle }}</h2>
+      </div>
+      <div class="mvv-grid">
+        <div class="mvv-card animate-up delay-1">
+          <span class="material-icons">track_changes</span>
+          <h3>{{ aboutUsContent.missionTitle }}</h3>
+          <p>{{ aboutUsContent.mission }}</p>
+        </div>
+        <div class="mvv-card animate-up delay-2">
+          <span class="material-icons">public</span>
+          <h3>{{ aboutUsContent.visionTitle }}</h3>
+          <p>{{ aboutUsContent.vision }}</p>
+        </div>
+        <div class="mvv-card animate-up delay-3">
+          <span class="material-icons">star</span>
+          <h3>{{ aboutUsContent.valuesTitle }}</h3>
+          <ul class="values-list">
+            @for (value of aboutUsValuesText.split('\n'); track value) {
+              @if (value.trim()) {
+                <li><span class="material-icons">eco</span> {{ value }}</li>
+              }
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" class="section section-galeria editable-zone">
+    <button type="button" class="edit-button" (click)="editBlock('gallery')">Editar</button>
+    <div class="container">
+      @if (editingBlock() === 'gallery') {
+        <article class="edit-panel">
+          <label class="field">
+            <span>Etiqueta</span>
+            <input type="text" [(ngModel)]="aboutUsContent.galleryTag" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field">
+            <span>Titulo</span>
+            <input type="text" [(ngModel)]="aboutUsContent.galleryTitle" (ngModelChange)="markChanged()" />
+          </label>
+          <label class="field field-full">
+            <span>Subtexto</span>
+            <textarea rows="3" [(ngModel)]="aboutUsContent.gallerySubtext" (ngModelChange)="markChanged()"></textarea>
+          </label>
+        </article>
+      }
+
+      <div class="section-header">
+        <span class="section-tag">{{ aboutUsContent.galleryTag }}</span>
+        <h2 class="section-title centered">{{ aboutUsContent.galleryTitle }}</h2>
+        <p class="section-subtext">{{ aboutUsContent.gallerySubtext }}</p>
+      </div>
+
+      <div class="gallery-filters">
+        <button
+          class="gallery-filter-btn"
+          [class.active]="activeFilter === 'todos'"
+          (click)="setFilter('todos')"
+          type="button"
+        >
+          Todos
+        </button>
+        <button
+          class="gallery-filter-btn"
+          [class.active]="activeFilter === 'hotel'"
+          (click)="setFilter('hotel')"
+          type="button"
+        >
+          <span class="material-icons">hotel</span>
+          Beneficios del Hotel
+        </button>
+        <button
+          class="gallery-filter-btn"
+          [class.active]="activeFilter === 'lugares'"
+          (click)="setFilter('lugares')"
+          type="button"
+        >
+          <span class="material-icons">explore</span>
+          Lugares Aledanos
+        </button>
+      </div>
+
+      <div class="gallery-grid">
+        @for (item of filteredItems; track item.src) {
+          <div class="gallery-card animate-up">
+            <img [src]="item.src" [alt]="item.alt" loading="lazy" />
+            <div class="gallery-overlay">
+              <p class="gallery-caption">{{ item.caption }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</section>

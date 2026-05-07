@@ -7,20 +7,34 @@
 
     <nav class="side-nav__menu">
       @for (item of menuItems; track item.key) {
-        <button
-          type="button"
-          class="side-nav__item"
-          [class.side-nav__item--active]="activeMenuItem() === item.key"
-          [attr.aria-label]="item.label"
-          [attr.aria-current]="activeMenuItem() === item.key ? 'page' : null"
-          [attr.data-label]="item.label"
-          (click)="setActiveMenuItem(item.key)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path [attr.d]="iconPath(item.icon)"></path>
-          </svg>
-          <span class="side-nav__item-label">{{ item.compactLabel }}</span>
-        </button>
+        @if (item.route) {
+          <a
+            class="side-nav__item"
+            [routerLink]="item.route"
+            [attr.aria-label]="item.label"
+            [attr.data-label]="item.label"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path [attr.d]="iconPath(item.icon)"></path>
+            </svg>
+            <span class="side-nav__item-label">{{ item.compactLabel }}</span>
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="side-nav__item"
+            [class.side-nav__item--active]="activeMenuItem() === item.key"
+            [attr.aria-label]="item.label"
+            [attr.aria-current]="activeMenuItem() === item.key ? 'page' : null"
+            [attr.data-label]="item.label"
+            (click)="setActiveMenuItem(item.key)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path [attr.d]="iconPath(item.icon)"></path>
+            </svg>
+            <span class="side-nav__item-label">{{ item.compactLabel }}</span>
+          </button>
+        }
       }
     </nav>
   </aside>
@@ -315,14 +329,30 @@
 
       <div class="modules-grid">
         @for (module of moduleCards; track module.key) {
-          <article [id]="moduleSectionId(module.key)" class="module-card dashboard-section">
-            <div class="module-card__head">
-              <h3>{{ module.title }}</h3>
-              <span class="module-status">{{ module.status }}</span>
-            </div>
+          @if (module.link) {
+            <a
+              [id]="moduleSectionId(module.key)"
+              class="module-card module-card--link dashboard-section"
+              [routerLink]="module.link"
+            >
+              <div class="module-card__head">
+                <h3>{{ module.title }}</h3>
+                <span class="module-status">{{ module.status }}</span>
+              </div>
 
-            <p>{{ module.description }}</p>
-          </article>
+              <p>{{ module.description }}</p>
+              <span class="module-action">{{ module.actionLabel }}</span>
+            </a>
+          } @else {
+            <article [id]="moduleSectionId(module.key)" class="module-card dashboard-section">
+              <div class="module-card__head">
+                <h3>{{ module.title }}</h3>
+                <span class="module-status">{{ module.status }}</span>
+              </div>
+
+              <p>{{ module.description }}</p>
+            </article>
+          }
         }
       </div>
     </section>

@@ -86,6 +86,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
 builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
+// Repositorio del contenido editable de la pagina publica "Sobre Nosotros".
+builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
 

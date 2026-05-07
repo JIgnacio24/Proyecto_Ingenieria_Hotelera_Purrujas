@@ -1,4 +1,4 @@
-<!-- Hero pequeño -->
+<!-- Hero pequeno -->
 <section class="small-hero">
   <div class="hero-overlay"></div>
   <div class="hero-content">
@@ -13,152 +13,108 @@
   <div class="container">
     <div class="section-grid">
       <div class="section-text animate-left">
-        <span class="section-tag">Desde 2005</span>
-        <h2 class="section-title">Nuestra Historia</h2>
-        <p>
-          <strong>Hotel Las Purrujas</strong> nació en el año 2005 en el corazón de los Andes
-          costarricenses, específicamente en las faldas del Volcán Turrialba, en la provincia de
-          Cartago. Su nombre rinde homenaje a las <em>purrujas</em>, pequeñas aves endémicas de la
-          región que simbolizan la vida silvestre y la conexión profunda con la naturaleza.
-        </p>
-        <p>
-          Fundado por la familia Vargas Montoya, el hotel comenzó como una pequeña posada de cuatro
-          habitaciones con el sueño de ofrecer una experiencia auténtica del campo costarricense.
-          Con los años y gracias al turismo ecológico, se convirtió en un referente del ecoturismo
-          en la zona central de Costa Rica.
-        </p>
+        <span class="section-tag">{{ aboutUsContent.historyTag }}</span>
+        <h2 class="section-title">{{ aboutUsContent.historyTitle }}</h2>
+        <p [innerHTML]="aboutUsContent.historyDescription | replaceNewlines"></p>
       </div>
       <div class="section-visual animate-right">
         <div class="historia-card">
-          <div class="historia-year">2005</div>
-          <div class="historia-milestone">
-            <div class="milestone-dot"></div>
-            <span>Fundación con 4 habitaciones</span>
-          </div>
-          <div class="historia-milestone">
-            <div class="milestone-dot"></div>
-            <span>Expansión del restaurante La Ceiba</span>
-          </div>
-          <div class="historia-milestone">
-            <div class="milestone-dot"></div>
-            <span>18 habitaciones temáticas</span>
-          </div>
-          <div class="historia-milestone">
-            <div class="milestone-dot active"></div>
-            <span>Referente de ecoturismo en Cartago</span>
-          </div>
-          <div class="historia-year-now">Hoy</div>
+          <div class="historia-year">{{ aboutUsContent.historyTimelineStartYear }}</div>
+          @for (milestone of aboutUsContent.historyMilestones; track milestone; let last = $last) {
+            <div class="historia-milestone">
+              <div class="milestone-dot" [class.active]="last"></div>
+              <span>{{ milestone }}</span>
+            </div>
+          }
+          <div class="historia-year-now">{{ aboutUsContent.historyTimelineEndLabel }}</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Equipo y Filosofía -->
+<!-- Equipo y Filosofia -->
 <section class="section section-equipo">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Nuestra gente</span>
-      <h2 class="section-title centered">Equipo & Filosofía</h2>
+      <span class="section-tag">{{ aboutUsContent.teamTag }}</span>
+      <h2 class="section-title centered">{{ aboutUsContent.teamTitle }}</h2>
     </div>
     <div class="equipo-grid">
       <div class="equipo-stat animate-up delay-1">
-        <div class="stat-number">30<span>+</span></div>
+        <div class="stat-number">{{ aboutUsContent.collaboratorsCount }}<span>+</span></div>
         <div class="stat-label">Colaboradores</div>
       </div>
       <div class="equipo-stat animate-up delay-2">
-        <div class="stat-number">90<span>%</span></div>
+        <div class="stat-number">{{ aboutUsContent.localTalentPercentage }}<span>%</span></div>
         <div class="stat-label">Talento local de Cartago</div>
       </div>
       <div class="equipo-stat animate-up delay-3">
-        <div class="stat-number">20<span>+</span></div>
-        <div class="stat-label">Años de experiencia</div>
+        <div class="stat-number">{{ aboutUsContent.experienceYears }}<span>+</span></div>
+        <div class="stat-label">Anos de experiencia</div>
       </div>
     </div>
 
     <div class="director-card animate-up">
-      <div class="director-avatar">AV</div>
+      <div class="director-avatar">{{ getInitials(aboutUsContent.directorName) }}</div>
       <div class="director-info">
-        <h3>Andrea Vargas</h3>
-        <span class="director-title">Directora General</span>
-        <p>
-          Hija de los fundadores y graduada en Administración Hotelera de la Universidad de Costa
-          Rica, Andrea lidera el hotel con una visión moderna sin perder la esencia familiar que lo
-          caracteriza. Bajo su dirección, Las Purrujas ha crecido como referente de ecoturismo
-          responsable en la región.
-        </p>
+        <h3>{{ aboutUsContent.directorName }}</h3>
+        <span class="director-title">{{ aboutUsContent.directorTitle }}</span>
+        <p>{{ aboutUsContent.directorBiography }}</p>
       </div>
     </div>
 
     <div class="filosofia-block animate-up">
       <div class="filosofia-icon"><span class="material-icons">eco</span></div>
-      <h3>Nuestra Filosofía</h3>
-      <p>
-        En Las Purrujas no solo ofrecemos una cama y un desayuno; ofrecemos una
-        <strong>experiencia de vida</strong>. Cada detalle, desde la decoración artesanal hasta el
-        menú del restaurante, está pensado para que el huésped se lleve consigo un pedazo auténtico
-        de Costa Rica. Creemos que el turismo puede y debe ser un motor de desarrollo local, por eso
-        reinvertimos parte de nuestros ingresos en programas educativos y ambientales para la
-        comunidad.
-      </p>
+      <h3>{{ aboutUsContent.philosophyTitle }}</h3>
+      <p [innerHTML]="aboutUsContent.philosophyDescription | replaceNewlines"></p>
       <blockquote class="filosofia-quote">
-        "Donde la naturaleza te abraza y Costa Rica te enamora."
+        "{{ aboutUsContent.philosophyQuote }}"
       </blockquote>
     </div>
   </div>
 </section>
 
-<!-- Misión, Visión, Valores -->
+<!-- Mision, Vision, Valores -->
 <section class="section section-mision">
   <div class="mision-bg-pattern"></div>
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Quiénes somos</span>
-      <h2 class="section-title centered">Misión, Visión & Valores</h2>
+      <span class="section-tag">{{ aboutUsContent.mvvTag }}</span>
+      <h2 class="section-title centered">{{ aboutUsContent.mvvTitle }}</h2>
     </div>
-    <div class="mvv-grid">
-      <div class="mvv-card animate-up delay-1">
-        <span class="material-icons">track_changes</span>
-        <h3>Misión</h3>
-        <p>
-          Brindar a nuestros huéspedes una experiencia de hospedaje auténtica, cálida y sostenible,
-          conectándolos con la riqueza natural y cultural de Costa Rica, a través de un servicio
-          personalizado y comprometido con el bienestar de la comunidad local y el medio ambiente.
-        </p>
-      </div>
-      <div class="mvv-card animate-up delay-2">
-        <span class="material-icons">public</span>
-        <h3>Visión</h3>
-        <p>
-          Ser reconocidos como el principal destino de ecoturismo en la región de Cartago para el
-          año 2030, liderando un modelo de turismo responsable que inspire a otras empresas
-          hoteleras a adoptar prácticas sostenibles.
-        </p>
-      </div>
-      <div class="mvv-card animate-up delay-3">
-        <span class="material-icons">star</span>
-        <h3>Valores</h3>
+      <div class="mvv-grid">
+        <div class="mvv-card animate-up delay-1">
+          <span class="material-icons">track_changes</span>
+          <h3>{{ aboutUsContent.missionTitle }}</h3>
+          <p>{{ aboutUsContent.mission }}</p>
+        </div>
+        <div class="mvv-card animate-up delay-2">
+          <span class="material-icons">public</span>
+          <h3>{{ aboutUsContent.visionTitle }}</h3>
+          <p>{{ aboutUsContent.vision }}</p>
+        </div>
+        <div class="mvv-card animate-up delay-3">
+          <span class="material-icons">star</span>
+          <h3>{{ aboutUsContent.valuesTitle }}</h3>
         <ul class="values-list">
-          <li><span class="material-icons">eco</span> Sostenibilidad</li>
-          <li><span class="material-icons">favorite</span> Calidez humana</li>
-          <li><span class="material-icons">handshake</span> Compromiso comunitario</li>
-          <li><span class="material-icons">grass</span> Respeto por la naturaleza</li>
-          <li><span class="material-icons">auto_awesome</span> Excelencia en el servicio</li>
+          @for (value of aboutUsContent.values; track value) {
+            <li><span class="material-icons">eco</span> {{ value }}</li>
+          }
         </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Galería -->
+<!-- Galeria -->
 <section id="galeria" class="section section-galeria">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Inspirate</span>
-      <h2 class="section-title centered">Galería</h2>
+      <span class="section-tag">{{ aboutUsContent.galleryTag }}</span>
+      <h2 class="section-title centered">{{ aboutUsContent.galleryTitle }}</h2>
       <p class="section-subtext">
-        Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para
-        planificar tu itinerario perfecto.
+        {{ aboutUsContent.gallerySubtext }}
       </p>
     </div>
 
@@ -184,7 +140,7 @@
         (click)="setFilter('lugares')"
       >
         <span class="material-icons">explore</span>
-        Lugares Aledaños
+        Lugares Aledanos
       </button>
     </div>
 
@@ -199,20 +155,20 @@
   </div>
 </section>
 
-<!-- Cómo llegar -->
+<!-- Como llegar -->
 <section id="como-llegar" class="section section-como-llegar">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Visítanos</span>
-      <h2 class="section-title centered">¿Cómo llegar?</h2>
-      <p class="section-subtext">A 45 minutos de San José, en las faldas del Volcán Turrialba.</p>
+      <span class="section-tag">Visitanos</span>
+      <h2 class="section-title centered">Como llegar?</h2>
+      <p class="section-subtext">A 45 minutos de San Jose, en las faldas del Volcan Turrialba.</p>
     </div>
     <div class="map-card">
       <div class="map-text">
         <h3>Coordenadas</h3>
-        <p>9.975878207007307° N,83.770258333651° W · Las Purrujas, Cartago.</p>
+        <p>9.975878207007307 N,83.770258333651 W - Las Purrujas, Cartago.</p>
         <ul>
-          <li>Ruta 32 hasta Turrialba, luego desvío a La Pastora.</li>
+          <li>Ruta 32 hasta Turrialba, luego desvio a La Pastora.</li>
           <li>Transporte privado disponible desde el aeropuerto SJO.</li>
           <li>Parqueo gratuito y seguro dentro de la propiedad.</li>
         </ul>
@@ -242,20 +198,16 @@
   </div>
 </section>
 
-<!-- Reservas en línea -->
+<!-- Reservas en linea -->
 <section id="reservas" class="section section-reservas">
   <div class="container reservas-box">
     <div>
       <span class="section-tag">Tu estancia</span>
-      <h2 class="section-title">Reserva en línea</h2>
+      <h2 class="section-title">Reserva en linea</h2>
       <p>
-        Confirma tu habitación en minutos. Pagos seguros y cancelación flexible hasta 7 días antes.
+        Confirma tu habitacion en minutos. Pagos seguros y cancelacion flexible hasta 7 dias antes.
       </p>
     </div>
     <a class="cta-button" routerLink="/cotizar">Solicitar disponibilidad</a>
   </div>
 </section>
-
-
-
-

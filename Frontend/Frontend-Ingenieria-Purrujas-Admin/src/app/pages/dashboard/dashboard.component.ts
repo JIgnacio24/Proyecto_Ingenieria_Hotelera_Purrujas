@@ -2,6 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { AdminUser } from '../../core/auth.models';
@@ -16,6 +17,7 @@ import {
 type DashboardMenuKey =
   | 'home'
   | 'pages'
+  | 'about-us'
   | 'reservations'
   | 'rooms'
   | 'status'
@@ -28,19 +30,22 @@ interface DashboardMenuItem {
   compactLabel: string;
   icon: string;
   targetId: string;
+  route?: string;
 }
 
 interface DashboardModuleCard {
-  key: Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
+  key: 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
   title: string;
   status: string;
   description: string;
+  link?: string;
+  actionLabel?: string;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -58,11 +63,26 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-home'
     },
     {
+      key: 'status',
+      label: 'Ver estado del hotel hoy',
+      compactLabel: 'Estado',
+      icon: 'status',
+      targetId: 'dashboard-status'
+    },
+    {
       key: 'pages',
       label: 'Modificar paginas',
       compactLabel: 'Paginas',
       icon: 'pages',
       targetId: 'dashboard-content'
+    },
+    {
+      key: 'about-us',
+      label: 'Editar Sobre Nosotros',
+      compactLabel: 'Sobre',
+      icon: 'about-us',
+      // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
+      targetId: 'dashboard-about-us'
     },
     {
       key: 'reservations',
@@ -77,13 +97,6 @@ export class DashboardComponent implements AfterViewInit {
       compactLabel: 'Habitaciones',
       icon: 'rooms',
       targetId: 'dashboard-rooms'
-    },
-    {
-      key: 'status',
-      label: 'Ver estado del hotel hoy',
-      compactLabel: 'Estado',
-      icon: 'status',
-      targetId: 'dashboard-status'
     },
     {
       key: 'availability',
@@ -102,6 +115,15 @@ export class DashboardComponent implements AfterViewInit {
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
   readonly moduleCards: readonly DashboardModuleCard[] = [
+    {
+      key: 'about-us',
+      title: 'Editar Sobre Nosotros',
+      status: 'Editable',
+      description:
+        'Abre la vista editable de Sobre Nosotros para cambiar textos, historia, filosofia, mision, vision, valores y galeria.',
+      link: '/panel/sobre-nosotros',
+      actionLabel: 'Abrir editor'
+    },
     {
       key: 'reservations',
       title: 'Listado de reservaciones',
@@ -225,6 +247,7 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
+    // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
     const targetId = this.menuItems.find((item) => item.key === menuKey)?.targetId;
 
@@ -243,6 +266,10 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   moduleSectionId(menuKey: DashboardModuleCard['key']): string {
+    if (menuKey === 'about-us') {
+      return 'dashboard-about-us';
+    }
+
     return this.menuItems.find((item) => item.key === menuKey)?.targetId ?? '';
   }
 
@@ -268,6 +295,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z';
       case 'pages':
         return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
+      case 'about-us':
+        return 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-7 9a7 7 0 0 1 14 0M4 4h16v16H4z';
       case 'reservations':
         return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
       case 'rooms':
@@ -307,6 +336,7 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   private buildFacilitiesContentPayload(): FacilitiesPageContent {
+    // Los campos multilinea del formulario se guardan como arreglos limpios en el JSON.
     return cloneFacilitiesPageContent({
       ...this.facilitiesContent,
       primaryListItems: this.parseLines(this.primaryListItemsText),
@@ -331,6 +361,7 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   private syncActiveMenuItem(): void {
+    // Mantiene resaltado el boton lateral correspondiente a la seccion visible.
     const marker = 180;
     const sections = this.menuItems
       .map((item) => ({
