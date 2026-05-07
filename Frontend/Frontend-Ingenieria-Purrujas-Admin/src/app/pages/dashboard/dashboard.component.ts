@@ -13,6 +13,11 @@ import {
   FacilitiesContentService,
   FacilitiesPageContent
 } from '../../core/facilities-content.service';
+import {
+  RoomAvailabilitySearchResult,
+  RoomAvailabilityService,
+  RoomAvailabilitySummary
+} from '../../core/room-availability.service';
 
 type DashboardMenuKey =
   | 'home'
@@ -35,7 +40,7 @@ interface DashboardMenuItem {
 }
 
 interface DashboardModuleCard {
-  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
+  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'ads'>;
   title: string;
   status: string;
   description: string;
@@ -54,6 +59,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
+  private readonly roomAvailabilityService = inject(RoomAvailabilityService);
 
   readonly menuItems: readonly DashboardMenuItem[] = [
     {
@@ -71,9 +77,16 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-status'
     },
     {
+      key: 'availability',
+      label: 'Disponibilidad de habitaciones',
+      compactLabel: 'Disponibilidad',
+      icon: 'availability',
+      targetId: 'dashboard-availability'
+    },
+    {
       key: 'pages',
-      label: 'Modificar paginas',
-      compactLabel: 'Paginas',
+      label: 'Editar Facilidades',
+      compactLabel: 'Facilidades',
       icon: 'pages',
       targetId: 'dashboard-content'
     },
@@ -106,13 +119,6 @@ export class DashboardComponent implements AfterViewInit {
       compactLabel: 'Habitaciones',
       icon: 'rooms',
       targetId: 'dashboard-rooms'
-    },
-    {
-      key: 'availability',
-      label: 'Consultar disponibilidad de habitaciones',
-      compactLabel: 'Disponibilidad',
-      icon: 'availability',
-      targetId: 'dashboard-availability'
     },
     {
       key: 'ads',
@@ -157,13 +163,6 @@ export class DashboardComponent implements AfterViewInit {
         'Aqui ira la administracion de tipos de habitacion, tarifas base y estado operativo cuando el modulo exista.'
     },
     {
-      key: 'availability',
-      title: 'Disponibilidad de habitaciones',
-      status: 'Pendiente de interfaz',
-      description:
-        'Zona prevista para consultar ocupacion, cupos por fecha y validaciones de disponibilidad desde el panel.'
-    },
-    {
       key: 'ads',
       title: 'Publicidad',
       status: 'Interfaz pendiente',
@@ -180,14 +179,24 @@ export class DashboardComponent implements AfterViewInit {
   readonly facilitiesFeedback = signal('');
   readonly facilitiesFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
+  readonly availabilityLoading = signal(true);
+  readonly availabilitySearching = signal(false);
+  readonly availabilityFeedback = signal('');
+  readonly availabilityFeedbackTone = signal<'success' | 'error' | ''>('');
+  readonly roomAvailabilitySummary = signal<RoomAvailabilitySummary | null>(null);
+  readonly availabilitySearchResult = signal<RoomAvailabilitySearchResult | null>(null);
 
   facilitiesContent: FacilitiesPageContent = createDefaultFacilitiesPageContent();
   primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
   secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
+  availabilityStartDate = this.todayInputValue();
+  availabilityEndDate = this.addDaysInputValue(1);
+  availabilityRoomTypeId: number | null = null;
 
   constructor() {
     void this.loadProfile();
     void this.loadFacilitiesContent();
+    void this.loadRoomAvailabilityToday();
   }
 
   ngAfterViewInit(): void {
@@ -264,6 +273,57 @@ export class DashboardComponent implements AfterViewInit {
     }
   }
 
+  async loadRoomAvailabilityToday(): Promise<void> {
+    this.availabilityLoading.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const summary = await firstValueFrom(this.roomAvailabilityService.getToday());
+      this.roomAvailabilitySummary.set(summary);
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible cargar el estado de habitaciones de hoy.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilityLoading.set(false);
+    }
+  }
+
+  async searchRoomAvailability(): Promise<void> {
+    this.availabilitySearching.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const result = await firstValueFrom(
+        this.roomAvailabilityService.search(
+          this.availabilityStartDate,
+          this.availabilityEndDate,
+          this.availabilityRoomTypeId
+        )
+      );
+
+      this.availabilitySearchResult.set(result);
+      this.availabilityFeedbackTone.set('success');
+      this.availabilityFeedback.set('Consulta de disponibilidad actualizada.');
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible consultar disponibilidad para esas fechas.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilitySearching.set(false);
+    }
+  }
+
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
@@ -309,6 +369,41 @@ export class DashboardComponent implements AfterViewInit {
       dateStyle: 'medium',
       timeStyle: 'short'
     }).format(date);
+  }
+
+  formatAvailabilityDate(value: string | null | undefined): string {
+    if (!value) {
+      return 'Sin fecha';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('es-CR', { dateStyle: 'full' }).format(date);
+  }
+
+  statusClass(statusName: string): string {
+    const normalized = statusName.trim().toLowerCase();
+
+    if (normalized === 'disponible') {
+      return 'status-available';
+    }
+
+    if (normalized === 'ocupada') {
+      return 'status-occupied';
+    }
+
+    return 'status-blocked';
+  }
+
+  formatUsd(value: number | null | undefined): string {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2
+    }).format(value ?? 0);
   }
 
   iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
@@ -382,6 +477,29 @@ export class DashboardComponent implements AfterViewInit {
   private clearFacilitiesFeedback(): void {
     this.facilitiesFeedback.set('');
     this.facilitiesFeedbackTone.set('');
+  }
+
+  private clearAvailabilityFeedback(): void {
+    this.availabilityFeedback.set('');
+    this.availabilityFeedbackTone.set('');
+  }
+
+  private todayInputValue(): string {
+    return this.dateInputValue(new Date());
+  }
+
+  private addDaysInputValue(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return this.dateInputValue(date);
+  }
+
+  private dateInputValue(date: Date): string {
+    return [
+      date.getFullYear(),
+      `${date.getMonth() + 1}`.padStart(2, '0'),
+      `${date.getDate()}`.padStart(2, '0')
+    ].join('-');
   }
 
   private syncActiveMenuItem(): void {
