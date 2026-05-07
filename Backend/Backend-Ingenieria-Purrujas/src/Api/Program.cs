@@ -86,6 +86,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
 builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
+builder.Services.AddScoped<IGettingTherePageContentRepository, GettingTherePageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
 

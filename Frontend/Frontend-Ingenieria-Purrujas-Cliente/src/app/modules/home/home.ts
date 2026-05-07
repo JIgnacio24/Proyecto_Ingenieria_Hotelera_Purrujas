@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FacilitiesComponent } from '../facilities/facilities.component';
+import { GettingThereComponent } from '../getting-there/getting-there.component';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FacilitiesComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FacilitiesComponent, GettingThereComponent],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
