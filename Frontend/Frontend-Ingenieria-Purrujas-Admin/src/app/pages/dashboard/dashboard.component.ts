@@ -17,6 +17,7 @@ import {
 type DashboardMenuKey =
   | 'home'
   | 'pages'
+  | 'home-editor'
   | 'about-us'
   | 'reservations'
   | 'rooms'
@@ -34,7 +35,7 @@ interface DashboardMenuItem {
 }
 
 interface DashboardModuleCard {
-  key: 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
+  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
   title: string;
   status: string;
   description: string;
@@ -77,6 +78,14 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-content'
     },
     {
+      key: 'home-editor',
+      label: 'Editar Home',
+      compactLabel: 'Home',
+      icon: 'home-editor',
+      // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
+      targetId: 'dashboard-home-editor'
+    },
+    {
       key: 'about-us',
       label: 'Editar Sobre Nosotros',
       compactLabel: 'Sobre',
@@ -115,6 +124,15 @@ export class DashboardComponent implements AfterViewInit {
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
   readonly moduleCards: readonly DashboardModuleCard[] = [
+    {
+      key: 'home-editor',
+      title: 'Editar Home',
+      status: 'Editable',
+      description:
+        'Abre la vista editable del hero del inicio para cambiar la imagen de fondo y los textos principales.',
+      link: '/panel/home',
+      actionLabel: 'Abrir editor'
+    },
     {
       key: 'about-us',
       title: 'Editar Sobre Nosotros',
@@ -266,6 +284,10 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   moduleSectionId(menuKey: DashboardModuleCard['key']): string {
+    if (menuKey === 'home-editor') {
+      return 'dashboard-home-editor';
+    }
+
     if (menuKey === 'about-us') {
       return 'dashboard-about-us';
     }
@@ -297,6 +319,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
       case 'about-us':
         return 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-7 9a7 7 0 0 1 14 0M4 4h16v16H4z';
+      case 'home-editor':
+        return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1zM8 13h8M8 16h5';
       case 'reservations':
         return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
       case 'rooms':

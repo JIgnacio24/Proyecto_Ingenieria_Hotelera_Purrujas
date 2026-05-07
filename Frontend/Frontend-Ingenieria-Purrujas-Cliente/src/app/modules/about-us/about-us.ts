@@ -56,8 +56,11 @@ export class AboutUs implements OnInit, OnDestroy {
   galleryItems: GalleryImage[] = [];
 
   get filteredItems(): GalleryImage[] {
-    if (this.activeFilter === 'todos') return this.galleryItems;
-    return this.galleryItems.filter(item => item.category === this.activeFilter);
+    if (this.activeFilter === 'todos') {
+      return this.galleryItems.filter((item) => item.id !== 3);
+    }
+
+    return this.galleryItems.filter(item => item.id !== 3 && item.category === this.activeFilter);
   }
 
   constructor(

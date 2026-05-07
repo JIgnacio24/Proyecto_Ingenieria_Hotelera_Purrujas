@@ -5,7 +5,12 @@ import { RouterModule } from '@angular/router';
 import { FacilitiesComponent } from '../facilities/facilities.component';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { GalleryImagesService } from '../../services/galleryImages.service';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { firstValueFrom, Subscription, timer } from 'rxjs';
+import {
+  createDefaultHomePageContent,
+  HomeContentService,
+  HomePageContent
+} from '../../services/home-content.service';
 
 
 
@@ -20,11 +25,13 @@ export class Home implements OnInit, OnDestroy {
   currency: Currency = 'USD';
   currencySymbol = '$';
   heroImageUrl = "url('/images/foto_fondo.png')";
+  homeContent: HomePageContent = createDefaultHomePageContent();
   private subs = new Subscription();
 
 constructor(
   public currencyService: CurrencyService,
-  private galleryImagesService: GalleryImagesService
+  private galleryImagesService: GalleryImagesService,
+  private homeContentService: HomeContentService
 ) {}
 
   ngOnInit(): void {
@@ -36,7 +43,16 @@ constructor(
         this.currencySymbol = this.currencyService.symbol(curr);
       })
     );
+    void this.loadHomeContent();
     void this.loadHeroImage();
+
+    this.subs.add(
+      // Refresca el hero para reflejar cambios publicados desde el panel admin.
+      timer(10000, 10000).subscribe(() => {
+        void this.loadHomeContent();
+        void this.loadHeroImage();
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -59,6 +75,16 @@ constructor(
       }
     } catch (error) {
       console.error('Error loading hero image:', error);
+    }
+  }
+
+  private async loadHomeContent(): Promise<void> {
+    try {
+      // El texto principal del hero se administra desde el panel y se lee desde la API publica.
+      this.homeContent = await firstValueFrom(this.homeContentService.getContent());
+    } catch (error) {
+      console.error('Error loading home content:', error);
+      this.homeContent = createDefaultHomePageContent();
     }
   }
 }

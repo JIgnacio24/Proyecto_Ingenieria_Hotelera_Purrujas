@@ -36,16 +36,7 @@ public sealed class GalleryImagesRepository : IGalleryImagesRepository
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            images.Add(new GalleryImage
-            {
-                Id = reader.GetInt32(0),
-                Name = reader.GetString(1),
-                Src = reader.GetString(2),
-                Alt = reader.GetString(3),
-                Caption = reader.GetString(4),
-                Category = reader.GetString(5),
-                IsActive = reader.GetBoolean(6)
-            });
+            images.Add(ReadGalleryImage(reader));
         }
 
         return images;
@@ -116,14 +107,24 @@ public sealed class GalleryImagesRepository : IGalleryImagesRepository
 
     private static GalleryImage ReadGalleryImage(SqlDataReader reader)
     {
+        var id = reader.GetInt32(0);
+        var category = reader.GetString(5);
+
+        // El registro semilla 3 corresponde al fondo del hero del Home.
+        // Se normaliza al leer para recuperar instalaciones donde fue guardado como "hotel".
+        if (id == 3)
+        {
+            category = "fondo";
+        }
+
         return new GalleryImage
         {
-            Id = reader.GetInt32(0),
+            Id = id,
             Name = reader.GetString(1),
             Src = reader.GetString(2),
             Alt = reader.GetString(3),
             Caption = reader.GetString(4),
-            Category = reader.GetString(5),
+            Category = category,
             IsActive = reader.GetBoolean(6)
         };
     }

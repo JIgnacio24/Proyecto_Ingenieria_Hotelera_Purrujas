@@ -68,10 +68,12 @@ export class AboutUsEditorComponent implements AfterViewInit {
 
   get filteredItems(): GalleryImage[] {
     if (this.activeFilter === 'todos') {
-      return this.galleryItems.filter((item) => item.category === 'hotel' || item.category === 'lugares');
+      return this.galleryItems.filter(
+        (item) => item.id !== 3 && (item.category === 'hotel' || item.category === 'lugares')
+      );
     }
 
-    return this.galleryItems.filter((item) => item.category === this.activeFilter);
+    return this.galleryItems.filter((item) => item.id !== 3 && item.category === this.activeFilter);
   }
 
   constructor() {

@@ -140,6 +140,6 @@ public class GalleryImagesController : ControllerBase
     private static string NormalizeCategory(string? category)
     {
         var normalized = category?.Trim().ToLowerInvariant();
-        return normalized is "hotel" or "lugares" ? normalized : "hotel";
+        return normalized is "hotel" or "lugares" or "fondo" ? normalized : "hotel";
     }
 }
