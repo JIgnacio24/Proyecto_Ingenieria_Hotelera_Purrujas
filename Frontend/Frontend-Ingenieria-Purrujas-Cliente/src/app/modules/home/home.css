@@ -95,10 +95,10 @@
   align-items: center;
   justify-content: center;
 
-  background-image:
-    linear-gradient(160deg, rgba(26,58,42,0.82) 0%, rgba(45,106,79,0.65) 60%, rgba(82,183,136,0.3) 100%),
-    url('/images/foto_fondo.png');
-
+ background-image:
+  linear-gradient(160deg, rgba(26,58,42,0.82) 0%, rgba(45,106,79,0.65) 60%, rgba(82,183,136,0.3) 100%),
+  var(--hero-image);
+  
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

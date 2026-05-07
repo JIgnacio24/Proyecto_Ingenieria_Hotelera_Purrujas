@@ -127,6 +127,15 @@ button:disabled {
   border-color: rgba(194, 89, 72, 0.24);
 }
 
+.form-feedback {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(26, 58, 42, 0.1);
+  color: var(--texto-medio);
+  background: rgba(26, 58, 42, 0.08);
+}
+
 .container {
   max-width: 1100px;
   margin: 0 auto;
@@ -301,8 +310,16 @@ button:disabled {
   font-weight: 700;
 }
 
+.field-error {
+  color: #7a1c1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   box-sizing: border-box;
   border-radius: 14px;
@@ -313,6 +330,34 @@ button:disabled {
   font: inherit;
   line-height: 1.55;
   resize: vertical;
+}
+
+.gallery-edit-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.gallery-edit-card {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(26, 58, 42, 0.1);
+  border-radius: 16px;
+  background: rgba(250, 247, 240, 0.86);
+}
+
+.gallery-edit-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.gallery-edit-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
 }
 
 .section-historia,
@@ -706,7 +751,9 @@ button:disabled {
   .equipo-grid,
   .mvv-grid,
   .gallery-grid,
-  .edit-panel {
+  .edit-panel,
+  .gallery-edit-card,
+  .gallery-edit-fields {
     grid-template-columns: 1fr;
   }
 

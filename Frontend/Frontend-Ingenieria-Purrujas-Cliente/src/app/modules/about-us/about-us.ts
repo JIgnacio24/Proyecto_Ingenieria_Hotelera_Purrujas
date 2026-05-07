@@ -10,6 +10,7 @@ import {
   createEmptyAboutUsPageContent,
   normalizeAboutUsPageContent
 } from '../../services/about-us-content.service';
+import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
 
 interface GalleryItem {
   src: string;
@@ -52,82 +53,9 @@ export class AboutUs implements OnInit, OnDestroy {
   private subs = new Subscription();
   aboutUsContent: AboutUsPageContent = createEmptyAboutUsPageContent();
 
-  galleryItems: GalleryItem[] = [
-    {
-      src: '/images/foto_fondo.png',
-      alt: 'Hotel Las Purrujas',
-      caption: 'Hotel Las Purrujas',
-      category: 'hotel'
-    },
-    {
-      src: '/images/habitación_doble.png',
-      alt: 'Habitación doble',
-      caption: 'Habitación doble',
-      category: 'hotel'
-    },
-    {
-      src: '/images/habitacion_doble_2.png',
-      alt: 'Habitación doble con vista',
-      caption: 'Habitación doble · vista balcón',
-      category: 'hotel'
-    },
-    {
-      src: '/images/piscinas_naturales.png',
-      alt: 'Piscinas naturales del hotel',
-      caption: 'Piscinas naturales',
-      category: 'hotel'
-    },
-    {
-      src: '/images/restaurante_la_ceiba.png',
-      alt: 'Restaurante La Ceiba',
-      caption: 'Restaurante La Ceiba',
-      category: 'hotel'
-    },
-    {
-      src: '/images/spa.png',
-      alt: 'Spa y bienestar',
-      caption: 'Spa y bienestar',
-      category: 'hotel'
-    },
-    {
-      src: '/images/vista_balcon.png',
-      alt: 'Vista desde el balcón',
-      caption: 'Vista desde el balcón',
-      category: 'hotel'
-    },
-    {
-      src: '/images/villa_familiar.png',
-      alt: 'Villa familiar',
-      caption: 'Villa familiar',
-      category: 'hotel'
-    },
-    {
-      src: '/images/gastronomia_tipica.png',
-      alt: 'Gastronomía típica',
-      caption: 'Gastronomía típica',
-      category: 'hotel'
-    },
-    {
-      src: '/images/avistamiento_aves.png',
-      alt: 'Avistamiento de aves en los alrededores',
-      caption: 'Avistamiento de aves',
-      category: 'lugares'
-    },
-    {
-      src: '/images/senderismo_volcan.png',
-      alt: 'Senderismo en el volcán Turrialba',
-      caption: 'Senderismo en el volcán',
-      category: 'lugares'
-    },
-    {
-      src: '/images/senderos.png',
-      alt: 'Senderos ecológicos de la zona',
-      caption: 'Senderos ecológicos',
-      category: 'lugares'
-    },
-  ];
+  galleryItems: GalleryImage[] = [];
 
-  get filteredItems(): GalleryItem[] {
+  get filteredItems(): GalleryImage[] {
     if (this.activeFilter === 'todos') return this.galleryItems;
     return this.galleryItems.filter(item => item.category === this.activeFilter);
   }
@@ -135,9 +63,10 @@ export class AboutUs implements OnInit, OnDestroy {
   constructor(
     public currencyService: CurrencyService,
     private aboutUsContentService: AboutUsContentService,
+    private galleryImagesService: GalleryImagesService,
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.subs.add(
@@ -149,6 +78,7 @@ export class AboutUs implements OnInit, OnDestroy {
 
     // Carga inicial del contenido dinamico publicado desde el panel admin.
     void this.loadAboutUsContent();
+    void this.loadGalleryImages();
 
     this.subs.add(
       // Refresca periodicamente para reflejar cambios recientes sin recompilar el cliente.
@@ -165,7 +95,7 @@ export class AboutUs implements OnInit, OnDestroy {
     return this.currencyService.convertFromUsd(amountUsd, this.currency);
   }
 
-  trackBySrc(_index: number, item: GalleryItem): string {
+  trackBySrc(_index: number, item: GalleryImage): string {
     return item.src;
   }
 
@@ -213,4 +143,19 @@ export class AboutUs implements OnInit, OnDestroy {
     this.aboutUsContent = normalizeAboutUsPageContent(content);
     this.changeDetectorRef.detectChanges();
   }
+
+  private async loadGalleryImages(): Promise<void> {
+  try {
+    const images = await firstValueFrom(this.galleryImagesService.getAll());
+
+    this.galleryItems = images.map((image) => ({
+      ...image,
+      src: `http://localhost:5232${image.src}`
+    }));
+
+    this.changeDetectorRef.detectChanges();
+  } catch (error) {
+    console.error('Error loading gallery images:', error);
+  }
+}
 }

@@ -271,6 +271,15 @@
     <div class="container">
       @if (editingBlock() === 'gallery') {
         <article class="edit-panel">
+          @if (inlineFeedback()) {
+            <p
+              class="form-feedback field-full"
+              [class.success-feedback]="inlineFeedbackTone() === 'success'"
+              [class.error-feedback]="inlineFeedbackTone() === 'error'"
+            >
+              {{ inlineFeedback() }}
+            </p>
+          }
           <label class="field">
             <span>Etiqueta</span>
             <input type="text" [(ngModel)]="aboutUsContent.galleryTag" (ngModelChange)="markChanged()" />
@@ -283,6 +292,54 @@
             <span>Subtexto</span>
             <textarea rows="3" [(ngModel)]="aboutUsContent.gallerySubtext" (ngModelChange)="markChanged()"></textarea>
           </label>
+          <div class="gallery-edit-list field-full">
+            @for (image of galleryItems; track image.id) {
+              <article class="gallery-edit-card">
+                <img [src]="imageUrl(image.src)" [alt]="image.alt" />
+                <div class="gallery-edit-fields">
+                  <label class="field">
+                    <span>Nombre</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="image.name"
+                      (ngModelChange)="updateGalleryImage(image)"
+                    />
+                  </label>
+                  <label class="field">
+                    <span>Categoria</span>
+                    <select [(ngModel)]="image.category" (ngModelChange)="updateGalleryImage(image)">
+                      <option value="hotel">Hotel</option>
+                      <option value="lugares">Lugares aledanos</option>
+                      <option value="fondo">Fondo del inicio</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Texto alternativo</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="image.alt"
+                      (ngModelChange)="updateGalleryImage(image)"
+                    />
+                  </label>
+                  <label class="field">
+                    <span>Leyenda</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="image.caption"
+                      (ngModelChange)="updateGalleryImage(image)"
+                    />
+                  </label>
+                  <label class="field field-full">
+                    <span>Imagen</span>
+                    <input type="file" accept="image/*" (change)="onGalleryImageFileSelected($event, image)" />
+                    @if (galleryImageError(image.id)) {
+                      <small class="field-error">{{ galleryImageError(image.id) }}</small>
+                    }
+                  </label>
+                </div>
+              </article>
+            }
+          </div>
         </article>
       }
 
@@ -317,14 +374,14 @@
           type="button"
         >
           <span class="material-icons">explore</span>
-          Lugares Aledanos
+          Lugares Aledaños
         </button>
       </div>
 
       <div class="gallery-grid">
         @for (item of filteredItems; track item.src) {
           <div class="gallery-card animate-up">
-            <img [src]="item.src" [alt]="item.alt" loading="lazy" />
+            <img [src]="imageUrl(item.src)" [alt]="item.alt" loading="lazy" />
             <div class="gallery-overlay">
               <p class="gallery-caption">{{ item.caption }}</p>
             </div>

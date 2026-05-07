@@ -90,6 +90,7 @@ builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageConte
 builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
+builder.Services.AddScoped<IGalleryImagesRepository, GalleryImagesRepository>();
 
 var app = builder.Build();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
@@ -135,7 +136,7 @@ app.UseCors("ClientApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.UseStaticFiles(); //Usar imagenes
 app.Run();
 
 static bool IsLocalDevelopmentOrigin(string origin)

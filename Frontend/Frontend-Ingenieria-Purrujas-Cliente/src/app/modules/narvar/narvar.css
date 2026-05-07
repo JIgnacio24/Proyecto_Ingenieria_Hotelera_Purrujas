@@ -73,6 +73,27 @@
   transform: translateY(-1px);
 }
 
+.reservation-item {
+  order: 10;
+}
+
+.nav-links a.reservation-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dorado-suave);
+  border-color: var(--dorado);
+  transform: translateY(-1px) scale(1.06);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(201, 168, 76, 0.35);
+}
+
+.nav-links a.reservation-link:hover {
+  color: #fff4c8;
+  border-color: #fff4c8;
+  transform: translateY(-1px) scale(1.1);
+}
+
 @media (max-width: 720px) {
   .nav-container {
     min-height: auto;
