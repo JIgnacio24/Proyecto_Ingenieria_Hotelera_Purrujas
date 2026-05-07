@@ -318,6 +318,119 @@
       </form>
     </section>
 
+    <section class="editor-card dashboard-section">
+      <div class="editor-header">
+        <div class="section-head">
+          <p>Contenido web</p>
+          <span>Edita los textos visibles de la seccion Como llegar del sitio cliente.</span>
+        </div>
+
+        <div class="editor-toolbar">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadGettingThereContent()"
+            [disabled]="gettingThereLoading() || gettingThereSaving()"
+          >
+            Recargar
+          </button>
+
+          <button
+            type="submit"
+            form="getting-there-content-form"
+            class="primary-button"
+            [disabled]="gettingThereLoading() || gettingThereSaving()"
+          >
+            {{ gettingThereSaving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+
+      @if (gettingThereFeedback()) {
+        <p
+          class="form-feedback"
+          [class.success-feedback]="gettingThereFeedbackTone() === 'success'"
+          [class.error-feedback]="gettingThereFeedbackTone() === 'error'"
+        >
+          {{ gettingThereFeedback() }}
+        </p>
+      }
+
+      <form id="getting-there-content-form" class="editor-form" (ngSubmit)="saveGettingThereContent()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Etiqueta de seccion</span>
+            <input
+              type="text"
+              name="gettingThereSectionTag"
+              [(ngModel)]="gettingThereContent.sectionTag"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Titulo de seccion</span>
+            <input
+              type="text"
+              name="gettingThereSectionTitle"
+              [(ngModel)]="gettingThereContent.sectionTitle"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Texto introductorio</span>
+            <textarea
+              rows="3"
+              name="gettingThereSectionSubtext"
+              [(ngModel)]="gettingThereContent.sectionSubtext"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Titulo de coordenadas</span>
+            <input
+              type="text"
+              name="gettingThereCoordinatesTitle"
+              [(ngModel)]="gettingThereContent.coordinatesTitle"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Boton del mapa</span>
+            <input
+              type="text"
+              name="gettingThereMapButtonLabel"
+              [(ngModel)]="gettingThereContent.mapButtonLabel"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Descripcion de coordenadas</span>
+            <textarea
+              rows="3"
+              name="gettingThereCoordinatesDescription"
+              [(ngModel)]="gettingThereContent.coordinatesDescription"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+
+          <label class="field field-full">
+            <span>Indicaciones</span>
+            <textarea
+              rows="6"
+              name="gettingThereDirectionsItems"
+              [(ngModel)]="gettingThereDirectionsItemsText"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+        </div>
+      </form>
+    </section>
+
     <section class="modules-card">
       <div class="section-head">
         <p>Modulos del menu</p>

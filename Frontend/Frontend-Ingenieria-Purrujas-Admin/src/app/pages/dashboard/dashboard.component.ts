@@ -13,6 +13,12 @@ import {
   FacilitiesContentService,
   FacilitiesPageContent
 } from '../../core/facilities-content.service';
+import {
+  cloneGettingTherePageContent,
+  createDefaultGettingTherePageContent,
+  GettingThereContentService,
+  GettingTherePageContent
+} from '../../core/getting-there-content.service';
 
 type DashboardMenuKey =
   | 'home'
@@ -54,6 +60,7 @@ export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
+  private readonly gettingThereContentService = inject(GettingThereContentService);
 
   readonly menuItems: readonly DashboardMenuItem[] = [
     {
@@ -179,15 +186,22 @@ export class DashboardComponent implements AfterViewInit {
   readonly facilitiesSaving = signal(false);
   readonly facilitiesFeedback = signal('');
   readonly facilitiesFeedbackTone = signal<'success' | 'error' | ''>('');
+  readonly gettingThereLoading = signal(true);
+  readonly gettingThereSaving = signal(false);
+  readonly gettingThereFeedback = signal('');
+  readonly gettingThereFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
 
   facilitiesContent: FacilitiesPageContent = createDefaultFacilitiesPageContent();
   primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
   secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
+  gettingThereContent: GettingTherePageContent = createDefaultGettingTherePageContent();
+  gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
 
   constructor() {
     void this.loadProfile();
     void this.loadFacilitiesContent();
+    void this.loadGettingThereContent();
   }
 
   ngAfterViewInit(): void {
@@ -261,6 +275,53 @@ export class DashboardComponent implements AfterViewInit {
       }
     } finally {
       this.facilitiesSaving.set(false);
+    }
+  }
+
+  async loadGettingThereContent(): Promise<void> {
+    this.gettingThereLoading.set(true);
+    this.clearGettingThereFeedback();
+
+    try {
+      const content = await firstValueFrom(this.gettingThereContentService.getContent());
+      this.applyGettingThereContent(content);
+    } catch (error) {
+      this.applyGettingThereContent(createDefaultGettingTherePageContent());
+      this.gettingThereFeedbackTone.set('error');
+      this.gettingThereFeedback.set(
+        this.resolveError(
+          error,
+          'No fue posible cargar el contenido de Como llegar. Se muestran los valores base.'
+        )
+      );
+    } finally {
+      this.gettingThereLoading.set(false);
+    }
+  }
+
+  async saveGettingThereContent(): Promise<void> {
+    this.gettingThereSaving.set(true);
+    this.clearGettingThereFeedback();
+
+    try {
+      const savedContent = await firstValueFrom(
+        this.gettingThereContentService.updateContent(this.buildGettingThereContentPayload())
+      );
+
+      this.applyGettingThereContent(savedContent);
+      this.gettingThereFeedbackTone.set('success');
+      this.gettingThereFeedback.set('El contenido de Como llegar se guardo correctamente.');
+    } catch (error) {
+      this.gettingThereFeedbackTone.set('error');
+      this.gettingThereFeedback.set(
+        this.resolveError(error, 'No fue posible guardar el contenido de Como llegar.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.gettingThereSaving.set(false);
     }
   }
 
@@ -372,6 +433,18 @@ export class DashboardComponent implements AfterViewInit {
     });
   }
 
+  private applyGettingThereContent(content: GettingTherePageContent): void {
+    this.gettingThereContent = cloneGettingTherePageContent(content);
+    this.gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
+  }
+
+  private buildGettingThereContentPayload(): GettingTherePageContent {
+    return cloneGettingTherePageContent({
+      ...this.gettingThereContent,
+      directionsItems: this.parseLines(this.gettingThereDirectionsItemsText)
+    });
+  }
+
   private parseLines(value: string): string[] {
     return value
       .split(/\r?\n/)
@@ -382,6 +455,11 @@ export class DashboardComponent implements AfterViewInit {
   private clearFacilitiesFeedback(): void {
     this.facilitiesFeedback.set('');
     this.facilitiesFeedbackTone.set('');
+  }
+
+  private clearGettingThereFeedback(): void {
+    this.gettingThereFeedback.set('');
+    this.gettingThereFeedbackTone.set('');
   }
 
   private syncActiveMenuItem(): void {

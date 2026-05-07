@@ -11,6 +11,7 @@ import {
   normalizeAboutUsPageContent
 } from '../../services/about-us-content.service';
 import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
+import { GettingThereComponent } from '../getting-there/getting-there.component';
 
 interface GalleryItem {
   src: string;
@@ -41,7 +42,7 @@ export class ReplaceNewlinesPipe implements PipeTransform {
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ReplaceNewlinesPipe],
+  imports: [CommonModule, FormsModule, RouterModule, ReplaceNewlinesPipe,  GettingThereComponent],
   templateUrl: './about-us.html',
   styleUrl: './about-us.css'
 })
