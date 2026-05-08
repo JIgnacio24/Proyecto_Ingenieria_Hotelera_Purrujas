@@ -1848,6 +1848,7 @@ EXEC usp_FacilitiesPageContent_Upsert
     @DescriptionJson = @FacilitiesContentJson;
 GO
 
+
 INSERT INTO RoomType (Name, BasePrice, IsActive)
 VALUES
     ('Habitación Doble', 95.00, 1),
@@ -1932,4 +1933,95 @@ INSERT INTO Payment (ReservationId, Amount, PaymentMethod, PaymentDate, IsPaid, 
 VALUES
     (1, 356.25, 'Tarjeta', '2026-04-10T09:15:00', 1, 1),
     (2, 729.00, 'Tarjeta', '2026-04-11T10:45:00', 1, 1);
+GO
+
+
+-- =========================================
+-- GETTING THERE PAGE CONTENT
+-- =========================================
+
+CREATE OR ALTER PROCEDURE usp_GettingTherePageContent_Get
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        p.Title,
+        pi.Subtitle,
+        pi.Description
+    FROM Page p
+    LEFT JOIN PageInformation pi ON pi.PageId = p.PageId
+    WHERE LOWER(p.Name) = LOWER(N'Como llegar')
+    ORDER BY pi.PageInformationId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE usp_GettingTherePageContent_Upsert
+    @SectionTitle NVARCHAR(255),
+    @SectionTag NVARCHAR(255),
+    @DescriptionJson NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @PageId INT;
+        DECLARE @PageInformationId INT;
+
+        SELECT TOP 1 @PageId = PageId
+        FROM Page
+        WHERE LOWER(Name) = LOWER(N'Como llegar')
+        ORDER BY PageId;
+
+        IF @PageId IS NULL
+        BEGIN
+            INSERT INTO Page (Name, Title, Link)
+            VALUES (N'Como llegar', @SectionTitle, N'/about-us#como-llegar');
+
+            SET @PageId = CAST(SCOPE_IDENTITY() AS INT);
+        END
+        ELSE
+        BEGIN
+            UPDATE Page
+            SET Title = @SectionTitle,
+                Link = N'/about-us#como-llegar'
+            WHERE PageId = @PageId;
+        END
+
+        SELECT TOP 1 @PageInformationId = PageInformationId
+        FROM PageInformation
+        WHERE PageId = @PageId
+        ORDER BY PageInformationId;
+
+        IF @PageInformationId IS NULL
+        BEGIN
+            INSERT INTO PageInformation (Subtitle, Description, PageId)
+            VALUES (@SectionTag, @DescriptionJson, @PageId);
+        END
+        ELSE
+        BEGIN
+            UPDATE PageInformation
+            SET Subtitle = @SectionTag,
+                Description = @DescriptionJson
+            WHERE PageInformationId = @PageInformationId;
+        END
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO
+
+DECLARE @GettingThereContentJson NVARCHAR(MAX) = N'{"sectionTag":"Visítanos","sectionTitle":"¿Cómo llegar?","sectionSubtext":"A 45 minutos de San José, en las faldas del Volcán Turrialba.","coordinatesTitle":"Coordenadas","coordinatesDescription":"9.975878207007307° N,83.770258333651° W · Las Purrujas, Cartago.","directionsItems":["Ruta 32 hasta Turrialba, luego desvío a La Pastora.","Transporte privado disponible desde el aeropuerto SJO.","Parqueo gratuito y seguro dentro de la propiedad."],"mapButtonLabel":"Abrir en Google Maps"}';
+
+EXEC usp_GettingTherePageContent_Upsert
+    @SectionTitle = N'¿Cómo llegar?',
+    @SectionTag = N'Visítanos',
+    @DescriptionJson = @GettingThereContentJson;
 GO

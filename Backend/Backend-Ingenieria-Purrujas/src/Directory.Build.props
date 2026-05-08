@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);**\artifacts\**</DefaultItemExcludes>
+    <BaseIntermediateOutputPath>$(LocalAppData)\Temp\purrujas-build\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(LocalAppData)\Temp\purrujas-build\bin\$(MSBuildProjectName)\</BaseOutputPath>
   </PropertyGroup>
 </Project>

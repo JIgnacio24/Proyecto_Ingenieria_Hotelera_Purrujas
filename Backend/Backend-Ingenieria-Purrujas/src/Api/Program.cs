@@ -1,6 +1,7 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
+using Backend_Ingenieria_Purrujas.Api.Services;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 using DotNetEnv;
@@ -89,12 +90,17 @@ builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
 builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
 // Repositorio del contenido editable de la pagina publica "Sobre Nosotros".
 builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();
+builder.Services.AddScoped<IHomePageContentRepository, HomePageContentRepository>();
+builder.Services.AddScoped<IGettingTherePageContentRepository, GettingTherePageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IGalleryImagesRepository, GalleryImagesRepository>();
+builder.Services.AddScoped<IRoomAvailabilityRepository, RoomAvailabilityRepository>();
+builder.Services.AddScoped<RoomAvailabilityPdfService>();
 
 var app = builder.Build();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
@@ -140,7 +146,7 @@ app.UseCors("ClientApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.UseStaticFiles(); //Usar imagenes
 app.Run();
 
 static bool IsLocalDevelopmentOrigin(string origin)

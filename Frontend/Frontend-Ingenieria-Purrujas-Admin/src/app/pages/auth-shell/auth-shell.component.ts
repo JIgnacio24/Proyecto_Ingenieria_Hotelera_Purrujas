@@ -60,7 +60,7 @@ export class AuthShellComponent {
       );
       await this.router.navigate(['/panel'], { replaceUrl: true });
     } catch (error) {
-      this.errorMessage.set(this.resolveError(error, 'No fue posible iniciar sesion.'));
+      this.errorMessage.set(this.resolveError(error, 'No fue posible iniciar sesión.'));
     } finally {
       this.submitting.set(false);
     }

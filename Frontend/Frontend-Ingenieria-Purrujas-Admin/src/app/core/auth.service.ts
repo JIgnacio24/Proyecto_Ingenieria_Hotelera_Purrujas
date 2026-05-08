@@ -39,7 +39,7 @@ export class AuthService {
       tap((user) => {
         if (!this.isAdministratorUser(user)) {
           this.invalidateSession();
-          throw new Error('La sesion no pertenece a un administrador autorizado.');
+          throw new Error('La sesión no pertenece a un administrador autorizado.');
         }
 
         const session = this.sessionState();

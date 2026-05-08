@@ -1,6 +1,6 @@
 <section class="dashboard-shell">
   <div class="dashboard-veil" aria-hidden="true"></div>
-  <aside class="side-nav" aria-label="Menu administrativo">
+  <aside class="side-nav" aria-label="Menú administrativo">
     <div class="side-nav__brand">
       <div class="brand-monogram">LP</div>
     </div>
@@ -51,7 +51,7 @@
         <span class="hotel-chip__label">Sistema interno</span>
         <strong>Las Purrujas</strong>
       </div>
-      <button type="button" class="logout-button" (click)="logout()">Cerrar sesion</button>
+      <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
     </div>
   </header>
 
@@ -64,21 +64,21 @@
       <div class="hero-media" aria-hidden="true"></div>
 
       <div class="hero-copy">
-        <p class="hero-kicker">Administracion</p>
+        <p class="hero-kicker">Administración</p>
         @if (loading()) {
-          <h2>Cargando la sesion del administrador...</h2>
-          <p>Espere un momento mientras se actualiza la informacion del acceso.</p>
+          <h2>Cargando la sesión del administrador...</h2>
+          <p>Espere un momento mientras se actualiza la información de acceso.</p>
         } @else if (profile()) {
           <h2>Bienvenido, {{ profile()?.fullName }}.</h2>
-          <p>La sesion esta activa y ya puedes administrar el contenido del sitio.</p>
+          <p>La sesión está activa, ya puedes administrar el contenido del sitio.</p>
         } @else {
           <h2>No se pudo cargar el perfil.</h2>
-          <p>Revise la sesion actual y vuelva a intentarlo.</p>
+          <p>Revise la sesión actual y vuelva a intentarlo.</p>
         }
 
         <div class="hero-actions">
           <button type="button" class="primary-button" (click)="loadProfile()">Actualizar</button>
-          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesion activa' }}</span>
+          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesión activa' }}</span>
         </div>
       </div>
     </section>
@@ -86,7 +86,7 @@
     <section class="profile-card">
       <div class="section-head">
         <p>Perfil de acceso</p>
-        <span>Informacion del usuario actual</span>
+        <span>Información del usuario actual</span>
       </div>
 
       <dl class="profile-list">
@@ -111,7 +111,7 @@
           <dd>{{ formatDate(profile()?.createdAt) }}</dd>
         </div>
         <div>
-          <dt>Ultimo acceso</dt>
+          <dt>Último acceso</dt>
           <dd>{{ formatDate(profile()?.lastLoginAt) }}</dd>
         </div>
       </dl>
@@ -135,18 +135,214 @@
         </article>
 
         <article class="summary-item">
-          <span>Ultimo acceso</span>
+          <span>Último acceso</span>
           <strong>{{ formatDate(profile()?.lastLoginAt) }}</strong>
         </article>
       </div>
     </section>
 
-    <section id="dashboard-content" class="editor-card dashboard-section">
-      <div class="editor-header">
+    <section id="dashboard-availability" class="availability-card dashboard-section">
+      <div class="availability-header">
         <div class="section-head">
-          <p>Contenido web</p>
-          <span>Edita los textos visibles de la seccion Facilidades del sitio cliente.</span>
+          <p>Disponibilidad de habitaciones</p>
+          <span>Estado operativo del día actual y consulta por fecha desde la base de datos.</span>
         </div>
+
+        <div class="availability-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadRoomAvailabilityToday()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
+          </button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="downloadRoomAvailabilityReport()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Descargar PDF' }}
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            (click)="openRoomAvailabilityReportPreview()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Ver reporte PDF' }}
+          </button>
+        </div>
+      </div>
+
+      @if (availabilityFeedback()) {
+        <p
+          class="form-feedback"
+          [class.success-feedback]="availabilityFeedbackTone() === 'success'"
+          [class.error-feedback]="availabilityFeedbackTone() === 'error'"
+        >
+          {{ availabilityFeedback() }}
+        </p>
+      }
+
+      @if (roomAvailabilitySummary(); as summary) {
+        <div class="availability-hero">
+          <div>
+            <span class="availability-date">{{ formatAvailabilityDate(summary.date) }}</span>
+            <h2>Estado del hotel hoy</h2>
+          </div>
+          <div class="availability-total">
+            <strong>{{ summary.availableRooms }}</strong>
+            <span>disponibles de {{ summary.totalRooms }}</span>
+          </div>
+        </div>
+
+        <div class="availability-metrics">
+          <article>
+            <span>Disponibles</span>
+            <strong>{{ summary.availableRooms }}</strong>
+          </article>
+          <article>
+            <span>Ocupadas</span>
+            <strong>{{ summary.occupiedRooms }}</strong>
+          </article>
+          <article>
+            <span>Fuera de servicio</span>
+            <strong>{{ summary.outOfServiceRooms }}</strong>
+          </article>
+        </div>
+
+        <div class="availability-table-wrap">
+          <table class="availability-table">
+            <thead>
+              <tr>
+                <th>Habitación</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Huésped actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (room of summary.rooms; track room.roomId) {
+                <tr>
+                  <td>{{ room.roomNumber }}</td>
+                  <td>{{ room.roomTypeName }}</td>
+                  <td>
+                    <span class="room-status" [ngClass]="statusClass(room.statusName)">
+                      {{ room.statusName }}
+                    </span>
+                  </td>
+                  <td>{{ room.currentGuest || 'Sin huésped' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4">No hay habitaciones registradas.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <form class="availability-search" (ngSubmit)="searchRoomAvailability()">
+          <div class="section-head">
+            <p>Consultar disponibilidad</p>
+            <span>Filtra habitaciones disponibles por rango de fechas y tipo.</span>
+          </div>
+
+          <div class="availability-search-grid">
+            <label class="field">
+              <span>Fecha de llegada</span>
+              <input
+                type="date"
+                name="availabilityStartDate"
+                [(ngModel)]="availabilityStartDate"
+                [disabled]="availabilitySearching()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Fecha de salida</span>
+              <input
+                type="date"
+                name="availabilityEndDate"
+                [(ngModel)]="availabilityEndDate"
+                [disabled]="availabilitySearching()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Tipo de habitación</span>
+              <select
+                name="availabilityRoomTypeId"
+                [(ngModel)]="availabilityRoomTypeId"
+                [disabled]="availabilitySearching()"
+              >
+                <option [ngValue]="null">Todos los tipos</option>
+                @for (roomType of summary.roomTypes; track roomType.roomTypeId) {
+                  <option [ngValue]="roomType.roomTypeId">{{ roomType.name }}</option>
+                }
+              </select>
+            </label>
+
+            <button type="submit" class="primary-button" [disabled]="availabilitySearching()">
+              {{ availabilitySearching() ? 'Consultando...' : 'Consultar' }}
+            </button>
+          </div>
+        </form>
+
+        @if (availabilitySearchResult(); as result) {
+          <div class="availability-results">
+            <div class="results-head">
+              <div>
+                <p>Resultado</p>
+                <span>
+                  {{ formatAvailabilityDate(result.startDate) }} - {{ formatAvailabilityDate(result.endDate) }}
+                  · {{ result.roomTypeName }}
+                </span>
+              </div>
+              <strong>{{ result.availableRooms }} disponibles</strong>
+            </div>
+
+            <div class="availability-result-grid">
+              @for (room of result.rooms; track room.roomId) {
+                <article class="available-room-card">
+                  <span>Habitación {{ room.roomNumber }}</span>
+                  <strong>{{ room.roomTypeName }}</strong>
+                  <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
+                  <small>
+                    {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
+                    · {{ formatUsd(room.basePricePerNight) }} base/noche
+                  </small>
+                  @if (room.highSeasonNights > 0) {
+                    <small>
+                      {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
+                      con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
+                    </small>
+                  }
+                  <small>{{ room.operationalStatus }}</small>
+                </article>
+              } @empty {
+                <p class="empty-state">No hay habitaciones disponibles para esa consulta.</p>
+              }
+            </div>
+          </div>
+        }
+      } @else {
+        <p class="loading-state">
+          {{ availabilityLoading() ? 'Cargando disponibilidad de habitaciones...' : 'Sin datos de disponibilidad.' }}
+        </p>
+      }
+    </section>
+
+    <section id="dashboard-content" class="editor-card dashboard-section">
+        <div class="editor-header">
+          <div class="section-head">
+          <p>Editar facilidades</p>
+          <span>Actualiza los textos visibles de facilidades en el sitio del cliente.</span>
+          </div>
 
         <div class="editor-toolbar">
           <button
@@ -182,7 +378,7 @@
       <form id="facilities-content-form" class="editor-form" (ngSubmit)="saveFacilitiesContent()">
         <div class="form-grid">
           <label class="field">
-            <span>Etiqueta de seccion</span>
+            <span>Etiqueta de sección</span>
             <input
               type="text"
               name="sectionTag"
@@ -192,7 +388,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo de seccion</span>
+            <span>Título de sección</span>
             <input
               type="text"
               name="sectionTitle"
@@ -202,7 +398,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo destacado</span>
+            <span>Título destacado</span>
             <input
               type="text"
               name="highlightTitle"
@@ -212,7 +408,7 @@
           </label>
 
           <label class="field field-full">
-            <span>Descripcion destacada</span>
+            <span>Descripción destacada</span>
             <textarea
               rows="4"
               name="highlightDescription"
@@ -226,11 +422,11 @@
           <article class="list-editor-card">
             <div class="group-head">
               <h3>Bloque principal</h3>
-              <p>Un elemento por linea.</p>
+              <p>Un elemento por línea.</p>
             </div>
 
             <label class="field">
-              <span>Titulo del bloque</span>
+              <span>Título del bloque</span>
               <input
                 type="text"
                 name="primaryListTitle"
@@ -253,11 +449,11 @@
           <article class="list-editor-card">
             <div class="group-head">
               <h3>Bloque secundario</h3>
-              <p>Un elemento por linea.</p>
+              <p>Un elemento por línea.</p>
             </div>
 
             <label class="field">
-              <span>Titulo del bloque</span>
+              <span>Título del bloque</span>
               <input
                 type="text"
                 name="secondaryListTitle"
@@ -281,7 +477,7 @@
         <div class="services-editor">
           <div class="group-head">
             <h3>Tarjetas de servicios</h3>
-            <p>Estas tarjetas conservan las imagenes actuales del cliente y solo cambian el texto.</p>
+            <p>Estas tarjetas conservan las imágenes actuales del cliente y solo cambian el texto.</p>
           </div>
 
           <div class="services-grid">
@@ -293,7 +489,7 @@
                 </div>
 
                 <label class="field">
-                  <span>Titulo</span>
+                  <span>Título</span>
                   <input
                     type="text"
                     [name]="'serviceTitle' + index"
@@ -303,7 +499,7 @@
                 </label>
 
                 <label class="field">
-                  <span>Descripcion</span>
+                  <span>Descripción</span>
                   <textarea
                     rows="4"
                     [name]="'serviceDescription' + index"
@@ -318,12 +514,125 @@
       </form>
     </section>
 
+    <section class="editor-card dashboard-section">
+      <div class="editor-header">
+        <div class="section-head">
+          <p>Contenido web</p>
+          <span>Edita los textos visibles de la sección Cómo llegar del sitio del cliente.</span>
+        </div>
+
+        <div class="editor-toolbar">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadGettingThereContent()"
+            [disabled]="gettingThereLoading() || gettingThereSaving()"
+          >
+            Recargar
+          </button>
+
+          <button
+            type="submit"
+            form="getting-there-content-form"
+            class="primary-button"
+            [disabled]="gettingThereLoading() || gettingThereSaving()"
+          >
+            {{ gettingThereSaving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+
+      @if (gettingThereFeedback()) {
+        <p
+          class="form-feedback"
+          [class.success-feedback]="gettingThereFeedbackTone() === 'success'"
+          [class.error-feedback]="gettingThereFeedbackTone() === 'error'"
+        >
+          {{ gettingThereFeedback() }}
+        </p>
+      }
+
+      <form id="getting-there-content-form" class="editor-form" (ngSubmit)="saveGettingThereContent()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Etiqueta de sección</span>
+            <input
+              type="text"
+              name="gettingThereSectionTag"
+              [(ngModel)]="gettingThereContent.sectionTag"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Título de sección</span>
+            <input
+              type="text"
+              name="gettingThereSectionTitle"
+              [(ngModel)]="gettingThereContent.sectionTitle"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Texto introductorio</span>
+            <textarea
+              rows="3"
+              name="gettingThereSectionSubtext"
+              [(ngModel)]="gettingThereContent.sectionSubtext"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Título de coordenadas</span>
+            <input
+              type="text"
+              name="gettingThereCoordinatesTitle"
+              [(ngModel)]="gettingThereContent.coordinatesTitle"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field">
+            <span>Botón del mapa</span>
+            <input
+              type="text"
+              name="gettingThereMapButtonLabel"
+              [(ngModel)]="gettingThereContent.mapButtonLabel"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Descripción de coordenadas</span>
+            <textarea
+              rows="3"
+              name="gettingThereCoordinatesDescription"
+              [(ngModel)]="gettingThereContent.coordinatesDescription"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+
+          <label class="field field-full">
+            <span>Indicaciones</span>
+            <textarea
+              rows="6"
+              name="gettingThereDirectionsItems"
+              [(ngModel)]="gettingThereDirectionsItemsText"
+              [disabled]="gettingThereLoading() || gettingThereSaving()"
+            ></textarea>
+          </label>
+        </div>
+      </form>
+    </section>
+
     <section class="modules-card">
       <div class="section-head">
-        <p>Modulos del menu</p>
+        <p>Módulos del menú</p>
         <span>
-          Los accesos laterales ya apuntan a la zona correcta del panel. Estos modulos aun no
-          tienen tabla o formulario funcional en esta version.
+          Los accesos laterales ya apuntan a la zona correcta del panel. Estos módulos aún no
+          tienen tabla ni formulario funcional en esta versión.
         </span>
       </div>
 

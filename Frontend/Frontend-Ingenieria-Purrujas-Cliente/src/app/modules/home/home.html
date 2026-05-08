@@ -1,4 +1,8 @@
-<section id="home" class="home-hero">
+<section
+  id="home"
+  class="home-hero"
+  [style.--hero-image]="heroImageUrl"
+>
   <div class="hero-overlay"></div>
   <div class="hero-leaves">
     <span class="leaf leaf-1">🌿</span>
@@ -6,9 +10,9 @@
     <span class="leaf leaf-3">🌿</span>
   </div>
   <div class="hero-content">
-    <p class="hero-eyebrow">Bienvenido</p>
-    <h1 class="hero-title">Hotel Las Purrujas</h1>
-    <p class="hero-subtitle">Donde la naturaleza te abraza y Costa Rica te enamora.</p>
+    <p class="hero-eyebrow">{{ homeContent.heroEyebrow }}</p>
+    <h1 class="hero-title">{{ homeContent.heroTitle }}</h1>
+    <p class="hero-subtitle">{{ homeContent.heroSubtitle }}</p>
     <div class="hero-divider"><span></span><span class="diamond">◆</span><span></span></div>
   </div>
 </section>
@@ -87,45 +91,4 @@
   </div>
 </section>
 
-<!-- Cómo llegar -->
-<section id="como-llegar" class="section section-como-llegar">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-tag">Visítanos</span>
-      <h2 class="section-title centered">¿Cómo llegar?</h2>
-      <p class="section-subtext">A 45 minutos de San José, en las faldas del Volcán Turrialba.</p>
-    </div>
-    <div class="map-card">
-      <div class="map-text">
-        <h3>Coordenadas</h3>
-        <p>9.975878207007307° N,83.770258333651° W · Las Purrujas, Cartago.</p>
-        <ul>
-          <li>Ruta 32 hasta Turrialba, luego desvío a La Pastora.</li>
-          <li>Transporte privado disponible desde el aeropuerto SJO.</li>
-          <li>Parqueo gratuito y seguro dentro de la propiedad.</li>
-        </ul>
-        <a
-          class="map-button"
-          href="https://maps.app.goo.gl/N7oWPu6m2tAaNHhy9"
-          target="_blank"
-          rel="noopener"
-        >
-          Abrir en Google Maps
-        </a>
-      </div>
-      <div class="map-embed">
-        <div class="map-embed">
-          <iframe
-            src="https://www.google.com/maps?q=9.975878207007307,-83.770258333651&z=18&output=embed"
-            width="100%"
-            height="100%"
-            style="border: 0"
-            allowfullscreen=""
-            loading="lazy"
-          >
-          </iframe>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<app-getting-there-section variant="home"></app-getting-there-section>

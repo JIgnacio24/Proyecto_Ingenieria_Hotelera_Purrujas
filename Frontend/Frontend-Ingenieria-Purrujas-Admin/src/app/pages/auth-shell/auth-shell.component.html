@@ -11,8 +11,8 @@
         <p class="eyebrow">Hotel Las Purrujas</p>
         <h1>Acceso administrativo</h1>
         <div class="brand-note">
-          <span>Area privada</span>
-          <p>Reservada para la gestion interna y el personal autorizado.</p>
+          <span>Área privada</span>
+          <p>Reservada para la gestión interna y el personal autorizado.</p>
         </div>
       </div>
     </aside>
@@ -20,8 +20,8 @@
     <section class="form-panel">
       <div class="panel-top">
         <div class="panel-heading">
-          <p class="form-kicker">Area interna</p>
-          <h2>Iniciar sesion</h2>
+          <p class="form-kicker">Área interna</p>
+          <h2>Iniciar sesión</h2>
         </div>
       </div>
 
@@ -39,20 +39,20 @@
             maxlength="50"
             placeholder="Ingrese su usuario" />
           @if (hasLoginError('username')) {
-            <small>Use entre 4 y 50 caracteres validos: letras, numeros, punto, guion o guion bajo.</small>
+            <small>Use entre 4 y 50 caracteres válidos: letras, números, punto, guion o guion bajo.</small>
           }
         </label>
 
         <label class="field">
-          <span>Password</span>
+          <span>Contraseña</span>
           <input
             type="password"
             formControlName="password"
             autocomplete="current-password"
             maxlength="255"
-            placeholder="Ingrese su password" />
+            placeholder="Ingrese su contraseña" />
           @if (hasLoginError('password')) {
-            <small>La contrasena debe tener entre 8 y 255 caracteres.</small>
+            <small>La contraseña debe tener entre 8 y 255 caracteres.</small>
           }
         </label>
 

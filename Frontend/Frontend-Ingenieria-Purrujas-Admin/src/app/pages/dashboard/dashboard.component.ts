@@ -13,10 +13,23 @@ import {
   FacilitiesContentService,
   FacilitiesPageContent
 } from '../../core/facilities-content.service';
+import {
+  cloneGettingTherePageContent,
+  createDefaultGettingTherePageContent,
+  GettingThereContentService,
+  GettingTherePageContent
+} from '../../core/getting-there-content.service';
+import {
+  RoomAvailabilityReportResponse,
+  RoomAvailabilitySearchResult,
+  RoomAvailabilityService,
+  RoomAvailabilitySummary
+} from '../../core/room-availability.service';
 
 type DashboardMenuKey =
   | 'home'
   | 'pages'
+  | 'home-editor'
   | 'about-us'
   | 'reservations'
   | 'rooms'
@@ -34,7 +47,7 @@ interface DashboardMenuItem {
 }
 
 interface DashboardModuleCard {
-  key: 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'availability' | 'ads'>;
+  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'ads'>;
   title: string;
   status: string;
   description: string;
@@ -53,6 +66,8 @@ export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
+  private readonly gettingThereContentService = inject(GettingThereContentService);
+  private readonly roomAvailabilityService = inject(RoomAvailabilityService);
 
   readonly menuItems: readonly DashboardMenuItem[] = [
     {
@@ -70,16 +85,31 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-status'
     },
     {
+      key: 'availability',
+      label: 'Disponibilidad de habitaciones',
+      compactLabel: 'Disponibilidad',
+      icon: 'availability',
+      targetId: 'dashboard-availability'
+    },
+    {
       key: 'pages',
-      label: 'Modificar paginas',
-      compactLabel: 'Paginas',
+      label: 'Editar facilidades',
+      compactLabel: 'Facilidades',
       icon: 'pages',
       targetId: 'dashboard-content'
     },
     {
+      key: 'home-editor',
+      label: 'Editar inicio',
+      compactLabel: 'Inicio',
+      icon: 'home-editor',
+      // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
+      targetId: 'dashboard-home-editor'
+    },
+    {
       key: 'about-us',
-      label: 'Editar Sobre Nosotros',
-      compactLabel: 'Sobre',
+      label: 'Editar Sobre nosotros',
+      compactLabel: 'Sobre nosotros',
       icon: 'about-us',
       // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
       targetId: 'dashboard-about-us'
@@ -99,13 +129,6 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-rooms'
     },
     {
-      key: 'availability',
-      label: 'Consultar disponibilidad de habitaciones',
-      compactLabel: 'Disponibilidad',
-      icon: 'availability',
-      targetId: 'dashboard-availability'
-    },
-    {
       key: 'ads',
       label: 'Publicidad',
       compactLabel: 'Publicidad',
@@ -116,11 +139,20 @@ export class DashboardComponent implements AfterViewInit {
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
   readonly moduleCards: readonly DashboardModuleCard[] = [
     {
-      key: 'about-us',
-      title: 'Editar Sobre Nosotros',
+      key: 'home-editor',
+      title: 'Editar inicio',
       status: 'Editable',
       description:
-        'Abre la vista editable de Sobre Nosotros para cambiar textos, historia, filosofia, mision, vision, valores y galeria.',
+        'Abre la vista editable del inicio para cambiar la imagen de fondo y los textos principales.',
+      link: '/panel/home',
+      actionLabel: 'Abrir editor'
+    },
+    {
+      key: 'about-us',
+      title: 'Editar Sobre nosotros',
+      status: 'Editable',
+      description:
+        'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
       link: '/panel/sobre-nosotros',
       actionLabel: 'Abrir editor'
     },
@@ -138,21 +170,14 @@ export class DashboardComponent implements AfterViewInit {
       title: 'Administrar habitaciones',
       status: 'Pendiente de interfaz',
       description:
-        'Aqui ira la administracion de tipos de habitacion, tarifas base y estado operativo cuando el modulo exista.'
-    },
-    {
-      key: 'availability',
-      title: 'Disponibilidad de habitaciones',
-      status: 'Pendiente de interfaz',
-      description:
-        'Zona prevista para consultar ocupacion, cupos por fecha y validaciones de disponibilidad desde el panel.'
+        'Aquí irá la administración de tipos de habitación, tarifas base y estado operativo cuando el módulo esté disponible.'
     },
     {
       key: 'ads',
       title: 'Publicidad',
       status: 'Interfaz pendiente',
       description:
-        'El menu ya apunta a esta seccion. Falta construir aqui el CRUD para administrar la publicidad del sitio.'
+        'El menú ya apunta a esta sección. Falta construir aquí el CRUD para administrar la publicidad del sitio.'
     }
   ];
 
@@ -163,15 +188,33 @@ export class DashboardComponent implements AfterViewInit {
   readonly facilitiesSaving = signal(false);
   readonly facilitiesFeedback = signal('');
   readonly facilitiesFeedbackTone = signal<'success' | 'error' | ''>('');
+  readonly gettingThereLoading = signal(true);
+  readonly gettingThereSaving = signal(false);
+  readonly gettingThereFeedback = signal('');
+  readonly gettingThereFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
+  readonly availabilityLoading = signal(true);
+  readonly availabilitySearching = signal(false);
+  readonly availabilityReportBusy = signal(false);
+  readonly availabilityFeedback = signal('');
+  readonly availabilityFeedbackTone = signal<'success' | 'error' | ''>('');
+  readonly roomAvailabilitySummary = signal<RoomAvailabilitySummary | null>(null);
+  readonly availabilitySearchResult = signal<RoomAvailabilitySearchResult | null>(null);
 
   facilitiesContent: FacilitiesPageContent = createDefaultFacilitiesPageContent();
   primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
   secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
+  gettingThereContent: GettingTherePageContent = createDefaultGettingTherePageContent();
+  gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
+  availabilityStartDate = this.todayInputValue();
+  availabilityEndDate = this.addDaysInputValue(1);
+  availabilityRoomTypeId: number | null = null;
 
   constructor() {
     void this.loadProfile();
     void this.loadFacilitiesContent();
+    void this.loadGettingThereContent();
+    void this.loadRoomAvailabilityToday();
   }
 
   ngAfterViewInit(): void {
@@ -186,7 +229,7 @@ export class DashboardComponent implements AfterViewInit {
       const user = await firstValueFrom(this.authService.fetchProfile());
       this.profile.set(user);
     } catch (error) {
-      this.errorMessage.set(this.resolveError(error, 'No fue posible validar la sesion.'));
+      this.errorMessage.set(this.resolveError(error, 'No fue posible validar la sesión.'));
 
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
         this.authService.logout();
@@ -214,7 +257,7 @@ export class DashboardComponent implements AfterViewInit {
       this.facilitiesFeedback.set(
         this.resolveError(
           error,
-          'No fue posible cargar el contenido de Facilidades. Se muestran los valores base.'
+          'No fue posible cargar el contenido de facilidades. Se muestran los valores predeterminados.'
         )
       );
     } finally {
@@ -233,11 +276,11 @@ export class DashboardComponent implements AfterViewInit {
 
       this.applyFacilitiesContent(savedContent);
       this.facilitiesFeedbackTone.set('success');
-      this.facilitiesFeedback.set('El contenido de Facilidades se guardo correctamente.');
+      this.facilitiesFeedback.set('El contenido de facilidades se guardó correctamente.');
     } catch (error) {
       this.facilitiesFeedbackTone.set('error');
       this.facilitiesFeedback.set(
-        this.resolveError(error, 'No fue posible guardar el contenido de Facilidades.')
+        this.resolveError(error, 'No fue posible guardar el contenido de facilidades.')
       );
 
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
@@ -246,6 +289,112 @@ export class DashboardComponent implements AfterViewInit {
     } finally {
       this.facilitiesSaving.set(false);
     }
+  }
+
+  async loadGettingThereContent(): Promise<void> {
+    this.gettingThereLoading.set(true);
+    this.clearGettingThereFeedback();
+
+    try {
+      const content = await firstValueFrom(this.gettingThereContentService.getContent());
+      this.applyGettingThereContent(content);
+    } catch (error) {
+      this.applyGettingThereContent(createDefaultGettingTherePageContent());
+      this.gettingThereFeedbackTone.set('error');
+      this.gettingThereFeedback.set(
+        this.resolveError(
+          error,
+          'No fue posible cargar el contenido de Cómo llegar. Se muestran los valores predeterminados.'
+        )
+      );
+    } finally {
+      this.gettingThereLoading.set(false);
+    }
+  }
+
+  async saveGettingThereContent(): Promise<void> {
+    this.gettingThereSaving.set(true);
+    this.clearGettingThereFeedback();
+
+    try {
+      const savedContent = await firstValueFrom(
+        this.gettingThereContentService.updateContent(this.buildGettingThereContentPayload())
+      );
+
+      this.applyGettingThereContent(savedContent);
+      this.gettingThereFeedbackTone.set('success');
+      this.gettingThereFeedback.set('El contenido de Cómo llegar se guardó correctamente.');
+    } catch (error) {
+      this.gettingThereFeedbackTone.set('error');
+      this.gettingThereFeedback.set(
+        this.resolveError(error, 'No fue posible guardar el contenido de Cómo llegar.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.gettingThereSaving.set(false);
+    }
+  }
+
+  async loadRoomAvailabilityToday(): Promise<void> {
+    this.availabilityLoading.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const summary = await firstValueFrom(this.roomAvailabilityService.getToday());
+      this.roomAvailabilitySummary.set(summary);
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible cargar el estado de habitaciones de hoy.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilityLoading.set(false);
+    }
+  }
+
+  async searchRoomAvailability(): Promise<void> {
+    this.availabilitySearching.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const result = await firstValueFrom(
+        this.roomAvailabilityService.search(
+          this.availabilityStartDate,
+          this.availabilityEndDate,
+          this.availabilityRoomTypeId
+        )
+      );
+
+      this.availabilitySearchResult.set(result);
+      this.availabilityFeedbackTone.set('success');
+      this.availabilityFeedback.set('Consulta de disponibilidad actualizada.');
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible consultar disponibilidad para esas fechas.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilitySearching.set(false);
+    }
+  }
+
+  async openRoomAvailabilityReportPreview(): Promise<void> {
+    await this.handleRoomAvailabilityReport('preview');
+  }
+
+  async downloadRoomAvailabilityReport(): Promise<void> {
+    await this.handleRoomAvailabilityReport('download');
   }
 
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
@@ -264,10 +413,14 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   activeMenuLabel(): string {
-    return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Home';
+    return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Inicio';
   }
 
   moduleSectionId(menuKey: DashboardModuleCard['key']): string {
+    if (menuKey === 'home-editor') {
+      return 'dashboard-home-editor';
+    }
+
     if (menuKey === 'about-us') {
       return 'dashboard-about-us';
     }
@@ -277,7 +430,7 @@ export class DashboardComponent implements AfterViewInit {
 
   formatDate(value: string | null | undefined): string {
     if (!value) {
-      return 'Aun sin registro';
+      return 'Aún sin registro';
     }
 
     const date = new Date(value);
@@ -291,6 +444,41 @@ export class DashboardComponent implements AfterViewInit {
     }).format(date);
   }
 
+  formatAvailabilityDate(value: string | null | undefined): string {
+    if (!value) {
+      return 'Sin fecha';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('es-CR', { dateStyle: 'full' }).format(date);
+  }
+
+  statusClass(statusName: string): string {
+    const normalized = statusName.trim().toLowerCase();
+
+    if (normalized === 'disponible') {
+      return 'status-available';
+    }
+
+    if (normalized === 'ocupada') {
+      return 'status-occupied';
+    }
+
+    return 'status-blocked';
+  }
+
+  formatUsd(value: number | null | undefined): string {
+    return new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2
+    }).format(value ?? 0);
+  }
+
   iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
     switch (icon) {
       case 'home':
@@ -299,6 +487,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
       case 'about-us':
         return 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-7 9a7 7 0 0 1 14 0M4 4h16v16H4z';
+      case 'home-editor':
+        return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1zM8 13h8M8 16h5';
       case 'reservations':
         return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
       case 'rooms':
@@ -350,6 +540,18 @@ export class DashboardComponent implements AfterViewInit {
     });
   }
 
+  private applyGettingThereContent(content: GettingTherePageContent): void {
+    this.gettingThereContent = cloneGettingTherePageContent(content);
+    this.gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
+  }
+
+  private buildGettingThereContentPayload(): GettingTherePageContent {
+    return cloneGettingTherePageContent({
+      ...this.gettingThereContent,
+      directionsItems: this.parseLines(this.gettingThereDirectionsItemsText)
+    });
+  }
+
   private parseLines(value: string): string[] {
     return value
       .split(/\r?\n/)
@@ -360,6 +562,102 @@ export class DashboardComponent implements AfterViewInit {
   private clearFacilitiesFeedback(): void {
     this.facilitiesFeedback.set('');
     this.facilitiesFeedbackTone.set('');
+  }
+
+  private clearGettingThereFeedback(): void {
+    this.gettingThereFeedback.set('');
+    this.gettingThereFeedbackTone.set('');
+  }
+
+  private clearAvailabilityFeedback(): void {
+    this.availabilityFeedback.set('');
+    this.availabilityFeedbackTone.set('');
+  }
+
+  private async handleRoomAvailabilityReport(mode: 'preview' | 'download'): Promise<void> {
+    this.availabilityReportBusy.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const report = await firstValueFrom(this.roomAvailabilityService.getTodayReport());
+      const file = new File([report.blob], report.fileName, { type: 'application/pdf' });
+
+      if (mode === 'preview') {
+        const previewOpened = this.openPdfPreview(file, report);
+        this.availabilityFeedbackTone.set('success');
+        this.availabilityFeedback.set(
+          previewOpened
+            ? 'El reporte PDF se generó con el estado actual de las habitaciones y se abrió en una nueva pestaña.'
+            : 'El navegador bloqueó la vista previa. El reporte PDF se descargó automáticamente.'
+        );
+      } else {
+        this.downloadPdfFile(file, report.fileName);
+        this.availabilityFeedbackTone.set('success');
+        this.availabilityFeedback.set('El reporte PDF se descargó correctamente.');
+      }
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible generar el reporte PDF del estado de habitaciones.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilityReportBusy.set(false);
+    }
+  }
+
+  private openPdfPreview(file: File, report: RoomAvailabilityReportResponse): boolean {
+    if (typeof window === 'undefined' || typeof URL === 'undefined') {
+      this.downloadPdfFile(file, report.fileName);
+      return false;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const previewWindow = window.open(objectUrl, '_blank', 'noopener');
+
+    if (!previewWindow) {
+      this.downloadPdfFile(file, report.fileName);
+      return false;
+    }
+
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    return true;
+  }
+
+  private downloadPdfFile(file: File, fileName: string): void {
+    if (typeof URL === 'undefined') {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const anchor = this.document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    anchor.rel = 'noopener';
+    anchor.click();
+
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
+  }
+
+  private todayInputValue(): string {
+    return this.dateInputValue(new Date());
+  }
+
+  private addDaysInputValue(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return this.dateInputValue(date);
+  }
+
+  private dateInputValue(date: Date): string {
+    return [
+      date.getFullYear(),
+      `${date.getMonth() + 1}`.padStart(2, '0'),
+      `${date.getDate()}`.padStart(2, '0')
+    ].join('-');
   }
 
   private syncActiveMenuItem(): void {

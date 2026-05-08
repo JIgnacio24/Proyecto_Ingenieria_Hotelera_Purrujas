@@ -1,0 +1,85 @@
+<section class="admin-home-shell">
+  <header class="admin-toolbar">
+    <div>
+      <p class="admin-eyebrow">Contenido del sitio</p>
+      <h1>Editar inicio</h1>
+      <span>Actualiza el hero principal del sitio del cliente.</span>
+    </div>
+
+    <div class="admin-actions">
+      <a class="secondary-button" routerLink="/panel">Volver al panel</a>
+      <button type="button" class="secondary-button" (click)="discard()" [disabled]="saving() || !hasChanges()">
+        Descartar
+      </button>
+      <button type="button" class="primary-button" (click)="save()" [disabled]="saving() || loading()">
+        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </header>
+
+  @if (feedback()) {
+    <p
+      class="admin-feedback"
+      [class.success-feedback]="feedbackTone() === 'success'"
+      [class.error-feedback]="feedbackTone() === 'error'"
+    >
+      {{ feedback() }}
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="loading-state">Cargando contenido del inicio...</p>
+  } @else {
+    <main class="home-editor-layout">
+      <section class="home-hero" [style.--hero-image]="'url(' + heroImagePreviewUrl + ')'">
+        <div class="hero-overlay"></div>
+        <div class="hero-leaves">
+          <span class="leaf leaf-1">🌿</span>
+          <span class="leaf leaf-2">🍃</span>
+          <span class="leaf leaf-3">🌿</span>
+        </div>
+        <div class="hero-content">
+          <p class="hero-eyebrow">{{ homeContent.heroEyebrow }}</p>
+          <h2 class="hero-title">{{ homeContent.heroTitle }}</h2>
+          <p class="hero-subtitle">{{ homeContent.heroSubtitle }}</p>
+          <div class="hero-divider"><span></span><span class="diamond">◆</span><span></span></div>
+        </div>
+      </section>
+
+      <form class="editor-panel" (ngSubmit)="save()">
+        <div class="panel-head">
+          <p>Hero principal</p>
+          <span>Estos campos reemplazan el texto visible sobre la imagen del inicio.</span>
+        </div>
+
+        <label class="field">
+          <span>Etiqueta</span>
+          <input type="text" name="heroEyebrow" [(ngModel)]="homeContent.heroEyebrow" (ngModelChange)="markChanged()" />
+        </label>
+
+        <label class="field">
+          <span>Título</span>
+          <input type="text" name="heroTitle" [(ngModel)]="homeContent.heroTitle" (ngModelChange)="markChanged()" />
+        </label>
+
+        <label class="field">
+          <span>Subtítulo</span>
+          <textarea rows="3" name="heroSubtitle" [(ngModel)]="homeContent.heroSubtitle" (ngModelChange)="markChanged()"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Imagen de fondo</span>
+          <input #imageInput type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" (change)="onHeroImageSelected($event)" />
+          @if (imageError()) {
+            <small class="field-error">{{ imageError() }}</small>
+          }
+        </label>
+
+        <div class="image-meta">
+          <strong>{{ heroImage?.name || 'Sin imagen asignada' }}</strong>
+          <span>Categoría: fondo</span>
+        </div>
+      </form>
+    </main>
+  }
+</section>

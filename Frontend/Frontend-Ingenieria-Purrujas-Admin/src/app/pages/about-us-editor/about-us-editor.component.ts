@@ -4,21 +4,16 @@ import { AfterViewInit, Component, Pipe, PipeTransform, inject, signal } from '@
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import {
   AboutUsContentService,
   AboutUsPageContent,
   cloneAboutUsPageContent,
   createDefaultAboutUsPageContent
 } from '../../core/about-us-content.service';
+import { GalleryImage, GalleryImagesService } from '../../core/gallery-images.service';
 
 type EditableBlock = 'history' | 'team' | 'director' | 'philosophy' | 'mvv' | 'gallery' | null;
-
-interface GalleryItem {
-  src: string;
-  alt: string;
-  caption: string;
-  category: 'hotel' | 'lugares';
-}
 
 @Pipe({
   name: 'replaceNewlines',
@@ -49,11 +44,18 @@ export class ReplaceNewlinesPipe implements PipeTransform {
 export class AboutUsEditorComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly aboutUsContentService = inject(AboutUsContentService);
+  private readonly galleryImagesService = inject(GalleryImagesService);
+  private readonly apiAssetBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
+  private readonly selectedGalleryFiles = new Map<number, File>();
+  private readonly changedGalleryImageIds = new Set<number>();
+  private readonly galleryImageErrors = new Map<number, string>();
 
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly feedback = signal('');
   readonly feedbackTone = signal<'success' | 'error' | ''>('');
+  readonly inlineFeedback = signal('');
+  readonly inlineFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly editingBlock = signal<EditableBlock>(null);
   readonly hasChanges = signal(false);
 
@@ -62,92 +64,21 @@ export class AboutUsEditorComponent implements AfterViewInit {
   originalContent: AboutUsPageContent = createDefaultAboutUsPageContent();
   aboutUsValuesText = this.aboutUsContent.values.join('\n');
   historyMilestonesText = this.aboutUsContent.historyMilestones.join('\n');
+  galleryItems: GalleryImage[] = [];
 
-  readonly galleryItems: GalleryItem[] = [
-    {
-      src: '/images/foto_fondo.png',
-      alt: 'Hotel Las Purrujas',
-      caption: 'Hotel Las Purrujas',
-      category: 'hotel'
-    },
-    {
-      src: '/images/habitaciÃ³n_doble.png',
-      alt: 'Habitacion doble',
-      caption: 'Habitacion doble',
-      category: 'hotel'
-    },
-    {
-      src: '/images/habitacion_doble_2.png',
-      alt: 'Habitacion doble con vista',
-      caption: 'Habitacion doble con vista balcon',
-      category: 'hotel'
-    },
-    {
-      src: '/images/piscinas_naturales.png',
-      alt: 'Piscinas naturales del hotel',
-      caption: 'Piscinas naturales',
-      category: 'hotel'
-    },
-    {
-      src: '/images/restaurante_la_ceiba.png',
-      alt: 'Restaurante La Ceiba',
-      caption: 'Restaurante La Ceiba',
-      category: 'hotel'
-    },
-    {
-      src: '/images/spa.png',
-      alt: 'Spa y bienestar',
-      caption: 'Spa y bienestar',
-      category: 'hotel'
-    },
-    {
-      src: '/images/vista_balcon.png',
-      alt: 'Vista desde el balcon',
-      caption: 'Vista desde el balcon',
-      category: 'hotel'
-    },
-    {
-      src: '/images/villa_familiar.png',
-      alt: 'Villa familiar',
-      caption: 'Villa familiar',
-      category: 'hotel'
-    },
-    {
-      src: '/images/gastronomia_tipica.png',
-      alt: 'Gastronomia tipica',
-      caption: 'Gastronomia tipica',
-      category: 'hotel'
-    },
-    {
-      src: '/images/avistamiento_aves.png',
-      alt: 'Avistamiento de aves en los alrededores',
-      caption: 'Avistamiento de aves',
-      category: 'lugares'
-    },
-    {
-      src: '/images/senderismo_volcan.png',
-      alt: 'Senderismo en el volcan Turrialba',
-      caption: 'Senderismo en el volcan',
-      category: 'lugares'
-    },
-    {
-      src: '/images/senderos.png',
-      alt: 'Senderos ecologicos de la zona',
-      caption: 'Senderos ecologicos',
-      category: 'lugares'
-    }
-  ];
-
-  get filteredItems(): GalleryItem[] {
+  get filteredItems(): GalleryImage[] {
     if (this.activeFilter === 'todos') {
-      return this.galleryItems;
+      return this.galleryItems.filter(
+        (item) => item.id !== 3 && (item.category === 'hotel' || item.category === 'lugares')
+      );
     }
 
-    return this.galleryItems.filter((item) => item.category === this.activeFilter);
+    return this.galleryItems.filter((item) => item.id !== 3 && item.category === this.activeFilter);
   }
 
   constructor() {
     void this.loadContent();
+    void this.loadGalleryImages();
   }
 
   ngAfterViewInit(): void {
@@ -169,7 +100,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
       this.applyContent(createDefaultAboutUsPageContent());
       this.feedbackTone.set('error');
       this.feedback.set(
-        this.resolveError(error, 'No fue posible cargar el contenido. Se muestran los valores base.')
+        this.resolveError(error, 'No fue posible cargar el contenido. Se muestran los valores predeterminados.')
       );
     } finally {
       this.loading.set(false);
@@ -177,7 +108,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
   }
 
   async saveContent(): Promise<void> {
-    // Persiste el contenido completo; el cliente lo consumira en su siguiente lectura del endpoint.
+    // Persiste el contenido completo; el cliente lo consumirá en su siguiente lectura del endpoint.
     this.saving.set(true);
     this.clearFeedback();
 
@@ -186,15 +117,20 @@ export class AboutUsEditorComponent implements AfterViewInit {
         this.aboutUsContentService.updateContent(this.buildPayload())
       );
 
+      await this.saveChangedGalleryImages();
       this.applyContent(savedContent);
+      await this.loadGalleryImages();
       this.hasChanges.set(false);
       this.editingBlock.set(null);
       this.feedbackTone.set('success');
-      this.feedback.set('Los cambios de Sobre Nosotros se guardaron correctamente.');
+      this.feedback.set('Los cambios de Sobre nosotros se guardaron correctamente.');
       this.scrollToTop();
     } catch (error) {
       this.feedbackTone.set('error');
-      this.feedback.set(this.resolveError(error, 'No fue posible guardar los cambios.'));
+      const message = this.resolveError(error, 'No fue posible guardar los cambios.');
+      this.feedback.set(message);
+      this.inlineFeedbackTone.set('error');
+      this.inlineFeedback.set(message);
     } finally {
       this.saving.set(false);
     }
@@ -205,10 +141,16 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.aboutUsContent = cloneAboutUsPageContent(this.originalContent);
     this.aboutUsValuesText = this.aboutUsContent.values.join('\n');
     this.historyMilestonesText = this.aboutUsContent.historyMilestones.join('\n');
+    this.selectedGalleryFiles.clear();
+    this.changedGalleryImageIds.clear();
+    this.galleryImageErrors.clear();
     this.hasChanges.set(false);
     this.editingBlock.set(null);
     this.feedbackTone.set('');
-    this.feedback.set('Cambios descartados.');
+    this.feedback.set('Los cambios fueron descartados.');
+    this.inlineFeedback.set('');
+    this.inlineFeedbackTone.set('');
+    void this.loadGalleryImages();
     this.scrollToTop();
   }
 
@@ -221,12 +163,55 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.activeFilter = filter;
   }
 
-  trackBySrc(_index: number, item: GalleryItem): string {
-    return item.src;
+  trackBySrc(_index: number, item: GalleryImage): string {
+    return String(item.id);
   }
 
   markChanged(): void {
     this.hasChanges.set(true);
+  }
+
+  imageUrl(src: string): string {
+    if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:')) {
+      return src;
+    }
+
+    return `${this.apiAssetBaseUrl}${src}`;
+  }
+
+  updateGalleryImage(image: GalleryImage): void {
+    this.changedGalleryImageIds.add(image.id);
+    this.markChanged();
+  }
+
+  onGalleryImageFileSelected(event: Event, image: GalleryImage): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowedExtensions.includes(extension)) {
+      this.galleryImageErrors.set(
+        image.id,
+        'Formato no permitido. Usa una imagen JPG, PNG o WEBP.'
+      );
+      this.selectedGalleryFiles.delete(image.id);
+      input.value = '';
+      return;
+    }
+
+    this.galleryImageErrors.delete(image.id);
+    this.selectedGalleryFiles.set(image.id, file);
+    this.changedGalleryImageIds.add(image.id);
+    image.src = URL.createObjectURL(file);
+    this.markChanged();
+  }
+
+  galleryImageError(imageId: number): string {
+    return this.galleryImageErrors.get(imageId) ?? '';
   }
 
   getInitials(name: string): string {
@@ -246,6 +231,18 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.historyMilestonesText = this.aboutUsContent.historyMilestones.join('\n');
   }
 
+  private async loadGalleryImages(): Promise<void> {
+    try {
+      this.galleryItems = await firstValueFrom(this.galleryImagesService.getAll());
+    } catch (error) {
+      const message = this.resolveError(error, 'No fue posible cargar las imágenes de la galería.');
+      this.feedbackTone.set('error');
+      this.feedback.set(message);
+      this.inlineFeedbackTone.set('error');
+      this.inlineFeedback.set(message);
+    }
+  }
+
   private buildPayload(): AboutUsPageContent {
     // Convierte los campos multilinea del editor en listas del contrato AboutUsPageContent.
     return cloneAboutUsPageContent({
@@ -253,6 +250,25 @@ export class AboutUsEditorComponent implements AfterViewInit {
       historyMilestones: this.parseLines(this.historyMilestonesText),
       values: this.parseLines(this.aboutUsValuesText)
     });
+  }
+
+  private async saveChangedGalleryImages(): Promise<void> {
+    const changedImages = this.galleryItems.filter((image) => this.changedGalleryImageIds.has(image.id));
+
+    for (const image of changedImages) {
+      await firstValueFrom(
+        this.galleryImagesService.update(image.id, {
+          name: image.name,
+          alt: image.alt,
+          caption: image.caption,
+          category: image.category,
+          file: this.selectedGalleryFiles.get(image.id) ?? null
+        })
+      );
+    }
+
+    this.selectedGalleryFiles.clear();
+    this.changedGalleryImageIds.clear();
   }
 
   private parseLines(value: string): string[] {
@@ -265,6 +281,8 @@ export class AboutUsEditorComponent implements AfterViewInit {
   private clearFeedback(): void {
     this.feedback.set('');
     this.feedbackTone.set('');
+    this.inlineFeedback.set('');
+    this.inlineFeedbackTone.set('');
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {

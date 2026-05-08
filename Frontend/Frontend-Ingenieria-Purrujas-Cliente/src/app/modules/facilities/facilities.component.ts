@@ -6,6 +6,8 @@ import {
   FacilitiesContentService,
   FacilitiesPageContent
 } from '../../services/facilities-content.service';
+import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
+
 
 type FacilityServiceViewModel = {
   title: string;
@@ -16,66 +18,18 @@ type FacilityServiceViewModel = {
 };
 
 const FACILITY_SERVICE_MEDIA = [
-  {
-    imageUrl: '/images/habitacion_doble_2.png',
-    imageAlt: 'Habitaciones tematicas con vista al bosque',
-    animationClass: ''
-  },
-  {
-    imageUrl: '/images/restaurante_la_ceiba.png',
-    imageAlt: 'Restaurante La Ceiba con ingredientes de finca',
-    animationClass: 'delay-1'
-  },
-  {
-    imageUrl: '/images/piscinas_naturales.png',
-    imageAlt: 'Piscina natural de manantial',
-    animationClass: 'delay-2'
-  },
-  {
-    imageUrl: '/images/senderos.png',
-    imageAlt: 'Senderos ecologicos privados',
-    animationClass: 'delay-3'
-  },
-  {
-    imageUrl: '/images/salon_eventos.png',
-    imageAlt: 'Salon de eventos rodeado de naturaleza',
-    animationClass: ''
-  },
-  {
-    imageUrl: '/images/spa.png',
-    imageAlt: 'Spa con plantas locales',
-    animationClass: 'delay-1'
-  },
-  {
-    imageUrl: '/images/senderismo_volcan.png',
-    imageAlt: 'Tour al Volcan Turrialba e Irazu',
-    animationClass: 'delay-2'
-  },
-  {
-    imageUrl: '/images/avistamiento_aves.png',
-    imageAlt: 'Birdwatching con guias certificados',
-    animationClass: 'delay-3'
-  },
-  {
-    imageUrl: '/images/gastronomia_tipica.png',
-    imageAlt: 'Talleres de gastronomia tipica',
-    animationClass: ''
-  },
-  {
-    imageUrl: '/images/transporte.png',
-    imageAlt: 'Transporte privado desde San Jose',
-    animationClass: 'delay-1'
-  },
-  {
-    imageUrl: '/images/internet.png',
-    imageAlt: 'Wi-Fi de alta velocidad en el hotel',
-    animationClass: 'delay-2'
-  },
-  {
-    imageUrl: '/images/atencion_personalizada.png',
-    imageAlt: 'Atencion personalizada todo el dia',
-    animationClass: 'delay-3'
-  }
+  { imageName: 'habitacion_doble_2.png', animationClass: '' },
+  { imageName: 'restaurante_la_ceiba.png', animationClass: 'delay-1' },
+  { imageName: 'piscinas_naturales.png', animationClass: 'delay-2' },
+  { imageName: 'senderos.png', animationClass: 'delay-3' },
+  { imageName: 'salon_eventos.png', animationClass: '' },
+  { imageName: 'spa.png', animationClass: 'delay-1' },
+  { imageName: 'senderismo_volcan.png', animationClass: 'delay-2' },
+  { imageName: 'avistamiento_aves.png', animationClass: 'delay-3' },
+  { imageName: 'gastronomia_tipica.png', animationClass: '' },
+  { imageName: 'transporte.png', animationClass: 'delay-1' },
+  { imageName: 'internet.png', animationClass: 'delay-2' },
+  { imageName: 'atencion_personalizada.png', animationClass: 'delay-3' }
 ] as const;
 
 @Component({
@@ -87,26 +41,41 @@ const FACILITY_SERVICE_MEDIA = [
 })
 export class FacilitiesComponent {
   private readonly facilitiesContentService = inject(FacilitiesContentService);
+  private readonly galleryImagesService = inject(GalleryImagesService);
 
   readonly content = signal<FacilitiesPageContent>(createDefaultFacilitiesPageContent());
-  readonly serviceCards = computed<FacilityServiceViewModel[]>(() =>
-    this.content()
+  readonly galleryImages = signal<GalleryImage[]>([]);
+  readonly serviceCards = computed<FacilityServiceViewModel[]>(() => {
+    const images = this.galleryImages();
+
+    return this.content()
       .serviceCards.slice(0, FACILITY_SERVICE_MEDIA.length)
-      .map((service, index) => ({
-        title: service.title,
-        description: service.description,
-        imageUrl: FACILITY_SERVICE_MEDIA[index].imageUrl,
-        imageAlt: FACILITY_SERVICE_MEDIA[index].imageAlt,
-        animationClass: FACILITY_SERVICE_MEDIA[index].animationClass
-      }))
-  );
+      .map((service, index) => {
+        const media = FACILITY_SERVICE_MEDIA[index];
+        const image = images.find((item) => item.name === media.imageName);
+
+        return {
+          title: service.title,
+          description: service.description,
+          imageUrl: image ? `http://localhost:5232${image.src}` : '',
+          imageAlt: image?.alt ?? service.title,
+          animationClass: media.animationClass
+        };
+      });
+  });
 
   constructor() {
     void this.loadContent();
+    void this.loadGalleryImages();
   }
 
   private async loadContent(): Promise<void> {
     const content = await firstValueFrom(this.facilitiesContentService.getContent());
     this.content.set(content);
+  }
+
+  private async loadGalleryImages(): Promise<void> {
+    const images = await firstValueFrom(this.galleryImagesService.getAll());
+    this.galleryImages.set(images);
   }
 }
