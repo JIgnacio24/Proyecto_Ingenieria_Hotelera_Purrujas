@@ -127,9 +127,11 @@ export class DashboardComponent implements AfterViewInit {
     {
       key: 'reservations',
       title: 'Listado de reservaciones',
-      status: 'Pendiente de interfaz',
+      status: 'Disponible',
       description:
-        'Espacio reservado para mostrar reservas, filtros por fecha y detalle del cliente cuando ese modulo se conecte.'
+        'Ver y gestionar todas las reservas en línea. Actualiza el estado de cada reservación desde la vista de lista.',
+      link: '/panel/reservas',
+      actionLabel: 'Ver reservaciones'
     },
     {
       key: 'rooms',

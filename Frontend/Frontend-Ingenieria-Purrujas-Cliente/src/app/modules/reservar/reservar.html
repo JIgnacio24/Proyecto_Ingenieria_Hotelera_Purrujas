@@ -1,0 +1,270 @@
+<section class="reservar-hero">
+  <div class="container">
+    <span class="section-tag">Reserva en línea</span>
+    <h1 class="section-title">Confirma tu estancia</h1>
+    <p class="section-subtext">
+      Elige tu habitación, fechas y completa tus datos para reservar. Verificamos disponibilidad en tiempo real.
+    </p>
+  </div>
+</section>
+
+<!-- SUCCESS STATE -->
+<section class="section" *ngIf="submitState === 'success' && confirmedReservation">
+  <div class="container">
+    <div class="confirmation-card" role="alert" aria-live="polite">
+      <div class="confirmation-icon" aria-hidden="true">✓</div>
+      <h2 class="confirmation-title">¡Reserva confirmada!</h2>
+      <p class="confirmation-id">Número de reserva: <strong>#{{ confirmedReservation.reservationId }}</strong></p>
+
+      <div class="confirmation-details">
+        <div class="detail-row">
+          <span class="detail-label">Habitación</span>
+          <span class="detail-value">{{ confirmedReservation.roomTypeName }} — {{ confirmedReservation.roomNumber }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Huésped</span>
+          <span class="detail-value">{{ confirmedReservation.customerFullName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Entrada</span>
+          <span class="detail-value">{{ formatDisplayDate(confirmedReservation.startDate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Salida</span>
+          <span class="detail-value">{{ formatDisplayDate(confirmedReservation.endDate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Noches</span>
+          <span class="detail-value">{{ confirmedReservation.nightsTotal }}</span>
+        </div>
+        <div class="detail-row total-row">
+          <span class="detail-label">Total estimado</span>
+          <span class="detail-value total-value">${{ confirmedReservation.totalUsd | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <p class="confirmation-note">
+        Te hemos enviado los detalles a <strong>{{ confirmedReservation.customerEmail }}</strong>.
+        Un representante confirmará tu reserva en las próximas horas.
+      </p>
+
+      <div class="confirmation-actions">
+        <a routerLink="/" class="cta-button">Volver al inicio</a>
+        <button class="btn-secondary" (click)="resetForm()">Hacer otra reserva</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN FORM -->
+<section class="section reservar-body" *ngIf="submitState !== 'success'">
+  <div class="container reservar-grid">
+
+    <!-- LEFT: Estancia -->
+    <div class="reservar-card">
+      <h2 class="card-section-title">Tu estancia</h2>
+
+      <!-- Room type selection -->
+      <div class="form-field">
+        <label class="field-label">Tipo de habitación</label>
+        <div class="room-cards" role="group" aria-label="Tipo de habitación">
+          <button
+            *ngFor="let room of habitaciones"
+            type="button"
+            class="room-option"
+            [class.room-option--selected]="selectedRoom.id === room.id"
+            (click)="selectRoom(room)"
+            [attr.aria-pressed]="selectedRoom.id === room.id">
+            <span class="room-icon" aria-hidden="true">{{ room.icon }}</span>
+            <div class="room-info">
+              <strong class="room-name">{{ room.nombre }}</strong>
+              <span class="room-capacity">{{ room.capacidad }}</span>
+              <span class="room-price">${{ room.precioBaja }}/noche</span>
+            </div>
+          </button>
+        </div>
+        <p class="field-hint">{{ selectedRoom.descripcion }}</p>
+      </div>
+
+      <!-- Currency -->
+      <div class="form-field">
+        <label for="moneda" class="field-label">Moneda</label>
+        <select id="moneda" [value]="currency" (change)="onCurrencyChange($any($event.target).value)">
+          <option value="USD">Dólares (USD)</option>
+          <option value="CRC">Colones (CRC)</option>
+        </select>
+      </div>
+
+      <!-- Dates -->
+      <div class="date-row">
+        <div class="form-field">
+          <label for="fechaEntrada" class="field-label">Fecha de entrada</label>
+          <input
+            id="fechaEntrada"
+            type="date"
+            [(ngModel)]="fechaInicio"
+            [min]="minStartDate"
+            (change)="onDateChange()"
+            required
+            aria-required="true">
+        </div>
+        <div class="form-field">
+          <label for="fechaSalida" class="field-label">Fecha de salida</label>
+          <input
+            id="fechaSalida"
+            type="date"
+            [(ngModel)]="fechaFin"
+            [min]="minEndDate"
+            (change)="onDateChange()"
+            required
+            aria-required="true">
+        </div>
+      </div>
+
+      <!-- Availability badge -->
+      <div class="availability-row" *ngIf="availabilityStatus !== 'idle'">
+        <span class="availability-badge availability-badge--checking" *ngIf="availabilityStatus === 'checking'">
+          <span class="badge-dot badge-dot--pulse" aria-hidden="true"></span>
+          Verificando disponibilidad...
+        </span>
+        <span class="availability-badge availability-badge--available" *ngIf="availabilityStatus === 'available'" role="status">
+          <span class="badge-dot" aria-hidden="true"></span>
+          Disponible — {{ availableRooms }} {{ availableRooms === 1 ? 'habitación' : 'habitaciones' }}
+        </span>
+        <span class="availability-badge availability-badge--unavailable" *ngIf="availabilityStatus === 'unavailable'" role="alert">
+          <span class="badge-dot" aria-hidden="true"></span>
+          {{ availabilityError || 'Sin disponibilidad para esas fechas' }}
+        </span>
+      </div>
+
+      <!-- Quote summary -->
+      <div class="quote-summary" *ngIf="nochesTotales > 0">
+        <div class="summary-item">
+          <div class="summary-value">{{ nochesTotales }}</div>
+          <div class="summary-label">Noches totales</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value">{{ nochesAlta }}</div>
+          <div class="summary-label">Temporada alta</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value">{{ nochesBaja }}</div>
+          <div class="summary-label">Temporada baja</div>
+        </div>
+      </div>
+
+      <div class="price-display" *ngIf="nochesTotales > 0">
+        <span class="price-label">Total estimado ({{ nochesTotales }} {{ nochesTotales === 1 ? 'noche' : 'noches' }})</span>
+        <strong class="price-amount">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
+      </div>
+
+      <div class="quote-error" *ngIf="quoteError" role="alert">{{ quoteError }}</div>
+    </div>
+
+    <!-- RIGHT: Guest form -->
+    <div class="reservar-card guest-card">
+      <h2 class="card-section-title">Datos del huésped</h2>
+
+      <form [formGroup]="guestForm" (ngSubmit)="submitReservation()" novalidate>
+
+        <div class="name-row">
+          <div class="form-field">
+            <label for="nombre" class="field-label">Nombre <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="nombre"
+              type="text"
+              formControlName="name"
+              placeholder="Tu nombre"
+              autocomplete="given-name"
+              aria-required="true"
+              [attr.aria-invalid]="guestForm.get('name')?.invalid && guestForm.get('name')?.touched">
+            <span class="field-error" *ngIf="fieldError('name')" role="alert">{{ fieldError('name') }}</span>
+          </div>
+          <div class="form-field">
+            <label for="apellido" class="field-label">Apellido <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="apellido"
+              type="text"
+              formControlName="lastName"
+              placeholder="Tu apellido"
+              autocomplete="family-name"
+              aria-required="true"
+              [attr.aria-invalid]="guestForm.get('lastName')?.invalid && guestForm.get('lastName')?.touched">
+            <span class="field-error" *ngIf="fieldError('lastName')" role="alert">{{ fieldError('lastName') }}</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="email" class="field-label">Correo electrónico <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="tu.correo@ejemplo.com"
+            autocomplete="email"
+            aria-required="true"
+            [attr.aria-invalid]="guestForm.get('email')?.invalid && guestForm.get('email')?.touched">
+          <span class="field-error" *ngIf="fieldError('email')" role="alert">{{ fieldError('email') }}</span>
+        </div>
+
+        <div class="form-field">
+          <label for="telefono" class="field-label">Teléfono <span class="optional-tag">(opcional)</span></label>
+          <input
+            id="telefono"
+            type="tel"
+            formControlName="phone"
+            placeholder="8888-0000"
+            autocomplete="tel">
+        </div>
+
+        <div class="form-field">
+          <label for="tarjeta" class="field-label">
+            Número de tarjeta <span class="required" aria-hidden="true">*</span>
+          </label>
+          <div class="card-input-wrap">
+            <span class="card-icon" aria-hidden="true">💳</span>
+            <input
+              id="tarjeta"
+              type="text"
+              formControlName="creditCard"
+              placeholder="Solo números, 13-19 dígitos"
+              autocomplete="cc-number"
+              inputmode="numeric"
+              maxlength="19"
+              aria-required="true"
+              [attr.aria-invalid]="guestForm.get('creditCard')?.invalid && guestForm.get('creditCard')?.touched">
+          </div>
+          <span class="field-error" *ngIf="fieldError('creditCard')" role="alert">{{ fieldError('creditCard') }}</span>
+          <span class="privacy-note">🔒 Tus datos se almacenan de forma segura.</span>
+        </div>
+
+        <!-- Submit error -->
+        <div class="submit-error" *ngIf="submitState === 'error' && submitError" role="alert" aria-live="assertive">
+          {{ submitError }}
+        </div>
+
+        <button
+          type="submit"
+          class="cta-button cta-button--full"
+          [disabled]="!canSubmit"
+          [attr.aria-busy]="submitState === 'loading'"
+          [class.cta-button--loading]="submitState === 'loading'">
+          <span *ngIf="submitState !== 'loading'">Confirmar reserva</span>
+          <span *ngIf="submitState === 'loading'" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            Procesando...
+          </span>
+        </button>
+
+        <p class="unavailable-note" *ngIf="availabilityStatus === 'unavailable' && !availabilityError">
+          No hay habitaciones del tipo seleccionado disponibles para esas fechas. Por favor elige otras fechas o un tipo diferente.
+        </p>
+
+        <p class="select-dates-note" *ngIf="availabilityStatus === 'idle' && !fechaInicio">
+          Selecciona las fechas de tu estancia para verificar disponibilidad y precio.
+        </p>
+      </form>
+    </div>
+
+  </div>
+</section>

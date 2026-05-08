@@ -1,0 +1,98 @@
+<div class="reservations-page">
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/panel" class="back-link">← Panel</a>
+      <h1 class="page-title">Reservaciones</h1>
+    </div>
+    <p class="page-subtitle">Gestión de reservas en línea. Actualiza el estado de cada reserva.</p>
+  </header>
+
+  <!-- FEEDBACK -->
+  <div
+    class="feedback-banner"
+    *ngIf="updateFeedback()"
+    [class.feedback-banner--success]="updateFeedbackTone() === 'success'"
+    [class.feedback-banner--error]="updateFeedbackTone() === 'error'"
+    role="alert"
+    aria-live="polite">
+    {{ updateFeedback() }}
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-banner" *ngIf="error()" role="alert">
+    {{ error() }}
+  </div>
+
+  <!-- STATUS FILTER TABS -->
+  <div class="filter-tabs" *ngIf="!loading() && !error()" role="group" aria-label="Filtrar por estado">
+    <button
+      *ngFor="let s of statusOptions"
+      class="filter-tab"
+      [class.filter-tab--active]="statusFilter() === s"
+      (click)="setFilter(s)"
+      type="button">
+      {{ s === 'todas' ? 'Todas' : s }}
+      <span class="tab-count">{{ countByStatus(s) }}</span>
+    </button>
+  </div>
+
+  <!-- SKELETON LOADING -->
+  <div class="skeleton-list" *ngIf="loading()" aria-label="Cargando reservaciones">
+    <div class="skeleton-row" *ngFor="let i of [1,2,3,4]"></div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" *ngIf="!loading() && !error() && filteredReservations.length === 0">
+    <p>No hay reservaciones{{ statusFilter() !== 'todas' ? ' con estado "' + statusFilter() + '"' : '' }}.</p>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrapper" *ngIf="!loading() && !error() && filteredReservations.length > 0">
+    <table class="reservations-table" aria-label="Lista de reservaciones">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Cliente</th>
+          <th scope="col">Habitación</th>
+          <th scope="col">Entrada</th>
+          <th scope="col">Salida</th>
+          <th scope="col">Noches</th>
+          <th scope="col">Total (USD)</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Cambiar estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filteredReservations">
+          <td class="id-cell">{{ r.reservationId }}</td>
+          <td>
+            <div class="customer-name">{{ r.customerFullName }}</div>
+            <div class="customer-email">{{ r.customerEmail }}</div>
+          </td>
+          <td>
+            <div>{{ r.roomTypeName }}</div>
+            <div class="room-number">Hab. {{ r.roomNumber }}</div>
+          </td>
+          <td>{{ formatDate(r.startDate) }}</td>
+          <td>{{ formatDate(r.endDate) }}</td>
+          <td class="center">{{ r.nightsTotal }}</td>
+          <td class="amount">${{ r.totalUsd | number:'1.2-2' }}</td>
+          <td>
+            <span [class]="statusClass(r.status)">{{ r.status }}</span>
+          </td>
+          <td>
+            <select
+              class="status-select"
+              [value]="r.status"
+              [disabled]="updatingId() === r.reservationId || r.status === 'Finalizada'"
+              (change)="updateStatus(r, $any($event.target).value)"
+              [attr.aria-label]="'Cambiar estado de reserva ' + r.reservationId"
+              [attr.aria-busy]="updatingId() === r.reservationId">
+              <option *ngFor="let s of changeableStatuses" [value]="s">{{ s }}</option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

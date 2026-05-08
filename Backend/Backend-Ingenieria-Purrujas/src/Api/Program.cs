@@ -1,5 +1,6 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
+using Backend_Ingenieria_Purrujas.Application.Reservations;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 using DotNetEnv;
@@ -90,6 +91,10 @@ builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageConte
 builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 var app = builder.Build();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
