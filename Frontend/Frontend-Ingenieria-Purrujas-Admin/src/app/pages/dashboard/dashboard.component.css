@@ -634,6 +634,14 @@ button:disabled {
   align-items: flex-start;
 }
 
+.availability-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .availability-hero {
   display: flex;
   justify-content: space-between;
@@ -955,6 +963,7 @@ button:disabled {
   .topbar-actions,
   .hero-actions,
   .availability-header,
+  .availability-actions,
   .availability-hero,
   .editor-header,
   .editor-toolbar,

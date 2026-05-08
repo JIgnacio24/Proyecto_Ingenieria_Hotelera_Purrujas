@@ -148,14 +148,34 @@
           <span>Estado operativo del dia actual y consulta por fecha desde la base de datos.</span>
         </div>
 
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="loadRoomAvailabilityToday()"
-          [disabled]="availabilityLoading()"
-        >
-          {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
-        </button>
+        <div class="availability-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadRoomAvailabilityToday()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
+          </button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="downloadRoomAvailabilityReport()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Descargar PDF' }}
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            (click)="openRoomAvailabilityReportPreview()"
+            [disabled]="availabilityLoading() || availabilityReportBusy()"
+          >
+            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Ver reporte PDF' }}
+          </button>
+        </div>
       </div>
 
       @if (availabilityFeedback()) {

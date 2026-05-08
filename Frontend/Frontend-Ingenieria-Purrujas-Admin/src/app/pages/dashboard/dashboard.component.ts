@@ -20,6 +20,7 @@ import {
   GettingTherePageContent
 } from '../../core/getting-there-content.service';
 import {
+  RoomAvailabilityReportResponse,
   RoomAvailabilitySearchResult,
   RoomAvailabilityService,
   RoomAvailabilitySummary
@@ -192,6 +193,7 @@ export class DashboardComponent implements AfterViewInit {
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
   readonly availabilityLoading = signal(true);
   readonly availabilitySearching = signal(false);
+  readonly availabilityReportBusy = signal(false);
   readonly availabilityFeedback = signal('');
   readonly availabilityFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly roomAvailabilitySummary = signal<RoomAvailabilitySummary | null>(null);
@@ -385,6 +387,14 @@ export class DashboardComponent implements AfterViewInit {
     }
   }
 
+  async openRoomAvailabilityReportPreview(): Promise<void> {
+    await this.handleRoomAvailabilityReport('preview');
+  }
+
+  async downloadRoomAvailabilityReport(): Promise<void> {
+    await this.handleRoomAvailabilityReport('download');
+  }
+
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
@@ -560,6 +570,74 @@ export class DashboardComponent implements AfterViewInit {
   private clearAvailabilityFeedback(): void {
     this.availabilityFeedback.set('');
     this.availabilityFeedbackTone.set('');
+  }
+
+  private async handleRoomAvailabilityReport(mode: 'preview' | 'download'): Promise<void> {
+    this.availabilityReportBusy.set(true);
+    this.clearAvailabilityFeedback();
+
+    try {
+      const report = await firstValueFrom(this.roomAvailabilityService.getTodayReport());
+      const file = new File([report.blob], report.fileName, { type: 'application/pdf' });
+
+      if (mode === 'preview') {
+        const previewOpened = this.openPdfPreview(file, report);
+        this.availabilityFeedbackTone.set('success');
+        this.availabilityFeedback.set(
+          previewOpened
+            ? 'El reporte PDF se genero con el estado actual de las habitaciones y se abrio en una nueva pestana.'
+            : 'El navegador bloqueo la vista previa. El reporte PDF se descargo automaticamente.'
+        );
+      } else {
+        this.downloadPdfFile(file, report.fileName);
+        this.availabilityFeedbackTone.set('success');
+        this.availabilityFeedback.set('El reporte PDF se descargo correctamente.');
+      }
+    } catch (error) {
+      this.availabilityFeedbackTone.set('error');
+      this.availabilityFeedback.set(
+        this.resolveError(error, 'No fue posible generar el reporte PDF del estado de habitaciones.')
+      );
+
+      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+        this.authService.logout();
+      }
+    } finally {
+      this.availabilityReportBusy.set(false);
+    }
+  }
+
+  private openPdfPreview(file: File, report: RoomAvailabilityReportResponse): boolean {
+    if (typeof window === 'undefined' || typeof URL === 'undefined') {
+      this.downloadPdfFile(file, report.fileName);
+      return false;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const previewWindow = window.open(objectUrl, '_blank', 'noopener');
+
+    if (!previewWindow) {
+      this.downloadPdfFile(file, report.fileName);
+      return false;
+    }
+
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    return true;
+  }
+
+  private downloadPdfFile(file: File, fileName: string): void {
+    if (typeof URL === 'undefined') {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const anchor = this.document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    anchor.rel = 'noopener';
+    anchor.click();
+
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
   }
 
   private todayInputValue(): string {

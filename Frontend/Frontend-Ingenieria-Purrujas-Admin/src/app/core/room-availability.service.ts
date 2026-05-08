@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface RoomTypeOption {
@@ -49,6 +49,11 @@ export interface RoomAvailabilitySearchResult {
   rooms: RoomAvailabilityItem[];
 }
 
+export interface RoomAvailabilityReportResponse {
+  blob: Blob;
+  fileName: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RoomAvailabilityService {
   private readonly http = inject(HttpClient);
@@ -75,5 +80,31 @@ export class RoomAvailabilityService {
       `${this.apiBaseUrl}/admin/room-availability/search`,
       { params }
     );
+  }
+
+  getTodayReport(): Observable<RoomAvailabilityReportResponse> {
+    return this.http
+      .get(`${this.apiBaseUrl}/admin/room-availability/today/report`, {
+        observe: 'response',
+        responseType: 'blob'
+      })
+      .pipe(
+        map((response: HttpResponse<Blob>) => ({
+          blob: response.body ?? new Blob([], { type: 'application/pdf' }),
+          fileName: this.resolvePdfFileName(response)
+        }))
+      );
+  }
+
+  private resolvePdfFileName(response: HttpResponse<Blob>): string {
+    const contentDisposition = response.headers.get('content-disposition') ?? '';
+    const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+    const fileName = fileNameMatch?.[1]?.trim();
+
+    if (!fileName) {
+      return `reporte_estado_habitaciones_${new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-')}.pdf`;
+    }
+
+    return decodeURIComponent(fileName).replace(/^"+|"+$/g, '');
   }
 }
