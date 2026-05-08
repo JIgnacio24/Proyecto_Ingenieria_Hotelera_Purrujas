@@ -141,12 +141,188 @@
       </div>
     </section>
 
-    <section id="dashboard-content" class="editor-card dashboard-section">
-      <div class="editor-header">
+    <section id="dashboard-availability" class="availability-card dashboard-section">
+      <div class="availability-header">
         <div class="section-head">
-          <p>Contenido web</p>
-          <span>Edita los textos visibles de la seccion Facilidades del sitio cliente.</span>
+          <p>Disponibilidad de habitaciones</p>
+          <span>Estado operativo del dia actual y consulta por fecha desde la base de datos.</span>
         </div>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="loadRoomAvailabilityToday()"
+          [disabled]="availabilityLoading()"
+        >
+          {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
+        </button>
+      </div>
+
+      @if (availabilityFeedback()) {
+        <p
+          class="form-feedback"
+          [class.success-feedback]="availabilityFeedbackTone() === 'success'"
+          [class.error-feedback]="availabilityFeedbackTone() === 'error'"
+        >
+          {{ availabilityFeedback() }}
+        </p>
+      }
+
+      @if (roomAvailabilitySummary(); as summary) {
+        <div class="availability-hero">
+          <div>
+            <span class="availability-date">{{ formatAvailabilityDate(summary.date) }}</span>
+            <h2>Estado del hotel hoy</h2>
+          </div>
+          <div class="availability-total">
+            <strong>{{ summary.availableRooms }}</strong>
+            <span>disponibles de {{ summary.totalRooms }}</span>
+          </div>
+        </div>
+
+        <div class="availability-metrics">
+          <article>
+            <span>Disponibles</span>
+            <strong>{{ summary.availableRooms }}</strong>
+          </article>
+          <article>
+            <span>Ocupadas</span>
+            <strong>{{ summary.occupiedRooms }}</strong>
+          </article>
+          <article>
+            <span>Fuera de servicio</span>
+            <strong>{{ summary.outOfServiceRooms }}</strong>
+          </article>
+        </div>
+
+        <div class="availability-table-wrap">
+          <table class="availability-table">
+            <thead>
+              <tr>
+                <th>Habitacion</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Huesped actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (room of summary.rooms; track room.roomId) {
+                <tr>
+                  <td>{{ room.roomNumber }}</td>
+                  <td>{{ room.roomTypeName }}</td>
+                  <td>
+                    <span class="room-status" [ngClass]="statusClass(room.statusName)">
+                      {{ room.statusName }}
+                    </span>
+                  </td>
+                  <td>{{ room.currentGuest || 'Sin huesped' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4">No hay habitaciones registradas.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <form class="availability-search" (ngSubmit)="searchRoomAvailability()">
+          <div class="section-head">
+            <p>Consultar disponibilidad</p>
+            <span>Filtra habitaciones disponibles por rango de fechas y tipo.</span>
+          </div>
+
+          <div class="availability-search-grid">
+            <label class="field">
+              <span>Fecha llegada</span>
+              <input
+                type="date"
+                name="availabilityStartDate"
+                [(ngModel)]="availabilityStartDate"
+                [disabled]="availabilitySearching()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Fecha salida</span>
+              <input
+                type="date"
+                name="availabilityEndDate"
+                [(ngModel)]="availabilityEndDate"
+                [disabled]="availabilitySearching()"
+              />
+            </label>
+
+            <label class="field">
+              <span>Tipo de habitacion</span>
+              <select
+                name="availabilityRoomTypeId"
+                [(ngModel)]="availabilityRoomTypeId"
+                [disabled]="availabilitySearching()"
+              >
+                <option [ngValue]="null">Todos los tipos</option>
+                @for (roomType of summary.roomTypes; track roomType.roomTypeId) {
+                  <option [ngValue]="roomType.roomTypeId">{{ roomType.name }}</option>
+                }
+              </select>
+            </label>
+
+            <button type="submit" class="primary-button" [disabled]="availabilitySearching()">
+              {{ availabilitySearching() ? 'Consultando...' : 'Consultar' }}
+            </button>
+          </div>
+        </form>
+
+        @if (availabilitySearchResult(); as result) {
+          <div class="availability-results">
+            <div class="results-head">
+              <div>
+                <p>Resultado</p>
+                <span>
+                  {{ formatAvailabilityDate(result.startDate) }} - {{ formatAvailabilityDate(result.endDate) }}
+                  · {{ result.roomTypeName }}
+                </span>
+              </div>
+              <strong>{{ result.availableRooms }} disponibles</strong>
+            </div>
+
+            <div class="availability-result-grid">
+              @for (room of result.rooms; track room.roomId) {
+                <article class="available-room-card">
+                  <span>Habitacion {{ room.roomNumber }}</span>
+                  <strong>{{ room.roomTypeName }}</strong>
+                  <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
+                  <small>
+                    {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
+                    · {{ formatUsd(room.basePricePerNight) }} base/noche
+                  </small>
+                  @if (room.highSeasonNights > 0) {
+                    <small>
+                      {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
+                      con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
+                    </small>
+                  }
+                  <small>{{ room.operationalStatus }}</small>
+                </article>
+              } @empty {
+                <p class="empty-state">No hay habitaciones disponibles para esa consulta.</p>
+              }
+            </div>
+          </div>
+        }
+      } @else {
+        <p class="loading-state">
+          {{ availabilityLoading() ? 'Cargando disponibilidad de habitaciones...' : 'Sin datos de disponibilidad.' }}
+        </p>
+      }
+    </section>
+
+    <section id="dashboard-content" class="editor-card dashboard-section">
+        <div class="editor-header">
+          <div class="section-head">
+          <p>Editar Facilidades</p>
+          <span>Actualiza los textos visibles de Facilidades en el sitio cliente.</span>
+          </div>
 
         <div class="editor-toolbar">
           <button

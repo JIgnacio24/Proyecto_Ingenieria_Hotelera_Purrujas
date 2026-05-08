@@ -93,6 +93,7 @@ builder.Services.AddScoped<IGettingTherePageContentRepository, GettingTherePageC
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
 builder.Services.AddScoped<IGalleryImagesRepository, GalleryImagesRepository>();
+builder.Services.AddScoped<IRoomAvailabilityRepository, RoomAvailabilityRepository>();
 
 var app = builder.Build();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
