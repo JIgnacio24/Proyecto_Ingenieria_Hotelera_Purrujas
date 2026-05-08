@@ -2,8 +2,8 @@
   <header class="admin-toolbar">
     <div>
       <p class="admin-eyebrow">Contenido del sitio</p>
-      <h1>Editar Home</h1>
-      <span>Actualiza el hero principal del frontend cliente.</span>
+      <h1>Editar inicio</h1>
+      <span>Actualiza el hero principal del sitio del cliente.</span>
     </div>
 
     <div class="admin-actions">
@@ -58,12 +58,12 @@
         </label>
 
         <label class="field">
-          <span>Titulo</span>
+          <span>Título</span>
           <input type="text" name="heroTitle" [(ngModel)]="homeContent.heroTitle" (ngModelChange)="markChanged()" />
         </label>
 
         <label class="field">
-          <span>Subtitulo</span>
+          <span>Subtítulo</span>
           <textarea rows="3" name="heroSubtitle" [(ngModel)]="homeContent.heroSubtitle" (ngModelChange)="markChanged()"></textarea>
         </label>
 
@@ -77,7 +77,7 @@
 
         <div class="image-meta">
           <strong>{{ heroImage?.name || 'Sin imagen asignada' }}</strong>
-          <span>Categoria: fondo</span>
+          <span>Categoría: fondo</span>
         </div>
       </form>
     </main>

@@ -1,9 +1,9 @@
 <section class="admin-about-shell">
   <header class="admin-toolbar">
     <div>
-      <p class="admin-eyebrow">Modulo editable</p>
-      <h1>Sobre Nosotros</h1>
-      <span>Vista del cliente con controles para actualizar el texto dinamico.</span>
+      <p class="admin-eyebrow">Módulo editable</p>
+      <h1>Sobre nosotros</h1>
+      <span>Vista del cliente con controles para actualizar el texto dinámico.</span>
     </div>
 
     <div class="admin-actions">
@@ -24,13 +24,13 @@
   }
 
   @if (loading()) {
-    <div class="loading-state">Cargando contenido de Sobre Nosotros...</div>
+    <div class="loading-state">Cargando contenido de Sobre nosotros...</div>
   }
 
   <section class="small-hero">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <p class="hero-eyebrow">Sobre Nosotros</p>
+      <p class="hero-eyebrow">Sobre nosotros</p>
       <h1 class="hero-title">Hotel Las Purrujas</h1>
       <p class="hero-subtitle">Conoce nuestra historia y valores</p>
     </div>
@@ -46,15 +46,15 @@
             <input type="text" [(ngModel)]="aboutUsContent.historyTag" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo</span>
+            <span>Título</span>
             <input type="text" [(ngModel)]="aboutUsContent.historyTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field field-full">
-            <span>Descripcion</span>
+            <span>Descripción</span>
             <textarea rows="7" [(ngModel)]="aboutUsContent.historyDescription" (ngModelChange)="markChanged()"></textarea>
           </label>
           <label class="field">
-            <span>Ano inicial de la tarjeta verde</span>
+            <span>Año inicial de la tarjeta verde</span>
             <input type="text" [(ngModel)]="aboutUsContent.historyTimelineStartYear" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
@@ -62,7 +62,7 @@
             <input type="text" [(ngModel)]="aboutUsContent.historyTimelineEndLabel" (ngModelChange)="markChanged()" />
           </label>
           <label class="field field-full">
-            <span>Hitos de la tarjeta verde (uno por linea)</span>
+            <span>Hitos de la tarjeta verde (uno por línea)</span>
             <textarea rows="5" [(ngModel)]="historyMilestonesText" (ngModelChange)="markChanged()"></textarea>
           </label>
         </article>
@@ -103,7 +103,7 @@
               <input type="text" [(ngModel)]="aboutUsContent.teamTag" (ngModelChange)="markChanged()" />
             </label>
             <label class="field">
-              <span>Titulo</span>
+              <span>Título</span>
               <input type="text" [(ngModel)]="aboutUsContent.teamTitle" (ngModelChange)="markChanged()" />
             </label>
             <label class="field">
@@ -115,7 +115,7 @@
               <input type="number" [(ngModel)]="aboutUsContent.localTalentPercentage" (ngModelChange)="markChanged()" />
             </label>
             <label class="field">
-              <span>Anos de experiencia</span>
+              <span>Años de experiencia</span>
               <input type="number" [(ngModel)]="aboutUsContent.experienceYears" (ngModelChange)="markChanged()" />
             </label>
           </div>
@@ -136,7 +136,7 @@
           </div>
           <div class="equipo-stat animate-up delay-3">
             <div class="stat-number">{{ aboutUsContent.experienceYears }}<span>+</span></div>
-            <div class="stat-label">Anos de experiencia</div>
+            <div class="stat-label">Años de experiencia</div>
           </div>
         </div>
       </article>
@@ -154,7 +154,7 @@
               <input type="text" [(ngModel)]="aboutUsContent.directorTitle" (ngModelChange)="markChanged()" />
             </label>
             <label class="field field-full">
-              <span>Biografia</span>
+              <span>Biografía</span>
               <textarea rows="4" [(ngModel)]="aboutUsContent.directorBiography" (ngModelChange)="markChanged()"></textarea>
             </label>
           </div>
@@ -172,11 +172,11 @@
         @if (editingBlock() === 'philosophy') {
           <div class="edit-panel">
             <label class="field">
-              <span>Titulo</span>
+              <span>Título</span>
               <input type="text" [(ngModel)]="aboutUsContent.philosophyTitle" (ngModelChange)="markChanged()" />
             </label>
             <label class="field field-full">
-              <span>Descripcion</span>
+              <span>Descripción</span>
               <textarea rows="5" [(ngModel)]="aboutUsContent.philosophyDescription" (ngModelChange)="markChanged()"></textarea>
             </label>
             <label class="field field-full">
@@ -206,31 +206,31 @@
             <input type="text" [(ngModel)]="aboutUsContent.mvvTag" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo</span>
+            <span>Título</span>
             <input type="text" [(ngModel)]="aboutUsContent.mvvTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo de Mision</span>
+            <span>Título de Misión</span>
             <input type="text" [(ngModel)]="aboutUsContent.missionTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo de Vision</span>
+            <span>Título de Visión</span>
             <input type="text" [(ngModel)]="aboutUsContent.visionTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo de Valores</span>
+            <span>Título de Valores</span>
             <input type="text" [(ngModel)]="aboutUsContent.valuesTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field field-full">
-            <span>Mision</span>
+            <span>Misión</span>
             <textarea rows="4" [(ngModel)]="aboutUsContent.mission" (ngModelChange)="markChanged()"></textarea>
           </label>
           <label class="field field-full">
-            <span>Vision</span>
+            <span>Visión</span>
             <textarea rows="4" [(ngModel)]="aboutUsContent.vision" (ngModelChange)="markChanged()"></textarea>
           </label>
           <label class="field field-full">
-            <span>Valores (uno por linea)</span>
+            <span>Valores (uno por línea)</span>
             <textarea rows="5" [(ngModel)]="aboutUsValuesText" (ngModelChange)="markChanged()"></textarea>
           </label>
         </article>
@@ -285,7 +285,7 @@
             <input type="text" [(ngModel)]="aboutUsContent.galleryTag" (ngModelChange)="markChanged()" />
           </label>
           <label class="field">
-            <span>Titulo</span>
+            <span>Título</span>
             <input type="text" [(ngModel)]="aboutUsContent.galleryTitle" (ngModelChange)="markChanged()" />
           </label>
           <label class="field field-full">
@@ -306,10 +306,10 @@
                     />
                   </label>
                   <label class="field">
-                    <span>Categoria</span>
+                    <span>Categoría</span>
                     <select [(ngModel)]="image.category" (ngModelChange)="updateGalleryImage(image)">
                       <option value="hotel">Hotel</option>
-                      <option value="lugares">Lugares aledanos</option>
+                      <option value="lugares">Lugares aledaños</option>
                       <option value="fondo">Fondo del inicio</option>
                     </select>
                   </label>
@@ -365,7 +365,7 @@
           type="button"
         >
           <span class="material-icons">hotel</span>
-          Beneficios del Hotel
+          Beneficios del hotel
         </button>
         <button
           class="gallery-filter-btn"

@@ -54,9 +54,9 @@ public sealed class RoomAvailabilityPdfService
                     column.Item().Column(info =>
                     {
                         info.Spacing(6);
-                        info.Item().Text("Datos de generacion").SemiBold().FontColor(Colors.Green.Darken3);
-                        info.Item().Text($"Fecha de generacion: {generatedAt:yyyy-MM-dd}");
-                        info.Item().Text($"Hora de generacion: {generatedAt:HH:mm:ss}");
+                        info.Item().Text("Datos de generación").SemiBold().FontColor(Colors.Green.Darken3);
+                        info.Item().Text($"Fecha de generación: {generatedAt:yyyy-MM-dd}");
+                        info.Item().Text($"Hora de generación: {generatedAt:HH:mm:ss}");
                         info.Item().Text($"Usuario: {ResolveUserLabel(generatedBy)}");
                         info.Item().Text($"Fecha consultada: {summary.Date:yyyy-MM-dd}");
                         info.Item().Text($"Total habitaciones: {summary.TotalRooms}");
@@ -106,10 +106,10 @@ public sealed class RoomAvailabilityPdfService
 
                         table.Header(header =>
                         {
-                            header.Cell().Element(HeaderCellStyle).Text("Habitacion");
+                            header.Cell().Element(HeaderCellStyle).Text("Habitación");
                             header.Cell().Element(HeaderCellStyle).Text("Tipo");
                             header.Cell().Element(HeaderCellStyle).Text("Estado");
-                            header.Cell().Element(HeaderCellStyle).Text("Huesped actual");
+                            header.Cell().Element(HeaderCellStyle).Text("Huésped actual");
                         });
 
                         if (summary.Rooms.Count == 0)
@@ -123,14 +123,14 @@ public sealed class RoomAvailabilityPdfService
                             table.Cell().Element(BodyCellStyle).Text(ResolveText(room.RoomNumber));
                             table.Cell().Element(BodyCellStyle).Text(ResolveText(room.RoomTypeName));
                             table.Cell().Element(BodyCellStyle).Text(ResolveText(room.StatusName));
-                            table.Cell().Element(BodyCellStyle).Text(ResolveText(room.CurrentGuest, "Sin huesped"));
+                            table.Cell().Element(BodyCellStyle).Text(ResolveText(room.CurrentGuest, "Sin huésped"));
                         }
                     });
                 });
 
                 page.Footer().AlignCenter().Text(text =>
                 {
-                    text.Span("Pagina ");
+                    text.Span("Página ");
                     text.CurrentPageNumber();
                     text.Span(" de ");
                     text.TotalPages();

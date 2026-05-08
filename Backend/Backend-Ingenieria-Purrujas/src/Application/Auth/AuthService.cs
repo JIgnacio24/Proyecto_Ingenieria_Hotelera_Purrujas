@@ -58,12 +58,12 @@ public class AuthService : IAuthService
 
         if (user is null)
         {
-            throw new UnauthorizedAccessException("Nombre de usuario o contrasena incorrectos.");
+            throw new UnauthorizedAccessException("Nombre de usuario o contraseña incorrectos.");
         }
 
         if (!IsAdministratorRole(user.Role))
         {
-            throw new UnauthorizedAccessException("Solo un administrador autenticado puede acceder al modulo administrativo.");
+            throw new UnauthorizedAccessException("Solo un administrador autenticado puede acceder al módulo administrativo.");
         }
 
         return BuildAuthResponse(user);
@@ -85,7 +85,7 @@ public class AuthService : IAuthService
 
         if (!FullNameRegex.IsMatch(fullName))
         {
-            throw new ArgumentException("El nombre completo contiene caracteres no validos.");
+            throw new ArgumentException("El nombre completo contiene caracteres no válidos.");
         }
 
         var username = request.Username?.Trim() ?? string.Empty;
@@ -96,7 +96,7 @@ public class AuthService : IAuthService
 
         if (!UsernameRegex.IsMatch(username))
         {
-            throw new ArgumentException("El nombre de usuario solo puede incluir letras, numeros, punto, guion y guion bajo.");
+            throw new ArgumentException("El nombre de usuario solo puede incluir letras, números, punto, guion y guion bajo.");
         }
 
         var email = request.Email?.Trim() ?? string.Empty;
@@ -107,7 +107,7 @@ public class AuthService : IAuthService
 
         if (!EmailValidator.IsValid(email))
         {
-            throw new ArgumentException("El correo no tiene un formato valido.");
+            throw new ArgumentException("El correo no tiene un formato válido.");
         }
 
         ValidatePassword(request.Password, requireComplexity: true);
@@ -123,7 +123,7 @@ public class AuthService : IAuthService
 
         if (!UsernameRegex.IsMatch(username))
         {
-            throw new ArgumentException("El nombre de usuario no tiene un formato valido.");
+            throw new ArgumentException("El nombre de usuario no tiene un formato válido.");
         }
 
         ValidatePassword(request.Password, requireComplexity: false);
@@ -133,7 +133,7 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(password) || password.Length < 8 || password.Length > 255)
         {
-            throw new ArgumentException("La contrasena debe tener entre 8 y 255 caracteres.");
+            throw new ArgumentException("La contraseña debe tener entre 8 y 255 caracteres.");
         }
 
         if (!requireComplexity)
@@ -149,7 +149,7 @@ public class AuthService : IAuthService
         if (!hasUppercase || !hasLowercase || !hasDigit || !hasSpecialCharacter)
         {
             throw new ArgumentException(
-                "La contrasena debe incluir mayuscula, minuscula, numero y caracter especial.");
+                "La contraseña debe incluir mayúscula, minúscula, número y carácter especial.");
         }
     }
 
@@ -166,7 +166,7 @@ public class AuthService : IAuthService
         var key = _configuration["Jwt:Key"];
         if (string.IsNullOrWhiteSpace(key))
         {
-            throw new InvalidOperationException("No se configuro Jwt:Key en el backend.");
+            throw new InvalidOperationException("No se configuró Jwt:Key en el backend.");
         }
 
         var issuer = _configuration["Jwt:Issuer"] ?? "Backend-Ingenieria-Purrujas";

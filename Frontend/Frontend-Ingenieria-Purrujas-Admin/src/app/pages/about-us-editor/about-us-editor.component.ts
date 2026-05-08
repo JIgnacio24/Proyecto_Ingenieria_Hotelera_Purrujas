@@ -100,7 +100,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
       this.applyContent(createDefaultAboutUsPageContent());
       this.feedbackTone.set('error');
       this.feedback.set(
-        this.resolveError(error, 'No fue posible cargar el contenido. Se muestran los valores base.')
+        this.resolveError(error, 'No fue posible cargar el contenido. Se muestran los valores predeterminados.')
       );
     } finally {
       this.loading.set(false);
@@ -108,7 +108,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
   }
 
   async saveContent(): Promise<void> {
-    // Persiste el contenido completo; el cliente lo consumira en su siguiente lectura del endpoint.
+    // Persiste el contenido completo; el cliente lo consumirá en su siguiente lectura del endpoint.
     this.saving.set(true);
     this.clearFeedback();
 
@@ -123,7 +123,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
       this.hasChanges.set(false);
       this.editingBlock.set(null);
       this.feedbackTone.set('success');
-      this.feedback.set('Los cambios de Sobre Nosotros se guardaron correctamente.');
+      this.feedback.set('Los cambios de Sobre nosotros se guardaron correctamente.');
       this.scrollToTop();
     } catch (error) {
       this.feedbackTone.set('error');
@@ -147,7 +147,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.hasChanges.set(false);
     this.editingBlock.set(null);
     this.feedbackTone.set('');
-    this.feedback.set('Cambios descartados.');
+    this.feedback.set('Los cambios fueron descartados.');
     this.inlineFeedback.set('');
     this.inlineFeedbackTone.set('');
     void this.loadGalleryImages();
@@ -235,7 +235,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
     try {
       this.galleryItems = await firstValueFrom(this.galleryImagesService.getAll());
     } catch (error) {
-      const message = this.resolveError(error, 'No fue posible cargar las imagenes de galeria.');
+      const message = this.resolveError(error, 'No fue posible cargar las imágenes de la galería.');
       this.feedbackTone.set('error');
       this.feedback.set(message);
       this.inlineFeedbackTone.set('error');

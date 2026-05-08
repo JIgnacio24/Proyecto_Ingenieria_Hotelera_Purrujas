@@ -137,7 +137,7 @@ export class HomeEditorComponent implements AfterViewInit {
       this.selectedHeroFile = null;
       this.hasChanges.set(false);
       this.feedbackTone.set('success');
-      this.feedback.set('El hero del inicio se guardo correctamente.');
+      this.feedback.set('El hero del inicio se guardó correctamente.');
     } catch (error) {
       this.feedbackTone.set('error');
       this.feedback.set(this.resolveError(error, 'No fue posible guardar el hero del inicio.'));

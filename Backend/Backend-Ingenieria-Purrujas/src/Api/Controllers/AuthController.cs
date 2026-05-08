@@ -72,13 +72,13 @@ public class AuthController : ControllerBase
         var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdValue, out var adminUserId))
         {
-            return Unauthorized(new { message = "La sesion no es valida." });
+            return Unauthorized(new { message = "La sesión no es válida." });
         }
 
         var user = await _authService.GetProfileAsync(adminUserId, cancellationToken);
         if (user is null)
         {
-            return Unauthorized(new { message = "La sesion no corresponde a un administrador activo." });
+            return Unauthorized(new { message = "La sesión no corresponde a un administrador activo." });
         }
 
         return Ok(user);

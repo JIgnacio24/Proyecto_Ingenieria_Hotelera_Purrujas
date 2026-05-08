@@ -1,6 +1,6 @@
 <section class="dashboard-shell">
   <div class="dashboard-veil" aria-hidden="true"></div>
-  <aside class="side-nav" aria-label="Menu administrativo">
+  <aside class="side-nav" aria-label="Menú administrativo">
     <div class="side-nav__brand">
       <div class="brand-monogram">LP</div>
     </div>
@@ -51,7 +51,7 @@
         <span class="hotel-chip__label">Sistema interno</span>
         <strong>Las Purrujas</strong>
       </div>
-      <button type="button" class="logout-button" (click)="logout()">Cerrar sesion</button>
+      <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
     </div>
   </header>
 
@@ -64,21 +64,21 @@
       <div class="hero-media" aria-hidden="true"></div>
 
       <div class="hero-copy">
-        <p class="hero-kicker">Administracion</p>
+        <p class="hero-kicker">Administración</p>
         @if (loading()) {
-          <h2>Cargando la sesion del administrador...</h2>
-          <p>Espere un momento mientras se actualiza la informacion del acceso.</p>
+          <h2>Cargando la sesión del administrador...</h2>
+          <p>Espere un momento mientras se actualiza la información de acceso.</p>
         } @else if (profile()) {
           <h2>Bienvenido, {{ profile()?.fullName }}.</h2>
-          <p>La sesion esta activa y ya puedes administrar el contenido del sitio.</p>
+          <p>La sesión está activa, ya puedes administrar el contenido del sitio.</p>
         } @else {
           <h2>No se pudo cargar el perfil.</h2>
-          <p>Revise la sesion actual y vuelva a intentarlo.</p>
+          <p>Revise la sesión actual y vuelva a intentarlo.</p>
         }
 
         <div class="hero-actions">
           <button type="button" class="primary-button" (click)="loadProfile()">Actualizar</button>
-          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesion activa' }}</span>
+          <span class="status-pill">{{ loading() ? 'Cargando' : 'Sesión activa' }}</span>
         </div>
       </div>
     </section>
@@ -86,7 +86,7 @@
     <section class="profile-card">
       <div class="section-head">
         <p>Perfil de acceso</p>
-        <span>Informacion del usuario actual</span>
+        <span>Información del usuario actual</span>
       </div>
 
       <dl class="profile-list">
@@ -111,7 +111,7 @@
           <dd>{{ formatDate(profile()?.createdAt) }}</dd>
         </div>
         <div>
-          <dt>Ultimo acceso</dt>
+          <dt>Último acceso</dt>
           <dd>{{ formatDate(profile()?.lastLoginAt) }}</dd>
         </div>
       </dl>
@@ -135,7 +135,7 @@
         </article>
 
         <article class="summary-item">
-          <span>Ultimo acceso</span>
+          <span>Último acceso</span>
           <strong>{{ formatDate(profile()?.lastLoginAt) }}</strong>
         </article>
       </div>
@@ -145,7 +145,7 @@
       <div class="availability-header">
         <div class="section-head">
           <p>Disponibilidad de habitaciones</p>
-          <span>Estado operativo del dia actual y consulta por fecha desde la base de datos.</span>
+          <span>Estado operativo del día actual y consulta por fecha desde la base de datos.</span>
         </div>
 
         <div class="availability-actions">
@@ -219,10 +219,10 @@
           <table class="availability-table">
             <thead>
               <tr>
-                <th>Habitacion</th>
+                <th>Habitación</th>
                 <th>Tipo</th>
                 <th>Estado</th>
-                <th>Huesped actual</th>
+                <th>Huésped actual</th>
               </tr>
             </thead>
             <tbody>
@@ -235,7 +235,7 @@
                       {{ room.statusName }}
                     </span>
                   </td>
-                  <td>{{ room.currentGuest || 'Sin huesped' }}</td>
+                  <td>{{ room.currentGuest || 'Sin huésped' }}</td>
                 </tr>
               } @empty {
                 <tr>
@@ -254,7 +254,7 @@
 
           <div class="availability-search-grid">
             <label class="field">
-              <span>Fecha llegada</span>
+              <span>Fecha de llegada</span>
               <input
                 type="date"
                 name="availabilityStartDate"
@@ -264,7 +264,7 @@
             </label>
 
             <label class="field">
-              <span>Fecha salida</span>
+              <span>Fecha de salida</span>
               <input
                 type="date"
                 name="availabilityEndDate"
@@ -274,7 +274,7 @@
             </label>
 
             <label class="field">
-              <span>Tipo de habitacion</span>
+              <span>Tipo de habitación</span>
               <select
                 name="availabilityRoomTypeId"
                 [(ngModel)]="availabilityRoomTypeId"
@@ -309,7 +309,7 @@
             <div class="availability-result-grid">
               @for (room of result.rooms; track room.roomId) {
                 <article class="available-room-card">
-                  <span>Habitacion {{ room.roomNumber }}</span>
+                  <span>Habitación {{ room.roomNumber }}</span>
                   <strong>{{ room.roomTypeName }}</strong>
                   <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
                   <small>
@@ -340,8 +340,8 @@
     <section id="dashboard-content" class="editor-card dashboard-section">
         <div class="editor-header">
           <div class="section-head">
-          <p>Editar Facilidades</p>
-          <span>Actualiza los textos visibles de Facilidades en el sitio cliente.</span>
+          <p>Editar facilidades</p>
+          <span>Actualiza los textos visibles de facilidades en el sitio del cliente.</span>
           </div>
 
         <div class="editor-toolbar">
@@ -378,7 +378,7 @@
       <form id="facilities-content-form" class="editor-form" (ngSubmit)="saveFacilitiesContent()">
         <div class="form-grid">
           <label class="field">
-            <span>Etiqueta de seccion</span>
+            <span>Etiqueta de sección</span>
             <input
               type="text"
               name="sectionTag"
@@ -388,7 +388,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo de seccion</span>
+            <span>Título de sección</span>
             <input
               type="text"
               name="sectionTitle"
@@ -398,7 +398,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo destacado</span>
+            <span>Título destacado</span>
             <input
               type="text"
               name="highlightTitle"
@@ -408,7 +408,7 @@
           </label>
 
           <label class="field field-full">
-            <span>Descripcion destacada</span>
+            <span>Descripción destacada</span>
             <textarea
               rows="4"
               name="highlightDescription"
@@ -422,11 +422,11 @@
           <article class="list-editor-card">
             <div class="group-head">
               <h3>Bloque principal</h3>
-              <p>Un elemento por linea.</p>
+              <p>Un elemento por línea.</p>
             </div>
 
             <label class="field">
-              <span>Titulo del bloque</span>
+              <span>Título del bloque</span>
               <input
                 type="text"
                 name="primaryListTitle"
@@ -449,11 +449,11 @@
           <article class="list-editor-card">
             <div class="group-head">
               <h3>Bloque secundario</h3>
-              <p>Un elemento por linea.</p>
+              <p>Un elemento por línea.</p>
             </div>
 
             <label class="field">
-              <span>Titulo del bloque</span>
+              <span>Título del bloque</span>
               <input
                 type="text"
                 name="secondaryListTitle"
@@ -477,7 +477,7 @@
         <div class="services-editor">
           <div class="group-head">
             <h3>Tarjetas de servicios</h3>
-            <p>Estas tarjetas conservan las imagenes actuales del cliente y solo cambian el texto.</p>
+            <p>Estas tarjetas conservan las imágenes actuales del cliente y solo cambian el texto.</p>
           </div>
 
           <div class="services-grid">
@@ -489,7 +489,7 @@
                 </div>
 
                 <label class="field">
-                  <span>Titulo</span>
+                  <span>Título</span>
                   <input
                     type="text"
                     [name]="'serviceTitle' + index"
@@ -499,7 +499,7 @@
                 </label>
 
                 <label class="field">
-                  <span>Descripcion</span>
+                  <span>Descripción</span>
                   <textarea
                     rows="4"
                     [name]="'serviceDescription' + index"
@@ -518,7 +518,7 @@
       <div class="editor-header">
         <div class="section-head">
           <p>Contenido web</p>
-          <span>Edita los textos visibles de la seccion Como llegar del sitio cliente.</span>
+          <span>Edita los textos visibles de la sección Cómo llegar del sitio del cliente.</span>
         </div>
 
         <div class="editor-toolbar">
@@ -555,7 +555,7 @@
       <form id="getting-there-content-form" class="editor-form" (ngSubmit)="saveGettingThereContent()">
         <div class="form-grid">
           <label class="field">
-            <span>Etiqueta de seccion</span>
+            <span>Etiqueta de sección</span>
             <input
               type="text"
               name="gettingThereSectionTag"
@@ -565,7 +565,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo de seccion</span>
+            <span>Título de sección</span>
             <input
               type="text"
               name="gettingThereSectionTitle"
@@ -585,7 +585,7 @@
           </label>
 
           <label class="field">
-            <span>Titulo de coordenadas</span>
+            <span>Título de coordenadas</span>
             <input
               type="text"
               name="gettingThereCoordinatesTitle"
@@ -595,7 +595,7 @@
           </label>
 
           <label class="field">
-            <span>Boton del mapa</span>
+            <span>Botón del mapa</span>
             <input
               type="text"
               name="gettingThereMapButtonLabel"
@@ -605,7 +605,7 @@
           </label>
 
           <label class="field field-full">
-            <span>Descripcion de coordenadas</span>
+            <span>Descripción de coordenadas</span>
             <textarea
               rows="3"
               name="gettingThereCoordinatesDescription"
@@ -629,10 +629,10 @@
 
     <section class="modules-card">
       <div class="section-head">
-        <p>Modulos del menu</p>
+        <p>Módulos del menú</p>
         <span>
-          Los accesos laterales ya apuntan a la zona correcta del panel. Estos modulos aun no
-          tienen tabla o formulario funcional en esta version.
+          Los accesos laterales ya apuntan a la zona correcta del panel. Estos módulos aún no
+          tienen tabla ni formulario funcional en esta versión.
         </span>
       </div>
 

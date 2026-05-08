@@ -93,23 +93,23 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'pages',
-      label: 'Editar Facilidades',
+      label: 'Editar facilidades',
       compactLabel: 'Facilidades',
       icon: 'pages',
       targetId: 'dashboard-content'
     },
     {
       key: 'home-editor',
-      label: 'Editar Home',
-      compactLabel: 'Home',
+      label: 'Editar inicio',
+      compactLabel: 'Inicio',
       icon: 'home-editor',
       // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
       targetId: 'dashboard-home-editor'
     },
     {
       key: 'about-us',
-      label: 'Editar Sobre Nosotros',
-      compactLabel: 'Sobre',
+      label: 'Editar Sobre nosotros',
+      compactLabel: 'Sobre nosotros',
       icon: 'about-us',
       // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
       targetId: 'dashboard-about-us'
@@ -140,19 +140,19 @@ export class DashboardComponent implements AfterViewInit {
   readonly moduleCards: readonly DashboardModuleCard[] = [
     {
       key: 'home-editor',
-      title: 'Editar Home',
+      title: 'Editar inicio',
       status: 'Editable',
       description:
-        'Abre la vista editable del hero del inicio para cambiar la imagen de fondo y los textos principales.',
+        'Abre la vista editable del inicio para cambiar la imagen de fondo y los textos principales.',
       link: '/panel/home',
       actionLabel: 'Abrir editor'
     },
     {
       key: 'about-us',
-      title: 'Editar Sobre Nosotros',
+      title: 'Editar Sobre nosotros',
       status: 'Editable',
       description:
-        'Abre la vista editable de Sobre Nosotros para cambiar textos, historia, filosofia, mision, vision, valores y galeria.',
+        'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
       link: '/panel/sobre-nosotros',
       actionLabel: 'Abrir editor'
     },
@@ -161,21 +161,21 @@ export class DashboardComponent implements AfterViewInit {
       title: 'Listado de reservaciones',
       status: 'Pendiente de interfaz',
       description:
-        'Espacio reservado para mostrar reservas, filtros por fecha y detalle del cliente cuando ese modulo se conecte.'
+        'Espacio reservado para mostrar reservaciones, filtros por fecha y detalle del cliente cuando este módulo se conecte.'
     },
     {
       key: 'rooms',
       title: 'Administrar habitaciones',
       status: 'Pendiente de interfaz',
       description:
-        'Aqui ira la administracion de tipos de habitacion, tarifas base y estado operativo cuando el modulo exista.'
+        'Aquí irá la administración de tipos de habitación, tarifas base y estado operativo cuando el módulo esté disponible.'
     },
     {
       key: 'ads',
       title: 'Publicidad',
       status: 'Interfaz pendiente',
       description:
-        'El menu ya apunta a esta seccion. Falta construir aqui el CRUD para administrar la publicidad del sitio.'
+        'El menú ya apunta a esta sección. Falta construir aquí el CRUD para administrar la publicidad del sitio.'
     }
   ];
 
@@ -227,7 +227,7 @@ export class DashboardComponent implements AfterViewInit {
       const user = await firstValueFrom(this.authService.fetchProfile());
       this.profile.set(user);
     } catch (error) {
-      this.errorMessage.set(this.resolveError(error, 'No fue posible validar la sesion.'));
+      this.errorMessage.set(this.resolveError(error, 'No fue posible validar la sesión.'));
 
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
         this.authService.logout();
@@ -255,7 +255,7 @@ export class DashboardComponent implements AfterViewInit {
       this.facilitiesFeedback.set(
         this.resolveError(
           error,
-          'No fue posible cargar el contenido de Facilidades. Se muestran los valores base.'
+          'No fue posible cargar el contenido de facilidades. Se muestran los valores predeterminados.'
         )
       );
     } finally {
@@ -274,11 +274,11 @@ export class DashboardComponent implements AfterViewInit {
 
       this.applyFacilitiesContent(savedContent);
       this.facilitiesFeedbackTone.set('success');
-      this.facilitiesFeedback.set('El contenido de Facilidades se guardo correctamente.');
+      this.facilitiesFeedback.set('El contenido de facilidades se guardó correctamente.');
     } catch (error) {
       this.facilitiesFeedbackTone.set('error');
       this.facilitiesFeedback.set(
-        this.resolveError(error, 'No fue posible guardar el contenido de Facilidades.')
+        this.resolveError(error, 'No fue posible guardar el contenido de facilidades.')
       );
 
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
@@ -302,7 +302,7 @@ export class DashboardComponent implements AfterViewInit {
       this.gettingThereFeedback.set(
         this.resolveError(
           error,
-          'No fue posible cargar el contenido de Como llegar. Se muestran los valores base.'
+          'No fue posible cargar el contenido de Cómo llegar. Se muestran los valores predeterminados.'
         )
       );
     } finally {
@@ -321,11 +321,11 @@ export class DashboardComponent implements AfterViewInit {
 
       this.applyGettingThereContent(savedContent);
       this.gettingThereFeedbackTone.set('success');
-      this.gettingThereFeedback.set('El contenido de Como llegar se guardo correctamente.');
+      this.gettingThereFeedback.set('El contenido de Cómo llegar se guardó correctamente.');
     } catch (error) {
       this.gettingThereFeedbackTone.set('error');
       this.gettingThereFeedback.set(
-        this.resolveError(error, 'No fue posible guardar el contenido de Como llegar.')
+        this.resolveError(error, 'No fue posible guardar el contenido de Cómo llegar.')
       );
 
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
@@ -411,7 +411,7 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   activeMenuLabel(): string {
-    return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Home';
+    return this.menuItems.find((item) => item.key === this.activeMenuItem())?.label ?? 'Inicio';
   }
 
   moduleSectionId(menuKey: DashboardModuleCard['key']): string {
@@ -428,7 +428,7 @@ export class DashboardComponent implements AfterViewInit {
 
   formatDate(value: string | null | undefined): string {
     if (!value) {
-      return 'Aun sin registro';
+      return 'Aún sin registro';
     }
 
     const date = new Date(value);
@@ -585,13 +585,13 @@ export class DashboardComponent implements AfterViewInit {
         this.availabilityFeedbackTone.set('success');
         this.availabilityFeedback.set(
           previewOpened
-            ? 'El reporte PDF se genero con el estado actual de las habitaciones y se abrio en una nueva pestana.'
-            : 'El navegador bloqueo la vista previa. El reporte PDF se descargo automaticamente.'
+            ? 'El reporte PDF se generó con el estado actual de las habitaciones y se abrió en una nueva pestaña.'
+            : 'El navegador bloqueó la vista previa. El reporte PDF se descargó automáticamente.'
         );
       } else {
         this.downloadPdfFile(file, report.fileName);
         this.availabilityFeedbackTone.set('success');
-        this.availabilityFeedback.set('El reporte PDF se descargo correctamente.');
+        this.availabilityFeedback.set('El reporte PDF se descargó correctamente.');
       }
     } catch (error) {
       this.availabilityFeedbackTone.set('error');
