@@ -165,8 +165,11 @@ export class ReservarComponent implements OnInit, OnDestroy {
       creditCard: values.creditCard.trim()
     };
 
-    this.reservationService.createReservation(request).subscribe({
-      next: (response) => {
+    forkJoin([
+      this.reservationService.createReservation(request),
+      of(null).pipe(delay(3000))
+    ]).subscribe({
+      next: ([response]) => {
         this.confirmedReservation = response;
         this.submitState = 'success';
         this.cdr.detectChanges();
