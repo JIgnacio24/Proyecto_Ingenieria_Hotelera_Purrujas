@@ -1,4 +1,5 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
+using Backend_Ingenieria_Purrujas.Application.Email;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
 using Backend_Ingenieria_Purrujas.Api.Services;
@@ -84,6 +85,7 @@ builder.Services.AddCors(options =>
 });
 
 // Dependency Injection
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();

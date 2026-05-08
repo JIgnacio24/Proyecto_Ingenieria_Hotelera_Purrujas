@@ -1,7 +1,9 @@
+using Backend_Ingenieria_Purrujas.Application.Email;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations.Dtos;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace Backend_Ingenieria_Purrujas.Application.Reservations;
 
@@ -9,7 +11,9 @@ public class ReservationService(
     IReservationRepository reservationRepository,
     IRoomRepository roomRepository,
     ICustomerRepository customerRepository,
-    IQuoteService quoteService
+    IQuoteService quoteService,
+    IEmailService emailService,
+    ILogger<ReservationService> logger
 ) : IReservationService
 {
     private const decimal UsdToCrcRate = 500m;
@@ -82,7 +86,7 @@ public class ReservationService(
         var totalUsd = quote.Total;
         var totalCrc = totalUsd * UsdToCrcRate;
 
-        return new ReservationResponseDto
+        var dto = new ReservationResponseDto
         {
             ReservationId    = reservationId,
             RoomNumber       = room.RoomNumber,
@@ -100,6 +104,17 @@ public class ReservationService(
             Status           = "Pendiente",
             CreatedAt        = DateTime.UtcNow
         };
+
+        try
+        {
+            await emailService.SendReservationConfirmationAsync(dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error al enviar correo de confirmación para reserva #{Id}.", reservationId);
+        }
+
+        return dto;
     }
 
     public async Task<IReadOnlyCollection<ReservationResponseDto>> GetAllAsync(
@@ -126,7 +141,25 @@ public class ReservationService(
         var statusId = await reservationRepository.GetStatusIdByNameAsync(status, cancellationToken)
             ?? throw new KeyNotFoundException($"Estado '{status}' no encontrado en la base de datos.");
 
+        var needsEmail = status is "Confirmada" or "Cancelada";
+        var detail = needsEmail
+            ? await reservationRepository.GetByIdAsync(id, cancellationToken)
+            : null;
+
         await reservationRepository.UpdateStatusAsync(id, statusId, cancellationToken);
+
+        if (detail is not null)
+        {
+            var dto = MapToDto(detail) with { Status = status };
+            try
+            {
+                await emailService.SendReservationStatusUpdateAsync(dto, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al enviar correo de estado para reserva #{Id}.", id);
+            }
+        }
     }
 
     private static ReservationResponseDto MapToDto(ReservationDetail d)

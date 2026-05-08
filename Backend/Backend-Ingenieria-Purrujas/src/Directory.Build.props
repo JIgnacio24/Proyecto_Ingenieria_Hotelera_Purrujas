@@ -3,5 +3,8 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);**\artifacts\**</DefaultItemExcludes>
     <BaseIntermediateOutputPath>$(LocalAppData)\Temp\purrujas-build\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <BaseOutputPath>$(LocalAppData)\Temp\purrujas-build\bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <!-- Evita que el SDK genere AssemblyInfo.cs automáticamente, previniendo duplicados cuando el IDE y la terminal buildean en paralelo -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 </Project>
