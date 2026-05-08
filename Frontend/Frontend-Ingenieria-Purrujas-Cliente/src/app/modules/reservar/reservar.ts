@@ -4,7 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
 
@@ -249,16 +250,21 @@ export class ReservarComponent implements OnInit, OnDestroy {
   private checkAvailability(): void {
     this.availabilityStatus = 'checking';
     this.availabilityError = '';
-    this.reservationService.checkAvailability(this.selectedRoom.id, this.fechaInicio, this.fechaFin).subscribe({
-      next: (r) => {
+    forkJoin([
+      this.reservationService.checkAvailability(this.selectedRoom.id, this.fechaInicio, this.fechaFin),
+      of(null).pipe(delay(3000))
+    ]).subscribe({
+      next: ([r]) => {
         this.availabilityError = '';
         this.availabilityStatus = r.isAvailable ? 'available' : 'unavailable';
         this.availableRooms = r.availableRooms;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.availabilityStatus = 'unavailable';
         this.availabilityError =
           err?.error?.message || 'No se pudo verificar disponibilidad. Intente de nuevo.';
+        this.cdr.detectChanges();
       }
     });
   }

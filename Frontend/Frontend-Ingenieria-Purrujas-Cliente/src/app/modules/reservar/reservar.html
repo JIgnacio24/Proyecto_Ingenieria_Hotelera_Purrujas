@@ -104,7 +104,7 @@
             type="date"
             [(ngModel)]="fechaInicio"
             [min]="minStartDate"
-            (change)="onDateChange()"
+            (ngModelChange)="onDateChange()"
             required
             aria-required="true">
         </div>
@@ -115,7 +115,7 @@
             type="date"
             [(ngModel)]="fechaFin"
             [min]="minEndDate"
-            (change)="onDateChange()"
+            (ngModelChange)="onDateChange()"
             required
             aria-required="true">
         </div>
