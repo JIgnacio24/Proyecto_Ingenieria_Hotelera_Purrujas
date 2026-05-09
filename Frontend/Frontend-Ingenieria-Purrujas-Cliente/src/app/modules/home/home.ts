@@ -25,7 +25,7 @@ import {
 export class Home implements OnInit, OnDestroy {
   currency: Currency = 'USD';
   currencySymbol = '$';
-  heroImageUrl = "url('/images/foto_fondo.png')";
+  heroImageUrl = "heroImageUrl = this.toCssImageUrl(${this.apiBaseUrl}/uploads/gallery/foto_fondo.png);";
   homeContent: HomePageContent = createDefaultHomePageContent();
   private subs = new Subscription();
 
