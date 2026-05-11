@@ -12,6 +12,7 @@ import {
 } from '../../services/about-us-content.service';
 import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
 import { GettingThereComponent } from '../getting-there/getting-there.component';
+import { OnlineReservationCtaComponent } from '../online-reservation-cta/online-reservation-cta.component';
 
 interface GalleryItem {
   src: string;
@@ -42,7 +43,7 @@ export class ReplaceNewlinesPipe implements PipeTransform {
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ReplaceNewlinesPipe,  GettingThereComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ReplaceNewlinesPipe, GettingThereComponent, OnlineReservationCtaComponent],
   templateUrl: './about-us.html',
   styleUrl: './about-us.css'
 })

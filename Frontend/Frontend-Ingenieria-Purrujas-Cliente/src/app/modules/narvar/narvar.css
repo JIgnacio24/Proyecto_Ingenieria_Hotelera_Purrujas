@@ -73,6 +73,12 @@
   transform: translateY(-1px);
 }
 
+.nav-links a.active-route {
+  color: #fff8df;
+  border-color: rgba(240, 224, 168, 0.95);
+  font-weight: 700;
+}
+
 .reservation-item {
   order: 10;
 }
@@ -81,17 +87,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--dorado-suave);
-  border-color: var(--dorado);
-  transform: translateY(-1px) scale(1.06);
+  min-height: 2.35rem;
+  padding: 0.55rem 0.95rem;
+  color: #17321f;
+  background: linear-gradient(135deg, #f6e7a6 0%, #c9a84c 100%);
+  border: 1px solid rgba(255, 244, 200, 0.75);
+  border-radius: 999px;
+  transform: translateY(-1px);
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(201, 168, 76, 0.35);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(201, 168, 76, 0.18);
+  text-shadow: none;
 }
 
 .nav-links a.reservation-link:hover {
-  color: #fff4c8;
+  color: #0f2919;
   border-color: #fff4c8;
-  transform: translateY(-1px) scale(1.1);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28), 0 0 0 2px rgba(255, 244, 200, 0.28);
+}
+
+.nav-links a.reservation-link.reservation-current {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 3px;
 }
 
 @media (max-width: 720px) {

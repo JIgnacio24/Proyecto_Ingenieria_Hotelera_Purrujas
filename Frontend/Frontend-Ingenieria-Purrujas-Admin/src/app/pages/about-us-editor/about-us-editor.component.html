@@ -1,4 +1,25 @@
 <section class="admin-about-shell">
+  <aside class="side-nav" aria-label="Navegación del editor Sobre nosotros">
+    <button type="button" class="side-nav__brand" (click)="scrollToTop()">
+      <span class="brand-monogram">SN</span>
+    </button>
+
+    <div class="side-nav__menu">
+      @for (section of editorSections; track section.id) {
+        <button
+          type="button"
+          class="side-nav__item"
+          [class.side-nav__item--active]="activeSection() === section.id"
+          [attr.data-label]="section.label"
+          (click)="scrollToSection(section.id)"
+        >
+          <span class="material-icons">{{ section.icon }}</span>
+          <span class="side-nav__item-label">{{ section.compactLabel }}</span>
+        </button>
+      }
+    </div>
+  </aside>
+
   <header class="admin-toolbar">
     <div>
       <p class="admin-eyebrow">Módulo editable</p>
@@ -27,7 +48,7 @@
     <div class="loading-state">Cargando contenido de Sobre nosotros...</div>
   }
 
-  <section class="small-hero">
+  <section id="editor-hero" class="small-hero editor-section">
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <p class="hero-eyebrow">Sobre nosotros</p>
@@ -36,7 +57,7 @@
     </div>
   </section>
 
-  <section id="sobre-nosotros" class="section section-historia editable-zone">
+  <section id="editor-historia" class="section section-historia editable-zone editor-section">
     <button type="button" class="edit-button" (click)="editBlock('history')">Editar</button>
     <div class="container">
       @if (editingBlock() === 'history') {
@@ -92,7 +113,7 @@
     </div>
   </section>
 
-  <section class="section section-equipo">
+  <section id="editor-equipo" class="section section-equipo editor-section">
     <div class="container">
       <article class="editable-zone">
         <button type="button" class="edit-button" (click)="editBlock('team')">Editar</button>
@@ -111,12 +132,24 @@
               <input type="number" [(ngModel)]="aboutUsContent.collaboratorsCount" (ngModelChange)="markChanged()" />
             </label>
             <label class="field">
+              <span>Texto de colaboradores</span>
+              <input type="text" [(ngModel)]="aboutUsContent.collaboratorsLabel" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
               <span>Talento local (%)</span>
               <input type="number" [(ngModel)]="aboutUsContent.localTalentPercentage" (ngModelChange)="markChanged()" />
             </label>
             <label class="field">
+              <span>Texto de talento local</span>
+              <input type="text" [(ngModel)]="aboutUsContent.localTalentLabel" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
               <span>Años de experiencia</span>
               <input type="number" [(ngModel)]="aboutUsContent.experienceYears" (ngModelChange)="markChanged()" />
+            </label>
+            <label class="field">
+              <span>Texto de años de experiencia</span>
+              <input type="text" [(ngModel)]="aboutUsContent.experienceLabel" (ngModelChange)="markChanged()" />
             </label>
           </div>
         }
@@ -128,15 +161,15 @@
         <div class="equipo-grid">
           <div class="equipo-stat animate-up delay-1">
             <div class="stat-number">{{ aboutUsContent.collaboratorsCount }}<span>+</span></div>
-            <div class="stat-label">Colaboradores</div>
+            <div class="stat-label">{{ aboutUsContent.collaboratorsLabel }}</div>
           </div>
           <div class="equipo-stat animate-up delay-2">
             <div class="stat-number">{{ aboutUsContent.localTalentPercentage }}<span>%</span></div>
-            <div class="stat-label">Talento local de Cartago</div>
+            <div class="stat-label">{{ aboutUsContent.localTalentLabel }}</div>
           </div>
           <div class="equipo-stat animate-up delay-3">
             <div class="stat-number">{{ aboutUsContent.experienceYears }}<span>+</span></div>
-            <div class="stat-label">Años de experiencia</div>
+            <div class="stat-label">{{ aboutUsContent.experienceLabel }}</div>
           </div>
         </div>
       </article>
@@ -195,7 +228,7 @@
     </div>
   </section>
 
-  <section class="section section-mision editable-zone">
+  <section id="editor-mvv" class="section section-mision editable-zone editor-section">
     <button type="button" class="edit-button edit-button-light" (click)="editBlock('mvv')">Editar</button>
     <div class="mision-bg-pattern"></div>
     <div class="container">
@@ -266,7 +299,7 @@
     </div>
   </section>
 
-  <section id="galeria" class="section section-galeria editable-zone">
+  <section id="editor-galeria" class="section section-galeria editable-zone editor-section">
     <button type="button" class="edit-button" (click)="editBlock('gallery')">Editar</button>
     <div class="container">
       @if (editingBlock() === 'gallery') {

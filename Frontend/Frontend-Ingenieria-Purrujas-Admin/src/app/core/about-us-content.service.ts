@@ -15,8 +15,11 @@ export interface AboutUsPageContent {
   teamTag: string;
   teamTitle: string;
   collaboratorsCount: number;
+  collaboratorsLabel: string;
   localTalentPercentage: number;
+  localTalentLabel: string;
   experienceYears: number;
+  experienceLabel: string;
   directorName: string;
   directorTitle: string;
   directorBiography: string;
@@ -62,6 +65,9 @@ export function cloneAboutUsPageContent(content: AboutUsPageContent): AboutUsPag
     missionTitle: normalizeText(content.missionTitle, 'Mision'),
     visionTitle: normalizeText(content.visionTitle, 'Vision'),
     valuesTitle: normalizeText(content.valuesTitle, 'Valores'),
+    collaboratorsLabel: normalizeText(content.collaboratorsLabel, 'Colaboradores'),
+    localTalentLabel: normalizeText(content.localTalentLabel, 'Talento local de Cartago'),
+    experienceLabel: normalizeText(content.experienceLabel, 'Años de experiencia'),
     historyMilestones: [...(content.historyMilestones ?? [])],
     values: [...(content.values ?? [])]
   };
@@ -84,8 +90,11 @@ function createEmptyAboutUsPageContent(): AboutUsPageContent {
     teamTag: '',
     teamTitle: '',
     collaboratorsCount: 0,
+    collaboratorsLabel: 'Colaboradores',
     localTalentPercentage: 0,
+    localTalentLabel: 'Talento local de Cartago',
     experienceYears: 0,
+    experienceLabel: 'Años de experiencia',
     directorName: '',
     directorTitle: '',
     directorBiography: '',

@@ -14,8 +14,11 @@ public sealed class AboutUsPageContent
     public string TeamTag { get; set; } = string.Empty;
     public string TeamTitle { get; set; } = string.Empty;
     public int CollaboratorsCount { get; set; }
+    public string CollaboratorsLabel { get; set; } = "Colaboradores";
     public int LocalTalentPercentage { get; set; }
+    public string LocalTalentLabel { get; set; } = "Talento local de Cartago";
     public int ExperienceYears { get; set; }
+    public string ExperienceLabel { get; set; } = "Años de experiencia";
 
     public string DirectorName { get; set; } = string.Empty;
     public string DirectorTitle { get; set; } = string.Empty;

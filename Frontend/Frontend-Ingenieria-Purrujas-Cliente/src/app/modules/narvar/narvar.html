@@ -1,22 +1,26 @@
 <nav class="top-nav">
   <div class="nav-container">
     <div class="nav-brand">
-      <a href="#home" class="brand-link">
+      <a href="" class="brand-link" (click)="goToSection($event, 'home')">
         <img src="images/Logo.png" alt="Logo Hotel" class="logo">
         <span>Hotel Las Purrujas</span>
       </a>
     </div>
     <ul class="nav-links">
-      <li><a href="#home">Home</a></li>
-      <li><a href="#facilidades">Facilidades</a></li>
-      <li><a href="#tarifas">Tarifas</a></li>
-      <li><a href="#como-llegar">¿Cómo llegar?</a></li>
-      <li><a href="#contactenos">Contáctenos</a></li>
-      <li><a routerLink="/cotizar">Cotización rápida</a></li>
-      <li><a routerLink="/about-us">Sobre nosotros</a></li>
-      <li><a routerLink="/promociones">Promociones</a></li>
-      <li><a routerLink="/publicidad">Publicidad</a></li>
-      <li class="reservation-item"><a routerLink="/reservar" class="reservation-link">Reservas en línea</a></li>
+      <li><a href="" (click)="goToSection($event, 'home')" [class.active-route]="isHomeFragmentActive('home')">Home</a></li>
+      <li><a href="" (click)="goToSection($event, 'facilidades')" [class.active-route]="isHomeFragmentActive('facilidades')">Facilidades</a></li>
+      <li><a href="" (click)="goToSection($event, 'tarifas')" [class.active-route]="isHomeFragmentActive('tarifas')">Tarifas</a></li>
+      <li><a href="" (click)="goToSection($event, 'como-llegar')" [class.active-route]="isHomeFragmentActive('como-llegar')">¿Cómo llegar?</a></li>
+      <li><a href="" (click)="goToSection($event, 'contactenos')" [class.active-route]="isHomeFragmentActive('contactenos')">Contáctenos</a></li>
+      <li><a routerLink="/cotizar" [class.active-route]="isRouteActive('/cotizar')">Cotización rápida</a></li>
+      <li><a routerLink="/about-us" [class.active-route]="isRouteActive('/about-us')">Sobre nosotros</a></li>
+      <li><a routerLink="/promociones" [class.active-route]="isRouteActive('/promociones')">Promociones</a></li>
+      <li><a routerLink="/publicidad" [class.active-route]="isRouteActive('/publicidad')">Publicidad</a></li>
+      <li class="reservation-item">
+        <a routerLink="/reservar" class="reservation-link" [class.reservation-current]="isRouteActive('/reservar')">
+          Reservas en línea
+        </a>
+      </li>
     </ul>
   </div>
 </nav>

@@ -15,8 +15,11 @@ export interface AboutUsPageContent {
   teamTag: string;
   teamTitle: string;
   collaboratorsCount: number;
+  collaboratorsLabel: string;
   localTalentPercentage: number;
+  localTalentLabel: string;
   experienceYears: number;
+  experienceLabel: string;
   directorName: string;
   directorTitle: string;
   directorBiography: string;
@@ -59,8 +62,11 @@ export function createEmptyAboutUsPageContent(): AboutUsPageContent {
     teamTag: '',
     teamTitle: '',
     collaboratorsCount: 0,
+    collaboratorsLabel: 'Colaboradores',
     localTalentPercentage: 0,
+    localTalentLabel: 'Talento local de Cartago',
     experienceYears: 0,
+    experienceLabel: 'Años de experiencia',
     directorName: '',
     directorTitle: '',
     directorBiography: '',
@@ -94,6 +100,9 @@ export function normalizeAboutUsPageContent(
     missionTitle: normalizeText(normalizedContent.missionTitle, empty.missionTitle),
     visionTitle: normalizeText(normalizedContent.visionTitle, empty.visionTitle),
     valuesTitle: normalizeText(normalizedContent.valuesTitle, empty.valuesTitle),
+    collaboratorsLabel: normalizeText(normalizedContent.collaboratorsLabel, empty.collaboratorsLabel),
+    localTalentLabel: normalizeText(normalizedContent.localTalentLabel, empty.localTalentLabel),
+    experienceLabel: normalizeText(normalizedContent.experienceLabel, empty.experienceLabel),
     historyMilestones: normalizeList(normalizedContent.historyMilestones),
     values: normalizeList(normalizedContent.values)
   };

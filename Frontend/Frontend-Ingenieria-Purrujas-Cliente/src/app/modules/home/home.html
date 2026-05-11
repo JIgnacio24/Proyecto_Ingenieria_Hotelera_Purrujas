@@ -1,7 +1,7 @@
 <section
   id="home"
   class="home-hero"
-  [style.--hero-image]="heroImageUrl"
+  [style.background-image]="heroBackgroundImage"
 >
   <div class="hero-overlay"></div>
   <div class="hero-leaves">
@@ -17,19 +17,7 @@
   </div>
 </section>
 
-<!-- Reservas en línea -->
-<section id="reservas" class="section section-reservas">
-  <div class="container reservas-box">
-    <div>
-      <span class="section-tag">Tu estancia</span>
-      <h2 class="section-title">Reserva en línea</h2>
-      <p>
-        Confirma tu habitación en minutos. Pagos seguros y cancelación flexible hasta 7 días antes.
-      </p>
-    </div>
-    <a class="cta-button" routerLink="/reservar">Solicitar disponibilidad</a>
-  </div>
-</section>
+<app-online-reservation-cta></app-online-reservation-cta>
 
 <!-- Facilidades -->
 <app-facilities></app-facilities>

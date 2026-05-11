@@ -29,6 +29,7 @@ import {
 type DashboardMenuKey =
   | 'home'
   | 'pages'
+  | 'getting-there'
   | 'home-editor'
   | 'about-us'
   | 'reservations'
@@ -97,6 +98,13 @@ export class DashboardComponent implements AfterViewInit {
       compactLabel: 'Facilidades',
       icon: 'pages',
       targetId: 'dashboard-content'
+    },
+    {
+      key: 'getting-there',
+      label: 'Editar cómo llegar',
+      compactLabel: 'Cómo llegar',
+      icon: 'getting-there',
+      targetId: 'dashboard-getting-there'
     },
     {
       key: 'home-editor',
@@ -406,10 +414,7 @@ export class DashboardComponent implements AfterViewInit {
       return;
     }
 
-    this.document.getElementById(targetId)?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
+    this.scrollToDashboardSection(targetId);
   }
 
   activeMenuLabel(): string {
@@ -485,6 +490,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z';
       case 'pages':
         return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
+      case 'getting-there':
+        return 'M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11m0-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6';
       case 'about-us':
         return 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-7 9a7 7 0 0 1 14 0M4 4h16v16H4z';
       case 'home-editor':
@@ -662,7 +669,7 @@ export class DashboardComponent implements AfterViewInit {
 
   private syncActiveMenuItem(): void {
     // Mantiene resaltado el boton lateral correspondiente a la seccion visible.
-    const marker = 180;
+    const marker = this.dashboardScrollOffset() + 24;
     const sections = this.menuItems
       .map((item) => ({
         key: item.key,
@@ -696,5 +703,36 @@ export class DashboardComponent implements AfterViewInit {
     if (this.activeMenuItem() !== closestSection.key) {
       this.activeMenuItem.set(closestSection.key);
     }
+  }
+
+  private scrollToDashboardSection(targetId: string): void {
+    const target = this.document.getElementById(targetId);
+    const view = this.document.defaultView;
+
+    if (!target || !view) {
+      return;
+    }
+
+    const top = target.getBoundingClientRect().top + view.scrollY - this.dashboardScrollOffset();
+    view.scrollTo({
+      top: Math.max(top, 0),
+      left: 0,
+      behavior: 'smooth'
+    });
+  }
+
+  private dashboardScrollOffset(): number {
+    const view = this.document.defaultView;
+    const sideNav = this.document.querySelector('.side-nav');
+
+    if (
+      view &&
+      view.matchMedia('(max-width: 1200px)').matches &&
+      sideNav instanceof HTMLElement
+    ) {
+      return sideNav.offsetHeight + 16;
+    }
+
+    return 18;
   }
 }

@@ -43,15 +43,15 @@
     <div class="equipo-grid">
       <div class="equipo-stat animate-up delay-1">
         <div class="stat-number">{{ aboutUsContent.collaboratorsCount }}<span>+</span></div>
-        <div class="stat-label">Colaboradores</div>
+        <div class="stat-label">{{ aboutUsContent.collaboratorsLabel }}</div>
       </div>
       <div class="equipo-stat animate-up delay-2">
         <div class="stat-number">{{ aboutUsContent.localTalentPercentage }}<span>%</span></div>
-        <div class="stat-label">Talento local de Cartago</div>
+        <div class="stat-label">{{ aboutUsContent.localTalentLabel }}</div>
       </div>
       <div class="equipo-stat animate-up delay-3">
         <div class="stat-number">{{ aboutUsContent.experienceYears }}<span>+</span></div>
-        <div class="stat-label">Anos de experiencia</div>
+        <div class="stat-label">{{ aboutUsContent.experienceLabel }}</div>
       </div>
     </div>
 
@@ -140,7 +140,7 @@
         (click)="setFilter('lugares')"
       >
         <span class="material-icons">explore</span>
-        Lugares Aledanos
+        Lugares Aledaños
       </button>
     </div>
 
@@ -157,16 +157,4 @@
 
 <app-getting-there-section variant="about"></app-getting-there-section>
 
-<!-- Reservas en linea -->
-<section id="reservas" class="section section-reservas">
-  <div class="container reservas-box">
-    <div>
-      <span class="section-tag">Tu estancia</span>
-      <h2 class="section-title">Reserva en linea</h2>
-      <p>
-        Confirma tu habitacion en minutos. Pagos seguros y cancelacion flexible hasta 7 dias antes.
-      </p>
-    </div>
-    <a class="cta-button" routerLink="/cotizar">Solicitar disponibilidad</a>
-  </div>
-</section>
+<app-online-reservation-cta ctaLink="/cotizar"></app-online-reservation-cta>

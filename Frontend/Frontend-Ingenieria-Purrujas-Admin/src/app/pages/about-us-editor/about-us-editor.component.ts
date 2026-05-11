@@ -1,6 +1,6 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, Pipe, PipeTransform, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, HostListener, Pipe, PipeTransform, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -58,6 +58,15 @@ export class AboutUsEditorComponent implements AfterViewInit {
   readonly inlineFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly editingBlock = signal<EditableBlock>(null);
   readonly hasChanges = signal(false);
+  readonly activeSection = signal('editor-hero');
+
+  readonly editorSections = [
+    { id: 'editor-hero', label: 'Encabezado', compactLabel: 'Inicio', icon: 'landscape' },
+    { id: 'editor-historia', label: 'Historia', compactLabel: 'Historia', icon: 'history_edu' },
+    { id: 'editor-equipo', label: 'Equipo y filosofía', compactLabel: 'Equipo', icon: 'groups' },
+    { id: 'editor-mvv', label: 'Misión, visión y valores', compactLabel: 'MVV', icon: 'track_changes' },
+    { id: 'editor-galeria', label: 'Galería', compactLabel: 'Galería', icon: 'photo_library' }
+  ];
 
   activeFilter: 'todos' | 'hotel' | 'lugares' = 'todos';
   aboutUsContent: AboutUsPageContent = createDefaultAboutUsPageContent();
@@ -84,6 +93,12 @@ export class AboutUsEditorComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     // La entrada desde el dashboard debe abrir el editor desde su encabezado.
     this.scrollToTop('auto');
+    this.updateActiveSection();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.updateActiveSection();
   }
 
   async loadContent(): Promise<void> {
@@ -214,6 +229,22 @@ export class AboutUsEditorComponent implements AfterViewInit {
     return this.galleryImageErrors.get(imageId) ?? '';
   }
 
+  scrollToSection(sectionId: string): void {
+    const element = this.document.getElementById(sectionId);
+    if (!element) {
+      return;
+    }
+
+    const top = element.getBoundingClientRect().top + (this.document.defaultView?.scrollY ?? 0) - 92;
+    this.document.defaultView?.scrollTo({ top, behavior: 'smooth' });
+    this.activeSection.set(sectionId);
+  }
+
+  scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
+    this.document.defaultView?.scrollTo({ top: 0, left: 0, behavior });
+    this.activeSection.set('editor-hero');
+  }
+
   getInitials(name: string): string {
     return name
       .split(' ')
@@ -297,7 +328,21 @@ export class AboutUsEditorComponent implements AfterViewInit {
     return fallbackMessage;
   }
 
-  private scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
-    this.document.defaultView?.scrollTo({ top: 0, left: 0, behavior });
+  private updateActiveSection(): void {
+    const viewportOffset = 130;
+    let activeId = this.editorSections[0].id;
+
+    for (const section of this.editorSections) {
+      const element = this.document.getElementById(section.id);
+      if (!element) {
+        continue;
+      }
+
+      if (element.getBoundingClientRect().top <= viewportOffset) {
+        activeId = section.id;
+      }
+    }
+
+    this.activeSection.set(activeId);
   }
 }
