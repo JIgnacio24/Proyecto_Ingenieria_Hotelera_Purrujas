@@ -120,7 +120,7 @@ public class AdminUserRepository : IAdminUserRepository
     {
         if (string.IsNullOrWhiteSpace(_connectionString))
         {
-            throw new InvalidOperationException("La cadena de conexion DefaultConnection no esta configurada.");
+            throw new InvalidOperationException("La cadena de conexión DefaultConnection no está configurada.");
         }
     }
 

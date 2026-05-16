@@ -63,7 +63,7 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
     {
         if (string.IsNullOrWhiteSpace(_connectionString))
         {
-            throw new InvalidOperationException("No se configuro la conexion a la base de datos.");
+            throw new InvalidOperationException("No se configuró la conexión a la base de datos.");
         }
 
         var normalizedContent = ValidateAndNormalize(content);
@@ -168,12 +168,12 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
         return new FacilitiesPageContent
         {
             SectionTag = RequireValue(content.SectionTag, "La etiqueta de la seccion es requerida."),
-            SectionTitle = RequireValue(content.SectionTitle, "El titulo de la seccion es requerido."),
-            HighlightTitle = RequireValue(content.HighlightTitle, "El titulo destacado es requerido."),
-            HighlightDescription = RequireValue(content.HighlightDescription, "La descripcion destacada es requerida."),
-            PrimaryListTitle = RequireValue(content.PrimaryListTitle, "El titulo de la lista principal es requerido."),
+            SectionTitle = RequireValue(content.SectionTitle, "El título de la sección es requerido."),
+            HighlightTitle = RequireValue(content.HighlightTitle, "El título destacado es requerido."),
+            HighlightDescription = RequireValue(content.HighlightDescription, "La descripción destacada es requerida."),
+            PrimaryListTitle = RequireValue(content.PrimaryListTitle, "El título de la lista principal es requerido."),
             PrimaryListItems = primaryItems,
-            SecondaryListTitle = RequireValue(content.SecondaryListTitle, "El titulo de la lista secundaria es requerido."),
+            SecondaryListTitle = RequireValue(content.SecondaryListTitle, "El título de la lista secundaria es requerido."),
             SecondaryListItems = secondaryItems,
             ServiceCards = serviceCards
         };
@@ -274,55 +274,55 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
         return new FacilitiesPageContent
         {
             SectionTag = "Lo que nos distingue",
-            SectionTitle = "Caracteristicas Principales",
-            HighlightTitle = "Ubicacion Privilegiada",
-            HighlightDescription = "Situado a solo 45 minutos de San Jose, en las verdes montanas de Cartago, el hotel ofrece vistas panoramicas al Volcan Turrialba y esta rodeado de bosques nubosos y rios cristalinos. Una combinacion unica de accesibilidad y tranquilidad absoluta.",
+            SectionTitle = "Características principales",
+            HighlightTitle = "Ubicación privilegiada",
+            HighlightDescription = "Situado a solo 45 minutos de San José, en las verdes montañas de Cartago, el hotel ofrece vistas panorámicas al Volcán Turrialba y está rodeado de bosques nubosos y ríos cristalinos. Una combinación única de accesibilidad y tranquilidad absoluta.",
             PrimaryListTitle = "Instalaciones",
             PrimaryListItems =
             [
-                "18 habitaciones tematicas",
+                "18 habitaciones temáticas",
                 "Restaurante \"La Ceiba\"",
                 "Piscina natural de manantial",
-                "Senderos ecologicos (5 km)",
-                "Salon de eventos",
+                "Senderos ecológicos (5 km)",
+                "Salón de eventos",
                 "Spa con plantas locales"
             ],
-            SecondaryListTitle = "Servicios Destacados",
+            SecondaryListTitle = "Servicios destacados",
             SecondaryListItems =
             [
-                "Tours al Volcan Turrialba e Irazu",
-                "Birdwatching con guias certificados",
-                "Talleres de gastronomia tipica",
-                "Transporte desde San Jose",
+                "Tours al Volcán Turrialba e Irazú",
+                "Birdwatching con guías certificados",
+                "Talleres de gastronomía típica",
+                "Transporte desde San José",
                 "Wi-Fi de alta velocidad",
-                "Atencion personalizada 24/7"
+                "Atención personalizada 24/7"
             ],
             ServiceCards =
             [
                 new FacilitiesServiceText
                 {
-                    Title = "18 habitaciones tematicas",
+                    Title = "18 habitaciones temáticas",
                     Description = "Ambientes con personalidad propia, balcones al bosque nuboso y textiles artesanales inspirados en Cartago."
                 },
                 new FacilitiesServiceText
                 {
                     Title = "Restaurante \"La Ceiba\"",
-                    Description = "Cocina de finca a la mesa, cafe chorreado y menus de temporada que celebran los sabores locales."
+                    Description = "Cocina de finca a la mesa, café chorreado y menús de temporada que celebran los sabores locales."
                 },
                 new FacilitiesServiceText
                 {
                     Title = "Piscina natural de manantial",
-                    Description = "Agua cristalina, temperatura agradable y vistas verdes para recargar energia de forma natural."
+                    Description = "Agua cristalina, temperatura agradable y vistas verdes para recargar energía de forma natural."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Senderos ecologicos (5 km)",
-                    Description = "Rutas senalizadas entre bosque nuboso, ideales para caminatas al amanecer y observacion de flora."
+                    Title = "Senderos ecológicos (5 km)",
+                    Description = "Rutas señalizadas entre bosque nuboso, ideales para caminatas al amanecer y observación de flora."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Salon de eventos",
-                    Description = "Espacio versatil con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
+                    Title = "Salón de eventos",
+                    Description = "Espacio versátil con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
                 },
                 new FacilitiesServiceText
                 {
@@ -331,33 +331,33 @@ public sealed class FacilitiesPageContentRepository : IFacilitiesPageContentRepo
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Tours al Volcan Turrialba e Irazu",
-                    Description = "Excursiones guiadas para explorar dos volcanes iconicos con logistica y transporte incluidos."
+                    Title = "Tours al Volcán Turrialba e Irazú",
+                    Description = "Excursiones guiadas para explorar dos volcanes icónicos con logística y transporte incluidos."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Birdwatching con guias certificados",
-                    Description = "Avistamiento de purrujas y mas de 120 especies con especialistas locales y equipo optico."
+                    Title = "Birdwatching con guías certificados",
+                    Description = "Avistamiento de purrujas y más de 120 especies con especialistas locales y equipo óptico."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Talleres de gastronomia tipica",
+                    Title = "Talleres de gastronomía típica",
                     Description = "Aprende a preparar tortillas palmeadas, gallo pinto y salsas caseras con cocineras de la zona."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Transporte desde San Jose",
+                    Title = "Transporte desde San José",
                     Description = "Traslados seguros puerta a puerta para que llegues sin preocupaciones desde el aeropuerto o la ciudad."
                 },
                 new FacilitiesServiceText
                 {
                     Title = "Wi-Fi de alta velocidad",
-                    Description = "Conectividad confiable en habitaciones y areas comunes para trabajar o compartir tu experiencia."
+                    Description = "Conectividad confiable en habitaciones y áreas comunes para trabajar o compartir tu experiencia."
                 },
                 new FacilitiesServiceText
                 {
-                    Title = "Atencion personalizada 24/7",
-                    Description = "Equipo disponible todo el dia para ayudarte con reservas, recomendaciones y soporte durante tu estadia."
+                    Title = "Atención personalizada 24/7",
+                    Description = "Equipo disponible todo el día para ayudarte con reservas, recomendaciones y soporte durante tu estadía."
                 }
             ]
         };

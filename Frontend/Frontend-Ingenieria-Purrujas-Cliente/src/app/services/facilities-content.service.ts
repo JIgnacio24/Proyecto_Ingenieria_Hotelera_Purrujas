@@ -22,53 +22,53 @@ export interface FacilitiesPageContent {
 
 const DEFAULT_FACILITIES_PAGE_CONTENT: FacilitiesPageContent = {
   sectionTag: 'Lo que nos distingue',
-  sectionTitle: 'Caracteristicas Principales',
-  highlightTitle: 'Ubicación Privilegiada',
+  sectionTitle: 'Características principales',
+  highlightTitle: 'Ubicación privilegiada',
   highlightDescription:
-    'Situado a solo 45 minutos de San Jose, en las verdes montanas de Cartago, el hotel ofrece vistas panoramicas al Volcan Turrialba y esta rodeado de bosques nubosos y rios cristalinos. Una combinacion unica de accesibilidad y tranquilidad absoluta.',
+    'Situado a solo 45 minutos de San José, en las verdes montañas de Cartago, el hotel ofrece vistas panorámicas al Volcán Turrialba y está rodeado de bosques nubosos y ríos cristalinos. Una combinación única de accesibilidad y tranquilidad absoluta.',
   primaryListTitle: 'Instalaciones',
   primaryListItems: [
-    '18 habitaciones tematicas',
+    '18 habitaciones temáticas',
     'Restaurante "La Ceiba"',
     'Piscina natural de manantial',
-    'Senderos ecologicos (5 km)',
-    'Salon de eventos',
+    'Senderos ecológicos (5 km)',
+    'Salón de eventos',
     'Spa con plantas locales'
   ],
-  secondaryListTitle: 'Servicios Destacados',
+  secondaryListTitle: 'Servicios destacados',
   secondaryListItems: [
-    'Tours al Volcan Turrialba e Irazu',
-    'Birdwatching con guias certificados',
-    'Talleres de gastronomia tipica',
-    'Transporte desde San Jose',
+    'Tours al Volcán Turrialba e Irazú',
+    'Birdwatching con guías certificados',
+    'Talleres de gastronomía típica',
+    'Transporte desde San José',
     'Wi-Fi de alta velocidad',
-    'Atencion personalizada 24/7'
+    'Atención personalizada 24/7'
   ],
   serviceCards: [
     {
-      title: '18 habitaciones tematicas',
+      title: '18 habitaciones temáticas',
       description:
         'Ambientes con personalidad propia, balcones al bosque nuboso y textiles artesanales inspirados en Cartago.'
     },
     {
       title: 'Restaurante "La Ceiba"',
       description:
-        'Cocina de finca a la mesa, cafe chorreado y menus de temporada que celebran los sabores locales.'
+        'Cocina de finca a la mesa, café chorreado y menús de temporada que celebran los sabores locales.'
     },
     {
       title: 'Piscina natural de manantial',
       description:
-        'Agua cristalina, temperatura agradable y vistas verdes para recargar energia de forma natural.'
+        'Agua cristalina, temperatura agradable y vistas verdes para recargar energía de forma natural.'
     },
     {
-      title: 'Senderos ecologicos (5 km)',
+      title: 'Senderos ecológicos (5 km)',
       description:
-        'Rutas senalizadas entre bosque nuboso, ideales para caminatas al amanecer y observacion de flora.'
+        'Rutas señalizadas entre bosque nuboso, ideales para caminatas al amanecer y observación de flora.'
     },
     {
-      title: 'Salon de eventos',
+      title: 'Salón de eventos',
       description:
-        'Espacio versatil con luz natural, perfecto para retiros corporativos, bodas boutique y talleres.'
+        'Espacio versátil con luz natural, perfecto para retiros corporativos, bodas boutique y talleres.'
     },
     {
       title: 'Spa con plantas locales',
@@ -76,34 +76,34 @@ const DEFAULT_FACILITIES_PAGE_CONTENT: FacilitiesPageContent = {
         'Tratamientos herbales, masajes relajantes y aromaterapia con esencias del bosque costarricense.'
     },
     {
-      title: 'Tours al Volcan Turrialba e Irazu',
+      title: 'Tours al Volcán Turrialba e Irazú',
       description:
-        'Excursiones guiadas para explorar dos volcanes iconicos con logistica y transporte incluidos.'
+        'Excursiones guiadas para explorar dos volcanes icónicos con logística y transporte incluidos.'
     },
     {
-      title: 'Birdwatching con guias certificados',
+      title: 'Birdwatching con guías certificados',
       description:
-        'Avistamiento de purrujas y mas de 120 especies con especialistas locales y equipo optico.'
+        'Avistamiento de purrujas y más de 120 especies con especialistas locales y equipo óptico.'
     },
     {
-      title: 'Talleres de gastronomia tipica',
+      title: 'Talleres de gastronomía típica',
       description:
         'Aprende a preparar tortillas palmeadas, gallo pinto y salsas caseras con cocineras de la zona.'
     },
     {
-      title: 'Transporte desde San Jose',
+      title: 'Transporte desde San José',
       description:
         'Traslados seguros puerta a puerta para que llegues sin preocupaciones desde el aeropuerto o la ciudad.'
     },
     {
       title: 'Wi-Fi de alta velocidad',
       description:
-        'Conectividad confiable en habitaciones y areas comunes para trabajar o compartir tu experiencia.'
+        'Conectividad confiable en habitaciones y áreas comunes para trabajar o compartir tu experiencia.'
     },
     {
-      title: 'Atencion personalizada 24/7',
+      title: 'Atención personalizada 24/7',
       description:
-        'Equipo disponible todo el dia para ayudarte con reservas, recomendaciones y soporte durante tu estadia.'
+        'Equipo disponible todo el día para ayudarte con reservas, recomendaciones y soporte durante tu estadía.'
     }
   ]
 };
@@ -167,7 +167,7 @@ function sanitizeServiceCards(
     description: coalesce(
       normalizedCards[index]?.description,
       fallback[index]?.description,
-      'Descripcion pendiente.'
+      'Descripción pendiente.'
     )
   }));
 }

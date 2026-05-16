@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface AboutUsPageContent {
   // Contrato compartido con el endpoint /api/about-us-content.
-  // Cada propiedad corresponde a un texto editable de la pagina publica.
+  // Cada propiedad corresponde a un texto editable de la página pública.
   historyTag: string;
   historyTitle: string;
   historyDescription: string;
@@ -58,12 +58,12 @@ export function createDefaultAboutUsPageContent(): AboutUsPageContent {
 }
 
 export function cloneAboutUsPageContent(content: AboutUsPageContent): AboutUsPageContent {
-  // Crea copias independientes para evitar mutar la version original al editar el formulario.
+  // Crea copias independientes para evitar mutar la versión original al editar el formulario.
   return {
     ...createEmptyAboutUsPageContent(),
     ...content,
-    missionTitle: normalizeText(content.missionTitle, 'Mision'),
-    visionTitle: normalizeText(content.visionTitle, 'Vision'),
+    missionTitle: normalizeText(content.missionTitle, 'Misión'),
+    visionTitle: normalizeText(content.visionTitle, 'Visión'),
     valuesTitle: normalizeText(content.valuesTitle, 'Valores'),
     collaboratorsLabel: normalizeText(content.collaboratorsLabel, 'Colaboradores'),
     localTalentLabel: normalizeText(content.localTalentLabel, 'Talento local de Cartago'),
@@ -74,7 +74,7 @@ export function cloneAboutUsPageContent(content: AboutUsPageContent): AboutUsPag
 }
 
 function normalizeText(value: string | undefined, fallback: string): string {
-  // Protege la UI si un registro historico aun no tiene campos nuevos en el JSON.
+  // Protege la UI si un registro histórico aún no tiene campos nuevos en el JSON.
   const normalized = value?.trim() ?? '';
   return normalized.length > 0 ? normalized : fallback;
 }
@@ -103,9 +103,9 @@ function createEmptyAboutUsPageContent(): AboutUsPageContent {
     philosophyQuote: '',
     mvvTag: '',
     mvvTitle: '',
-    missionTitle: 'Mision',
+    missionTitle: 'Misión',
     mission: '',
-    visionTitle: 'Vision',
+    visionTitle: 'Visión',
     vision: '',
     valuesTitle: 'Valores',
     values: [],

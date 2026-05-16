@@ -1,9 +1,9 @@
 <section class="section quote-hero">
   <div class="container">
-    <span class="section-tag">Cotizacion rapida</span>
+    <span class="section-tag">Cotización rápida</span>
     <h1 class="section-title">Calcula tu estancia</h1>
     <p class="section-subtext">
-      Selecciona habitacion y rango de fechas. Ajustamos automaticamente el precio por temporada alta o baja.
+      Selecciona habitación y rango de fechas. Ajustamos automáticamente el precio por temporada alta o baja.
     </p>
   </div>
 </section>
@@ -12,7 +12,7 @@
   <div class="container quote-grid">
     <div class="quote-card">
       <div class="quote-field">
-        <label for="habitacion">Tipo de habitacion</label>
+        <label for="habitacion">Tipo de habitación</label>
         <select
           id="habitacion"
           [ngModel]="habitacionSeleccionada.id"
@@ -26,7 +26,7 @@
       <div class="quote-field">
         <label for="moneda">Moneda</label>
         <select id="moneda" [(ngModel)]="currency" (ngModelChange)="currencyService.setCurrency($event)" required>
-          <option value="USD">Dolares (USD)</option>
+          <option value="USD">Dólares (USD)</option>
           <option value="CRC">Colones (CRC)</option>
         </select>
       </div>

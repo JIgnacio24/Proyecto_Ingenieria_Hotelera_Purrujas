@@ -62,7 +62,7 @@ public sealed class HomePageContentRepository : IHomePageContentRepository
     {
         if (string.IsNullOrWhiteSpace(_connectionString))
         {
-            throw new InvalidOperationException("No se configuro la conexion a la base de datos.");
+            throw new InvalidOperationException("No se configuró la conexión a la base de datos.");
         }
 
         var normalizedContent = ValidateAndNormalize(content);
@@ -161,8 +161,8 @@ public sealed class HomePageContentRepository : IHomePageContentRepository
         return new HomePageContent
         {
             HeroEyebrow = RequireValue(content.HeroEyebrow, "La etiqueta del hero es requerida."),
-            HeroTitle = RequireValue(content.HeroTitle, "El titulo del hero es requerido."),
-            HeroSubtitle = RequireValue(content.HeroSubtitle, "El subtitulo del hero es requerido.")
+            HeroTitle = RequireValue(content.HeroTitle, "El título del hero es requerido."),
+            HeroSubtitle = RequireValue(content.HeroSubtitle, "El subtítulo del hero es requerido.")
         };
     }
 

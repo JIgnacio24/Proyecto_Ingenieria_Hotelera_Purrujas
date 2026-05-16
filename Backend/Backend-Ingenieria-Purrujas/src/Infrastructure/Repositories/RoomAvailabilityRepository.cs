@@ -235,7 +235,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
     {
         if (string.IsNullOrWhiteSpace(_connectionString))
         {
-            throw new InvalidOperationException("No se configuro la conexion a la base de datos.");
+            throw new InvalidOperationException("No se configuró la conexión a la base de datos.");
         }
     }
 

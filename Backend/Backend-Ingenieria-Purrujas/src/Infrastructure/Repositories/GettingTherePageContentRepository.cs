@@ -65,7 +65,7 @@ public sealed class GettingTherePageContentRepository : IGettingTherePageContent
     {
         if (string.IsNullOrWhiteSpace(_connectionString))
         {
-            throw new InvalidOperationException("No se configuro la conexion a la base de datos.");
+            throw new InvalidOperationException("No se configuró la conexión a la base de datos.");
         }
 
         var normalizedContent = ValidateAndNormalize(content);
@@ -152,10 +152,10 @@ public sealed class GettingTherePageContentRepository : IGettingTherePageContent
         return new GettingTherePageContent
         {
             SectionTag = RequireValue(content.SectionTag, "La etiqueta de la seccion es requerida."),
-            SectionTitle = RequireValue(content.SectionTitle, "El titulo de la seccion es requerido."),
+            SectionTitle = RequireValue(content.SectionTitle, "El título de la sección es requerido."),
             SectionSubtext = RequireValue(content.SectionSubtext, "El texto introductorio es requerido."),
-            CoordinatesTitle = RequireValue(content.CoordinatesTitle, "El titulo de coordenadas es requerido."),
-            CoordinatesDescription = RequireValue(content.CoordinatesDescription, "La descripcion de coordenadas es requerida."),
+            CoordinatesTitle = RequireValue(content.CoordinatesTitle, "El título de coordenadas es requerido."),
+            CoordinatesDescription = RequireValue(content.CoordinatesDescription, "La descripción de coordenadas es requerida."),
             DirectionsItems = directionsItems,
             MapButtonLabel = RequireValue(content.MapButtonLabel, "La etiqueta del boton del mapa es requerida.")
         };

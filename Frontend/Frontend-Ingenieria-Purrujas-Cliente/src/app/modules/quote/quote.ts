@@ -30,16 +30,16 @@ export class QuoteComponent implements OnInit, OnDestroy {
   habitaciones: Room[] = [
     {
       id: 'doble',
-      nombre: 'Habitacion Doble',
-      descripcion: 'Cama queen, balcon al bosque y cafe de cortesia.',
+      nombre: 'Habitación Doble',
+      descripcion: 'Cama queen, balcón al bosque y café de cortesía.',
       capacidad: '2 personas',
       precioBaja: 95,
       multiplicadorAlta: 1.25
     },
     {
       id: 'suite',
-      nombre: 'Suite Volcan',
-      descripcion: 'Jacuzzi, terraza panoramica y coctel de bienvenida.',
+      nombre: 'Suite Volcán',
+      descripcion: 'Jacuzzi, terraza panorámica y cóctel de bienvenida.',
       capacidad: 'Hasta 4 personas',
       precioBaja: 135,
       multiplicadorAlta: 1.25
@@ -47,7 +47,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
     {
       id: 'villa',
       nombre: 'Villa Familiar',
-      descripcion: 'Hasta 5 huespedes, cocina equipada y chimenea.',
+      descripcion: 'Hasta 5 huéspedes, cocina equipada y chimenea.',
       capacidad: 'Hasta 7 personas',
       precioBaja: 180,
       multiplicadorAlta: 1.25
@@ -180,18 +180,18 @@ export class QuoteComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.resetQuote();
-          this.mensajeError = error?.error?.message ?? 'No se pudo calcular la cotizacion.';
+          this.mensajeError = error?.error?.message ?? 'No se pudo calcular la cotización.';
         }
       });
   }
 
   private validateQuoteInput(): string {
     if (!this.habitacionSeleccionada?.id) {
-      return 'Debe seleccionar un tipo de habitacion valido.';
+      return 'Debe seleccionar un tipo de habitación válido.';
     }
 
     if (!this.currencyService.isValidCurrency(this.currency)) {
-      return 'La moneda seleccionada no es valida.';
+      return 'La moneda seleccionada no es válida.';
     }
 
     if (!this.fechaInicio && !this.fechaFin) {
@@ -205,7 +205,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
     const inicio = this.parseDateInput(this.fechaInicio);
     const fin = this.parseDateInput(this.fechaFin);
     if (!inicio || !fin) {
-      return 'Las fechas ingresadas no son validas.';
+      return 'Las fechas ingresadas no son válidas.';
     }
 
     const hoy = this.parseDateInput(this.minStartDate);

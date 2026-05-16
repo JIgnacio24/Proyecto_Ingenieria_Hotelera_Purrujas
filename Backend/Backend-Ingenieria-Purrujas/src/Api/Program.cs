@@ -40,7 +40,7 @@ var allowedOriginsSet = new HashSet<string>(allowedOrigins, StringComparer.Ordin
 var allowLocalDevelopmentOrigins = builder.Environment.IsDevelopment();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("No se configuro Jwt:Key.");
+    ?? throw new InvalidOperationException("No se configuró Jwt:Key.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "Backend-Ingenieria-Purrujas";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "Frontend-Ingenieria-Purrujas-Admin";
 var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));

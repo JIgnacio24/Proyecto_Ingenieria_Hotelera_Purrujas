@@ -29,7 +29,7 @@ public class QuoteService : IQuoteService
         var currency = NormalizeCurrency(request.Currency);
 
         var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
-            ?? throw new ArgumentException($"Tipo de habitacion '{roomTypeKey}' no encontrado.");
+            ?? throw new ArgumentException($"Tipo de habitación '{roomTypeKey}' no encontrado.");
 
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
@@ -65,14 +65,14 @@ public class QuoteService : IQuoteService
         var upper = requested.Trim().ToUpperInvariant();
         return SupportedCurrencies.Contains(upper)
             ? upper
-            : throw new ArgumentException("La moneda seleccionada no es valida.");
+            : throw new ArgumentException("La moneda seleccionada no es válida.");
     }
 
     private static string NormalizeRoomTypeKey(string roomTypeKey)
     {
         if (string.IsNullOrWhiteSpace(roomTypeKey))
         {
-            throw new ArgumentException("El tipo de habitacion es obligatorio.");
+            throw new ArgumentException("El tipo de habitación es obligatorio.");
         }
 
         return roomTypeKey.Trim().ToLowerInvariant();

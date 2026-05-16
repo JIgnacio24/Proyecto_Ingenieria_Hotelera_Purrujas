@@ -30,7 +30,7 @@ public class RoomAvailabilityController : ControllerBase
     [HttpGet("today")]
     public async Task<ActionResult<RoomAvailabilitySummary>> Today(CancellationToken cancellationToken)
     {
-        // La consulta usa la fecha local del servidor para reflejar el estado operativo del dia actual.
+        // La consulta usa la fecha local del servidor para reflejar el estado operativo del día actual.
         var today = DateOnly.FromDateTime(DateTime.Now);
         var summary = await _roomAvailabilityRepository.GetTodayAsync(today, cancellationToken);
         return Ok(summary);

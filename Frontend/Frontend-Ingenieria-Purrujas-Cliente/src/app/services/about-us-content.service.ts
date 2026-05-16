@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface AboutUsPageContent {
-  // Contrato recibido desde la base de datos por medio del endpoint publico.
+  // Contrato recibido desde la base de datos por medio del endpoint público.
   // La vista cliente no debe depender de textos quemados para estas secciones.
   historyTag: string;
   historyTitle: string;
@@ -75,9 +75,9 @@ export function createEmptyAboutUsPageContent(): AboutUsPageContent {
     philosophyQuote: '',
     mvvTag: '',
     mvvTitle: '',
-    missionTitle: 'Mision',
+    missionTitle: 'Misión',
     mission: '',
-    visionTitle: 'Vision',
+    visionTitle: 'Visión',
     vision: '',
     valuesTitle: 'Valores',
     values: [],
@@ -90,7 +90,7 @@ export function createEmptyAboutUsPageContent(): AboutUsPageContent {
 export function normalizeAboutUsPageContent(
   content: Partial<AboutUsPageContent> | null | undefined
 ): AboutUsPageContent {
-  // Tolera registros anteriores del JSON mientras la migracion agrega los campos nuevos.
+  // Tolera registros anteriores del JSON mientras la migración agrega los campos nuevos.
   const empty = createEmptyAboutUsPageContent();
   const normalizedContent = content ?? {};
 
@@ -109,7 +109,7 @@ export function normalizeAboutUsPageContent(
 }
 
 function normalizeText(value: string | undefined, fallback: string): string {
-  // Evita que una cadena vacia deje invisible un titulo editable.
+  // Evita que una cadena vacía deje invisible un título editable.
   const normalized = value?.trim() ?? '';
   return normalized.length > 0 ? normalized : fallback;
 }
