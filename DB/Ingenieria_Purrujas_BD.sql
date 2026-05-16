@@ -1,4 +1,4 @@
-IF DB_ID('Ingenieria_Purrujas_BD') IS NOT NULL
+ÔªøIF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
 BEGIN
     ALTER DATABASE Ingenieria_Purrujas_BD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE Ingenieria_Purrujas_BD;
@@ -33,7 +33,7 @@ CREATE TABLE AdminUser (
     Email NVARCHAR(255) NOT NULL UNIQUE,
     PasswordHash VARBINARY(64) NOT NULL,
     PasswordSalt VARBINARY(32) NOT NULL,
-    Role NVARCHAR(50) NOT NULL DEFAULT 'Administrador',
+    Role NVARCHAR(50) NOT NULL DEFAULT N'Administrador',
     IsActive BIT NOT NULL DEFAULT 1,
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     LastLoginAt DATETIME2 NULL
@@ -222,7 +222,7 @@ CREATE TABLE ContactInformation(
 GO
 
 -- =========================================
--- ANALÕTICA Y PREDICCI”N
+-- ANAL√çTICA Y PREDICCI√ìN
 -- =========================================
 
 CREATE TABLE DashboardMetricSnapshots (
@@ -259,7 +259,7 @@ CREATE OR ALTER PROCEDURE usp_AdminUser_Register
     @Username NVARCHAR(100),
     @Email NVARCHAR(255),
     @Password NVARCHAR(255),
-    @Role NVARCHAR(50) = 'Administrador'
+    @Role NVARCHAR(50) = N'Administrador'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -271,37 +271,37 @@ BEGIN
         SET @FullName = LTRIM(RTRIM(@FullName));
         SET @Username = LTRIM(RTRIM(@Username));
         SET @Email = LTRIM(RTRIM(@Email));
-        SET @Role = ISNULL(NULLIF(LTRIM(RTRIM(@Role)), ''), 'Administrador');
+        SET @Role = ISNULL(NULLIF(LTRIM(RTRIM(@Role)), N''), N'Administrador');
 
-        IF @FullName IS NULL OR @FullName = ''
-            THROW 50010, 'El nombre completo es obligatorio.', 1;
+        IF @FullName IS NULL OR @FullName = N''
+            THROW 50010, N'El nombre completo es obligatorio.', 1;
 
-        IF @Username IS NULL OR @Username = ''
-            THROW 50011, 'El nombre de usuario es obligatorio.', 1;
+        IF @Username IS NULL OR @Username = N''
+            THROW 50011, N'El nombre de usuario es obligatorio.', 1;
 
-        IF @Email IS NULL OR @Email = ''
-            THROW 50012, 'El correo es obligatorio.', 1;
+        IF @Email IS NULL OR @Email = N''
+            THROW 50012, N'El correo es obligatorio.', 1;
 
         IF @Password IS NULL OR LEN(@Password) < 8
-            THROW 50013, 'La contraseÒa debe tener al menos 8 caracteres.', 1;
+            THROW 50013, N'La contrase√±a debe tener al menos 8 caracteres.', 1;
 
         IF EXISTS (
             SELECT 1
             FROM AdminUser
             WHERE LOWER(Username) = LOWER(@Username)
         )
-            THROW 50014, 'El nombre de usuario ya existe.', 1;
+            THROW 50014, N'El nombre de usuario ya existe.', 1;
 
         IF EXISTS (
             SELECT 1
             FROM AdminUser
             WHERE LOWER(Email) = LOWER(@Email)
         )
-            THROW 50015, 'El correo ya existe.', 1;
+            THROW 50015, N'El correo ya existe.', 1;
 
         DECLARE @PasswordSalt VARBINARY(32) = CRYPT_GEN_RANDOM(32);
         DECLARE @PasswordHash VARBINARY(64) =
-            HASHBYTES('SHA2_512', @PasswordSalt + CONVERT(VARBINARY(4000), @Password));
+            HASHBYTES(N'SHA2_512', @PasswordSalt + CONVERT(VARBINARY(4000), @Password));
 
         INSERT INTO AdminUser (
             FullName,
@@ -367,7 +367,7 @@ BEGIN
     IF @AdminUserId IS NULL
         RETURN;
 
-    SET @ComputedHash = HASHBYTES('SHA2_512', @StoredSalt + CONVERT(VARBINARY(4000), @Password));
+    SET @ComputedHash = HASHBYTES(N'SHA2_512', @StoredSalt + CONVERT(VARBINARY(4000), @Password));
 
     IF @ComputedHash <> @StoredHash
         RETURN;
@@ -412,19 +412,19 @@ END;
 GO
 
 EXEC usp_AdminUser_Register
-    @FullName = 'Gabriela Solano',
-    @Username = 'admin.purrujas',
-    @Email = 'admin@laspurrujas.local',
-    @Password = 'Purrujas2026!',
-    @Role = 'Administrador';
+    @FullName = N'Gabriela Solano',
+    @Username = N'admin.purrujas',
+    @Email = N'admin@laspurrujas.local',
+    @Password = N'Purrujas2026!',
+    @Role = N'Administrador';
 GO
 
 EXEC usp_AdminUser_Register
-    @FullName = 'Carlos Mora',
-    @Username = 'recepcion.purrujas',
-    @Email = 'recepcion@laspurrujas.local',
-    @Password = 'Recepcion2026!',
-    @Role = 'Supervisor';
+    @FullName = N'Carlos Mora',
+    @Username = N'recepcion.purrujas',
+    @Email = N'recepcion@laspurrujas.local',
+    @Password = N'Recepcion2026!',
+    @Role = N'Supervisor';
 GO
 
 -- =========================================
@@ -446,7 +446,7 @@ BEGIN
         BEGIN TRAN;
 
         IF EXISTS (SELECT 1 FROM Customer WHERE Email = @Email AND IsActive = 1)
-            THROW 50001, 'El correo ya existe.', 1;
+            THROW 50001, N'El correo ya existe.', 1;
 
         INSERT INTO Customer (Name, LastName, Email, Phone, CreditCard, IsActive)
         VALUES (@Name, @LastName, @Email, @Phone, @CreditCard, 1);
@@ -503,7 +503,7 @@ BEGIN
         BEGIN TRAN;
 
         IF NOT EXISTS (SELECT 1 FROM Customer WHERE CustomerId = @CustomerId AND IsActive = 1)
-            THROW 50002, 'Cliente no encontrado.', 1;
+            THROW 50002, N'Cliente no encontrado.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -512,7 +512,7 @@ BEGIN
               AND CustomerId <> @CustomerId
               AND IsActive = 1
         )
-            THROW 50003, 'El correo ya est· registrado por otro cliente.', 1;
+            THROW 50003, N'El correo ya est√° registrado por otro cliente.', 1;
 
         UPDATE Customer
         SET Name = @Name,
@@ -623,7 +623,7 @@ BEGIN
         BEGIN TRAN;
 
         IF NOT EXISTS (SELECT 1 FROM RoomType WHERE RoomTypeId = @RoomTypeId AND IsActive = 1)
-            THROW 50004, 'Tipo de habitaciÛn no encontrado.', 1;
+            THROW 50004, N'Tipo de habitaci√≥n no encontrado.', 1;
 
         UPDATE RoomType
         SET Name = @Name,
@@ -784,7 +784,7 @@ BEGIN
         BEGIN TRAN;
 
         IF EXISTS (SELECT 1 FROM Room WHERE RoomNumber = @RoomNumber AND IsActive = 1)
-            THROW 50005, 'El n˙mero de habitaciÛn ya existe.', 1;
+            THROW 50005, N'El n√∫mero de habitaci√≥n ya existe.', 1;
 
         INSERT INTO Room (RoomNumber, IsActive, RoomTypeId, RoomStatusId)
         VALUES (@RoomNumber, 1, @RoomTypeId, @RoomStatusId);
@@ -859,7 +859,7 @@ BEGIN
         BEGIN TRAN;
 
         IF NOT EXISTS (SELECT 1 FROM Room WHERE RoomId = @RoomId AND IsActive = 1)
-            THROW 50006, 'HabitaciÛn no encontrada.', 1;
+            THROW 50006, N'Habitaci√≥n no encontrada.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -868,7 +868,7 @@ BEGIN
               AND RoomId <> @RoomId
               AND IsActive = 1
         )
-            THROW 50007, 'El n˙mero de habitaciÛn ya est· registrado.', 1;
+            THROW 50007, N'El n√∫mero de habitaci√≥n ya est√° registrado.', 1;
 
         UPDATE Room
         SET RoomNumber = @RoomNumber,
@@ -1033,13 +1033,13 @@ BEGIN
         BEGIN TRAN;
 
         IF @EndDate <= @StartDate
-            THROW 50008, 'La fecha final debe ser mayor que la fecha inicial.', 1;
+            THROW 50008, N'La fecha final debe ser mayor que la fecha inicial.', 1;
 
         IF NOT EXISTS (SELECT 1 FROM Customer WHERE CustomerId = @CustomerId AND IsActive = 1)
-            THROW 50009, 'Cliente no encontrado.', 1;
+            THROW 50009, N'Cliente no encontrado.', 1;
 
         IF NOT EXISTS (SELECT 1 FROM Room WHERE RoomId = @RoomId AND IsActive = 1)
-            THROW 50010, 'HabitaciÛn no encontrada.', 1;
+            THROW 50010, N'Habitaci√≥n no encontrada.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -1049,11 +1049,11 @@ BEGIN
               AND ReservationStatusId IN (
                     SELECT ReservationStatusId
                     FROM ReservationStatus
-                    WHERE Name NOT IN ('Cancelada', 'Finalizada')
+                    WHERE Name NOT IN (N'Cancelada', N'Finalizada')
               )
               AND (@StartDate < EndDate AND @EndDate > StartDate)
         )
-            THROW 50011, 'La habitaciÛn ya est· reservada en ese rango de fechas.', 1;
+            THROW 50011, N'La habitaci√≥n ya est√° reservada en ese rango de fechas.', 1;
 
         INSERT INTO Reservation
         (
@@ -1098,7 +1098,7 @@ BEGIN
         r.StartDate,
         r.EndDate,
         r.CustomerId,
-        c.Name + ' ' + c.LastName AS CustomerName,
+        c.Name + N' ' + c.LastName AS CustomerName,
         r.RoomId,
         rm.RoomNumber,
         r.ReservationStatusId,
@@ -1125,7 +1125,7 @@ BEGIN
         r.StartDate,
         r.EndDate,
         r.CustomerId,
-        c.Name + ' ' + c.LastName AS CustomerName,
+        c.Name + N' ' + c.LastName AS CustomerName,
         r.RoomId,
         rm.RoomNumber,
         r.ReservationStatusId,
@@ -1157,10 +1157,10 @@ BEGIN
         BEGIN TRAN;
 
         IF @EndDate <= @StartDate
-            THROW 50012, 'La fecha final debe ser mayor que la fecha inicial.', 1;
+            THROW 50012, N'La fecha final debe ser mayor que la fecha inicial.', 1;
 
         IF NOT EXISTS (SELECT 1 FROM Reservation WHERE ReservationId = @ReservationId AND IsActive = 1)
-            THROW 50013, 'Reserva no encontrada.', 1;
+            THROW 50013, N'Reserva no encontrada.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -1170,7 +1170,7 @@ BEGIN
               AND IsActive = 1
               AND (@StartDate < EndDate AND @EndDate > StartDate)
         )
-            THROW 50014, 'Existe conflicto con otra reserva para esa habitaciÛn.', 1;
+            THROW 50014, N'Existe conflicto con otra reserva para esa habitaci√≥n.', 1;
 
         UPDATE Reservation
         SET ReservationDate = @ReservationDate,
@@ -1233,7 +1233,7 @@ BEGIN
         BEGIN TRAN;
 
         IF @EndDate < @StartDate
-            THROW 50030, 'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
+            THROW 50030, N'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
 
         INSERT INTO Season (Name, PercentageChange, StartDate, EndDate, IsActive)
         VALUES (@Name, @PercentageChange, @StartDate, @EndDate, 1);
@@ -1289,10 +1289,10 @@ BEGIN
         BEGIN TRAN;
 
         IF NOT EXISTS (SELECT 1 FROM Season WHERE SeasonId = @SeasonId AND IsActive = 1)
-            THROW 50015, 'Temporada no encontrada.', 1;
+            THROW 50015, N'Temporada no encontrada.', 1;
 
         IF @EndDate < @StartDate
-            THROW 50031, 'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
+            THROW 50031, N'La fecha final de la temporada debe ser mayor o igual a la inicial.', 1;
 
         UPDATE Season
         SET Name = @Name,
@@ -1354,7 +1354,7 @@ BEGIN
         BEGIN TRAN;
 
         IF @EndDate <= @StartDate
-            THROW 50016, 'La fecha final de la promociÛn debe ser mayor a la inicial.', 1;
+            THROW 50016, N'La fecha final de la promoci√≥n debe ser mayor a la inicial.', 1;
 
         INSERT INTO Promotion (Name, Discount, StartDate, EndDate, RoomTypeId, IsActive)
         VALUES (@Name, @Discount, @StartDate, @EndDate, @RoomTypeId, 1);
@@ -1431,10 +1431,10 @@ BEGIN
         BEGIN TRAN;
 
         IF @EndDate <= @StartDate
-            THROW 50017, 'La fecha final de la promociÛn debe ser mayor a la inicial.', 1;
+            THROW 50017, N'La fecha final de la promoci√≥n debe ser mayor a la inicial.', 1;
 
         IF NOT EXISTS (SELECT 1 FROM Promotion WHERE PromotionId = @PromotionId AND IsActive = 1)
-            THROW 50018, 'PromociÛn no encontrada.', 1;
+            THROW 50018, N'Promoci√≥n no encontrada.', 1;
 
         UPDATE Promotion
         SET Name = @Name,
@@ -1497,7 +1497,7 @@ BEGIN
         BEGIN TRAN;
 
         IF EXISTS (SELECT 1 FROM Payment WHERE ReservationId = @ReservationId AND IsActive = 1)
-            THROW 50019, 'Ya existe un pago registrado para esa reserva.', 1;
+            THROW 50019, N'Ya existe un pago registrado para esa reserva.', 1;
 
         INSERT INTO Payment (ReservationId, Amount, PaymentMethod, PaymentDate, IsPaid, IsActive)
         VALUES (@ReservationId, @Amount, @PaymentMethod, @PaymentDate, @IsPaid, 1);
@@ -1568,7 +1568,7 @@ BEGIN
         BEGIN TRAN;
 
         IF NOT EXISTS (SELECT 1 FROM Payment WHERE PaymentId = @PaymentId AND IsActive = 1)
-            THROW 50020, 'Pago no encontrado.', 1;
+            THROW 50020, N'Pago no encontrado.', 1;
 
         IF EXISTS (
             SELECT 1
@@ -1577,7 +1577,7 @@ BEGIN
               AND PaymentId <> @PaymentId
               AND IsActive = 1
         )
-            THROW 50021, 'Otra fila de pago ya usa esa reserva.', 1;
+            THROW 50021, N'Otra fila de pago ya usa esa reserva.', 1;
 
         UPDATE Payment
         SET ReservationId = @ReservationId,
@@ -1709,139 +1709,139 @@ GO
 
 DECLARE @FacilitiesContentJson NVARCHAR(MAX) = N'{
     "sectionTag":"Lo que nos distingue",
-    "sectionTitle":"CaracterÌsticas Principales",
-    "highlightTitle":"UbicaciÛn Privilegiada",
-    "highlightDescription":"Situado a 2 horas de San JosÈ, en las verdes montaÒas de Cartago, el hotel ofrece vistas panor·micas al Volc·n Turrialba y est· rodeado de bosques nubosos 
-                            y rÌos cristalinos. Una combinaciÛn ˙nica de accesibilidad y tranquilidad absoluta.",
+    "sectionTitle":"Caracter√≠sticas Principales",
+    "highlightTitle":"Ubicaci√≥n Privilegiada",
+    "highlightDescription":"Situado a 2 horas de San Jos√©, en las verdes monta√±as de Cartago, el hotel ofrece vistas panor√°micas al Volc√°n Turrialba y est√° rodeado de bosques nubosos 
+                            y r√≠os cristalinos. Una combinaci√≥n √∫nica de accesibilidad y tranquilidad absoluta.",
     
     "primaryListTitle":"Instalaciones",
     "primaryListItems":[
-        "18 habitaciones tem·ticas",
+        "18 habitaciones tem√°ticas",
         "Restaurante ""La Ceiba""",
         "Piscina natural de manantial",
-        "Senderos ecolÛgicos (5 km)",
-        "SalÛn de eventos",
+        "Senderos ecol√≥gicos (5 km)",
+        "Sal√≥n de eventos",
         "Spa con plantas locales"
     ],
 
     "secondaryListTitle":"Servicios Destacados",
     "secondaryListItems":[
-        "Tours al Volc·n Turrialba e Iraz˙",
-        "Birdwatching con guÌas certificados",
-        "Talleres de gastronomÌa tÌpica",
-        "Transporte desde San JosÈ",
+        "Tours al Volc√°n Turrialba e Iraz√∫",
+        "Birdwatching con gu√≠as certificados",
+        "Talleres de gastronom√≠a t√≠pica",
+        "Transporte desde San Jos√©",
         "Wi-Fi de alta velocidad",
-        "AtenciÛn personalizada 24/7"
+        "Atenci√≥n personalizada 24/7"
     ],
 
     "serviceCards":[
         {
-            "title":"18 habitaciones tem·ticas",
+            "title":"18 habitaciones tem√°ticas",
             "description":"Ambientes con personalidad propia, balcones al bosque nuboso y textiles artesanales inspirados en Cartago."
         },
         {
             "title":"Restaurante ""La Ceiba""",
-            "description":"Cocina de finca a la mesa, cafÈ chorreado y men˙s de temporada que celebran los sabores locales."
+            "description":"Cocina de finca a la mesa, caf√© chorreado y men√∫s de temporada que celebran los sabores locales."
         },
         {
             "title":"Piscina natural de manantial",
-            "description":"Agua cristalina, temperatura agradable y vistas verdes para recargar energÌa de forma natural."
+            "description":"Agua cristalina, temperatura agradable y vistas verdes para recargar energ√≠a de forma natural."
         },
         {
-            "title":"Senderos ecolÛgicos (5 km)",
-            "description":"Rutas seÒalizadas entre bosque nuboso, ideales para caminatas al amanecer y observaciÛn de flora."
+            "title":"Senderos ecol√≥gicos (5 km)",
+            "description":"Rutas se√±alizadas entre bosque nuboso, ideales para caminatas al amanecer y observaci√≥n de flora."
         },
         {
-            "title":"SalÛn de eventos",
-            "description":"Espacio vers·til con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
+            "title":"Sal√≥n de eventos",
+            "description":"Espacio vers√°til con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
         },
         {
             "title":"Spa con plantas locales",
             "description":"Tratamientos herbales, masajes relajantes y aromaterapia con esencias del bosque costarricense."
         },
         {
-            "title":"Tours al Volc·n Turrialba e Iraz˙",
-            "description":"Excursiones guiadas para explorar dos volcanes icÛnicos con logÌstica y transporte incluidos."
+            "title":"Tours al Volc√°n Turrialba e Iraz√∫",
+            "description":"Excursiones guiadas para explorar dos volcanes ic√≥nicos con log√≠stica y transporte incluidos."
         },
         {
-            "title":"Birdwatching con guÌas certificados",
-            "description":"Avistamiento de purrujas y m·s de 120 especies con especialistas locales y equipo Ûptico."
+            "title":"Birdwatching con gu√≠as certificados",
+            "description":"Avistamiento de purrujas y m√°s de 120 especies con especialistas locales y equipo √≥ptico."
         },
         {
-            "title":"Talleres de gastronomÌa tÌpica",
+            "title":"Talleres de gastronom√≠a t√≠pica",
             "description":"Aprende a preparar tortillas palmeadas, gallo pinto y salsas caseras con cocineras de la zona."
         },
         {
-            "title":"Transporte desde San JosÈ",
+            "title":"Transporte desde San Jos√©",
             "description":"Traslados seguros puerta a puerta para que llegues sin preocupaciones desde el aeropuerto o la ciudad."
         },
         {
             "title":"Wi-Fi de alta velocidad",
-            "description":"Conectividad confiable en habitaciones y ·reas comunes para trabajar o compartir tu experiencia."
+            "description":"Conectividad confiable en habitaciones y √°reas comunes para trabajar o compartir tu experiencia."
         },
         {
-            "title":"AtenciÛn personalizada 24/7",
-            "description":"Equipo disponible todo el dÌa para ayudarte con reservas, recomendaciones y soporte durante tu estadÌa."
+            "title":"Atenci√≥n personalizada 24/7",
+            "description":"Equipo disponible todo el d√≠a para ayudarte con reservas, recomendaciones y soporte durante tu estad√≠a."
         }
     ]
 }';
 
 EXEC usp_FacilitiesPageContent_Upsert
-    @SectionTitle = N'CaracterÌsticas Principales',
+    @SectionTitle = N'Caracter√≠sticas Principales',
     @SectionTag = N'Lo que nos distingue',
     @DescriptionJson = @FacilitiesContentJson;
 GO
 
 INSERT INTO RoomType (Name, BasePrice, IsActive)
 VALUES
-    ('HabitaciÛn Doble', 95.00, 1),
-    ('Suite Volc·n', 135.00, 1),
-    ('Villa Familiar', 180.00, 1);
+    (N'Habitaci√≥n Doble', 95.00, 1),
+    (N'Suite Volc√°n', 135.00, 1),
+    (N'Villa Familiar', 180.00, 1);
 GO
 
 INSERT INTO RoomStatus (Name, Description, IsAvailableForBooking)
 VALUES
-    ('Disponible', 'HabitaciÛn lista para reservar.', 1),
-    ('Limpieza', 'HabitaciÛn en proceso de limpieza.', 0),
-    ('Mantenimiento', 'HabitaciÛn fuera de servicio temporalmente.', 0);
+    (N'Disponible', N'Habitaci√≥n lista para reservar.', 1),
+    (N'Limpieza', N'Habitaci√≥n en proceso de limpieza.', 0),
+    (N'Mantenimiento', N'Habitaci√≥n fuera de servicio temporalmente.', 0);
 GO
 
 INSERT INTO Room (RoomNumber, IsActive, RoomTypeId, RoomStatusId)
 VALUES
-    ('101', 1, 1, 1),
-    ('102', 1, 1, 1),
-    ('201', 1, 2, 1),
-    ('202', 1, 2, 1),
-    ('301', 1, 3, 1);
+    (N'101', 1, 1, 1),
+    (N'102', 1, 1, 1),
+    (N'201', 1, 2, 1),
+    (N'202', 1, 2, 1),
+    (N'301', 1, 3, 1);
 GO
 
 INSERT INTO ReservationStatus (Name, Description, IsFinal)
 VALUES
-    ('Pendiente', 'Reserva creada y pendiente de confirmaciÛn.', 0),
-    ('Confirmada', 'Reserva confirmada por el hotel.', 0),
-    ('Finalizada', 'La estadÌa finalizÛ.', 1),
-    ('Cancelada', 'Reserva cancelada.', 1);
+    (N'Pendiente', N'Reserva creada y pendiente de confirmaci√≥n.', 0),
+    (N'Confirmada', N'Reserva confirmada por el hotel.', 0),
+    (N'Finalizada', N'La estad√≠a finaliz√≥.', 1),
+    (N'Cancelada', N'Reserva cancelada.', 1);
 GO
 
 INSERT INTO Customer (Name, LastName, Email, Phone, CreditCard, IsActive)
 VALUES
-    ('MarÌa', 'JimÈnez', 'maria.jimenez@demo.com', '8888-1111', '4111111111111111', 1),
-    ('Carlos', 'RodrÌguez', 'carlos.rodriguez@demo.com', '8888-2222', '5555555555554444', 1);
+    (N'Mar√≠a', N'Jim√©nez', N'maria.jimenez@demo.com', N'8888-1111', N'4111111111111111', 1),
+    (N'Carlos', N'Rodr√≠guez', N'carlos.rodriguez@demo.com', N'8888-2222', N'5555555555554444', 1);
 GO
 
 INSERT INTO Season (Name, PercentageChange, StartDate, EndDate, IsActive)
 VALUES
-    ('Temporada alta inicio de aÒo 2026', 25, '2026-01-01', '2026-01-31', 1),
-    ('Semana Santa 2026', 35, '2026-03-29', '2026-04-05', 1),
-    ('Vacaciones de medio aÒo 2026', 25, '2026-07-01', '2026-08-31', 1),
-    ('Temporada alta fin de aÒo 2026', 30, '2026-12-01', '2026-12-31', 1);
+    (N'Temporada alta inicio de a√±o 2026', 25, N'2026-01-01', N'2026-01-31', 1),
+    (N'Semana Santa 2026', 35, N'2026-03-29', N'2026-04-05', 1),
+    (N'Vacaciones de medio a√±o 2026', 25, N'2026-07-01', N'2026-08-31', 1),
+    (N'Temporada alta fin de a√±o 2026', 30, N'2026-12-01', N'2026-12-31', 1);
 GO
 
 INSERT INTO Promotion (Name, Discount, StartDate, EndDate, RoomTypeId, IsActive)
 VALUES
-    ('Escapada Rom·ntica', 25, '2026-04-01', '2026-05-31', 2, 1),
-    ('Semana EcolÛgica', 20, '2026-04-15', '2026-06-30', 1, 1),
-    ('Aventura Familiar', 30, '2026-05-01', '2026-07-15', 3, 1);
+    (N'Escapada Rom√°ntica', 25, N'2026-04-01', N'2026-05-31', 2, 1),
+    (N'Semana Ecol√≥gica', 20, N'2026-04-15', N'2026-06-30', 1, 1),
+    (N'Aventura Familiar', 30, N'2026-05-01', N'2026-07-15', 3, 1);
 GO
 
 INSERT INTO Reservation
@@ -1855,8 +1855,8 @@ INSERT INTO Reservation
     IsActive
 )
 VALUES
-    ('2026-04-10T09:00:00', '2026-07-10T15:00:00', '2026-07-13T12:00:00', 1, 1, 2, 1),
-    ('2026-04-11T10:30:00', '2026-04-01T15:00:00', '2026-04-04T12:00:00', 2, 5, 2, 1);
+    (N'2026-04-10T09:00:00', N'2026-07-10T15:00:00', N'2026-07-13T12:00:00', 1, 1, 2, 1),
+    (N'2026-04-11T10:30:00', N'2026-04-01T15:00:00', N'2026-04-04T12:00:00', 2, 5, 2, 1);
 GO
 
 INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount)
@@ -1867,8 +1867,8 @@ GO
 
 INSERT INTO Payment (ReservationId, Amount, PaymentMethod, PaymentDate, IsPaid, IsActive)
 VALUES
-    (1, 356.25, 'Tarjeta', '2026-04-10T09:15:00', 1, 1),
-    (2, 729.00, 'Tarjeta', '2026-04-11T10:45:00', 1, 1);
+    (1, 356.25, N'Tarjeta', N'2026-04-10T09:15:00', 1, 1),
+    (2, 729.00, N'Tarjeta', N'2026-04-11T10:45:00', 1, 1);
 GO
 
 --Patches
@@ -1958,97 +1958,97 @@ GO
 DECLARE @FacilitiesContentJson NVARCHAR(MAX) = N'
 {
     "sectionTag":"Lo que nos distingue",
-    "sectionTitle":"CaracterÌsticas Principales",
-    "highlightTitle":"UbicaciÛn Privilegiada",
-    "highlightDescription":"Situado a solo 45 minutos de San JosÈ, en las verdes montaÒas de Cartago, el hotel ofrece vistas panor·micas al Volc·n Turrialba y est· rodeado de bosques nubosos y rÌos cristalinos. Una combinaciÛn ˙nica de accesibilidad y tranquilidad absoluta.",
+    "sectionTitle":"Caracter√≠sticas Principales",
+    "highlightTitle":"Ubicaci√≥n Privilegiada",
+    "highlightDescription":"Situado a solo 45 minutos de San Jos√©, en las verdes monta√±as de Cartago, el hotel ofrece vistas panor√°micas al Volc√°n Turrialba y est√° rodeado de bosques nubosos y r√≠os cristalinos. Una combinaci√≥n √∫nica de accesibilidad y tranquilidad absoluta.",
 
     "primaryListTitle":"Instalaciones",
     "primaryListItems":
     [
-        "18 habitaciones tem·ticas",
+        "18 habitaciones tem√°ticas",
         "Restaurante ""La Ceiba""",
         "Piscina natural de manantial",
-        "Senderos ecolÛgicos (5 km)",
-        "SalÛn de eventos",
+        "Senderos ecol√≥gicos (5 km)",
+        "Sal√≥n de eventos",
         "Spa con plantas locales"
     ],
 
     "secondaryListTitle":"Servicios Destacados",
     "secondaryListItems":
     [
-        "Tours al Volc·n Turrialba e Iraz˙",
-        "Birdwatching con guÌas certificados",
-        "Talleres de gastronomÌa tÌpica",
-        "Transporte desde San JosÈ",
+        "Tours al Volc√°n Turrialba e Iraz√∫",
+        "Birdwatching con gu√≠as certificados",
+        "Talleres de gastronom√≠a t√≠pica",
+        "Transporte desde San Jos√©",
         "Wi-Fi de alta velocidad",
-        "AtenciÛn personalizada 24/7"
+        "Atenci√≥n personalizada 24/7"
     ],
 
     "serviceCards":
     [
         {
-            "title":"18 habitaciones tem·ticas",
+            "title":"18 habitaciones tem√°ticas",
             "description":"Ambientes con personalidad propia, balcones al bosque nuboso y textiles artesanales inspirados en Cartago."
         },
         {
             "title":"Restaurante ""La Ceiba""",
-            "description":"Cocina de finca a la mesa, cafÈ chorreado y men˙s de temporada que celebran los sabores locales."
+            "description":"Cocina de finca a la mesa, caf√© chorreado y men√∫s de temporada que celebran los sabores locales."
         },
         {
             "title":"Piscina natural de manantial",
-            "description":"Agua cristalina, temperatura agradable y vistas verdes para recargar energÌa de forma natural."
+            "description":"Agua cristalina, temperatura agradable y vistas verdes para recargar energ√≠a de forma natural."
         },
         {
-            "title":"Senderos ecolÛgicos (5 km)",
-            "description":"Rutas seÒalizadas entre bosque nuboso, ideales para caminatas al amanecer y observaciÛn de flora."
+            "title":"Senderos ecol√≥gicos (5 km)",
+            "description":"Rutas se√±alizadas entre bosque nuboso, ideales para caminatas al amanecer y observaci√≥n de flora."
         },
         {
-            "title":"SalÛn de eventos",
-            "description":"Espacio vers·til con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
+            "title":"Sal√≥n de eventos",
+            "description":"Espacio vers√°til con luz natural, perfecto para retiros corporativos, bodas boutique y talleres."
         },
         {
             "title":"Spa con plantas locales",
             "description":"Tratamientos herbales, masajes relajantes y aromaterapia con esencias del bosque costarricense."
         },
         {
-            "title":"Tours al Volc·n Turrialba e Iraz˙",
-            "description":"Excursiones guiadas para explorar dos volcanes icÛnicos con logÌstica y transporte incluidos."
+            "title":"Tours al Volc√°n Turrialba e Iraz√∫",
+            "description":"Excursiones guiadas para explorar dos volcanes ic√≥nicos con log√≠stica y transporte incluidos."
         },
         {
-            "title":"Birdwatching con guÌas certificados",
-            "description":"Avistamiento de purrujas y m·s de 120 especies con especialistas locales y equipo Ûptico."
+            "title":"Birdwatching con gu√≠as certificados",
+            "description":"Avistamiento de purrujas y m√°s de 120 especies con especialistas locales y equipo √≥ptico."
         },
         {
-            "title":"Talleres de gastronomÌa tÌpica",
+            "title":"Talleres de gastronom√≠a t√≠pica",
             "description":"Aprende a preparar tortillas palmeadas, gallo pinto y salsas caseras con cocineras de la zona."
         },
         {
-            "title":"Transporte desde San JosÈ",
+            "title":"Transporte desde San Jos√©",
             "description":"Traslados seguros puerta a puerta para que llegues sin preocupaciones desde el aeropuerto o la ciudad."
         },
         {
             "title":"Wi-Fi de alta velocidad",
-            "description":"Conectividad confiable en habitaciones y ·reas comunes para trabajar o compartir tu experiencia."
+            "description":"Conectividad confiable en habitaciones y √°reas comunes para trabajar o compartir tu experiencia."
         },
         {
-            "title":"AtenciÛn personalizada 24/7",
-            "description":"Equipo disponible todo el dÌa para ayudarte con reservas, recomendaciones y soporte durante tu estadÌa."
+            "title":"Atenci√≥n personalizada 24/7",
+            "description":"Equipo disponible todo el d√≠a para ayudarte con reservas, recomendaciones y soporte durante tu estad√≠a."
         }
     ]
 }';
 
 EXEC usp_FacilitiesPageContent_Upsert
-    @SectionTitle = N'CaracterÌsticas Principales',
+    @SectionTitle = N'Caracter√≠sticas Principales',
     @SectionTag = N'Lo que nos distingue',
     @DescriptionJson = @FacilitiesContentJson;
 GO
 
 -- Crear la tabla AboutUsPageContent si no existe.
-IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'AboutUsPageContent')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'AboutUsPageContent')
 BEGIN
     CREATE TABLE AboutUsPageContent (
         Id INT PRIMARY KEY IDENTITY(1,1),
-        ContentJson NVARCHAR(MAX) NOT NULL DEFAULT '{}',
+        ContentJson NVARCHAR(MAX) NOT NULL DEFAULT N'{}',
         CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
         UpdatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
     );
@@ -2062,7 +2062,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT TOP 1
-        ISNULL(ContentJson, '{}') AS ContentJson
+        ISNULL(ContentJson, N'{}') AS ContentJson
     FROM AboutUsPageContent
     ORDER BY CreatedAt DESC;
 END;
@@ -2097,25 +2097,25 @@ DECLARE @AboutUsContentJson NVARCHAR(MAX) = N'
     "historyTag":"Desde 2005",
     "historyTitle":"Nuestra Historia",
 
-    "historyDescription":"Hotel Las Purrujas naciÛ en el aÒo 2005 en el corazÛn de los Andes costarricenses, especÌficamente en las faldas del Volc·n Turrialba, en la provincia de Cartago. 
-                          Su nombre rinde homenaje a las purrujas, pequeÒas aves endÈmicas de la regiÛn que simbolizan la vida silvestre y la conexiÛn profunda con la naturaleza.
-                          \n\nFundado por la familia Vargas Montoya, el hotel comenzÛ como una pequeÒa posada de cuatro habitaciones con el sueÒo de ofrecer una experiencia autÈntica del 
-                          campo costarricense. Con los aÒos y gracias al turismo ecolÛgico, se convirtiÛ en un referente del ecoturismo en la zona central de Costa Rica.",
+    "historyDescription":"Hotel Las Purrujas naci√≥ en el a√±o 2005 en el coraz√≥n de los Andes costarricenses, espec√≠ficamente en las faldas del Volc√°n Turrialba, en la provincia de Cartago. 
+                          Su nombre rinde homenaje a las purrujas, peque√±as aves end√©micas de la regi√≥n que simbolizan la vida silvestre y la conexi√≥n profunda con la naturaleza.
+                          \n\nFundado por la familia Vargas Montoya, el hotel comenz√≥ como una peque√±a posada de cuatro habitaciones con el sue√±o de ofrecer una experiencia aut√©ntica del 
+                          campo costarricense. Con los a√±os y gracias al turismo ecol√≥gico, se convirti√≥ en un referente del ecoturismo en la zona central de Costa Rica.",
 
     "historyTimelineStartYear":"2005",
 
     "historyMilestones":
     [
-        "FundaciÛn con 4 habitaciones",
-        "ExpansiÛn del restaurante La Ceiba",
-        "18 habitaciones tem·ticas",
+        "Fundaci√≥n con 4 habitaciones",
+        "Expansi√≥n del restaurante La Ceiba",
+        "18 habitaciones tem√°ticas",
         "Referente de ecoturismo en Cartago"
     ],
 
     "historyTimelineEndLabel":"Hoy",
 
     "teamTag":"Nuestra gente",
-    "teamTitle":"Equipo & FilosofÌa",
+    "teamTitle":"Equipo & Filosof√≠a",
 
     "collaboratorsCount":30,
     "localTalentPercentage":90,
@@ -2123,34 +2123,34 @@ DECLARE @AboutUsContentJson NVARCHAR(MAX) = N'
 
     "collaboratorsLabel":"Colaboradores",
     "localTalentLabel":"Talento local de Cartago",
-    "experienceLabel":"AÒos de experiencia",
+    "experienceLabel":"A√±os de experiencia",
 
     "directorName":"Andrea Vargas",
     "directorTitle":"Directora General",
 
-    "directorBiography":"Hija de los fundadores y graduada en AdministraciÛn Hotelera de la Universidad de Costa Rica, Andrea lidera el hotel con una visiÛn moderna sin perder la esencia 
-                         familiar que lo caracteriza. Bajo su direcciÛn, Las Purrujas ha crecido como referente de ecoturismo responsable en la regiÛn.",
+    "directorBiography":"Hija de los fundadores y graduada en Administraci√≥n Hotelera de la Universidad de Costa Rica, Andrea lidera el hotel con una visi√≥n moderna sin perder la esencia 
+                         familiar que lo caracteriza. Bajo su direcci√≥n, Las Purrujas ha crecido como referente de ecoturismo responsable en la regi√≥n.",
 
-    "philosophyTitle":"Nuestra FilosofÌa",
+    "philosophyTitle":"Nuestra Filosof√≠a",
 
-    "philosophyDescription":"En Las Purrujas no solo ofrecemos una cama y un desayuno; ofrecemos una experiencia de vida. Cada detalle, desde la decoraciÛn artesanal hasta el men˙ del 
-                             restaurante, est· pensado para que el huÈsped se lleve consigo un pedazo autÈntico de Costa Rica. Creemos que el turismo puede y debe ser un motor de desarrollo 
+    "philosophyDescription":"En Las Purrujas no solo ofrecemos una cama y un desayuno; ofrecemos una experiencia de vida. Cada detalle, desde la decoraci√≥n artesanal hasta el men√∫ del 
+                             restaurante, est√° pensado para que el hu√©sped se lleve consigo un pedazo aut√©ntico de Costa Rica. Creemos que el turismo puede y debe ser un motor de desarrollo 
                              local, por eso reinvertimos parte de nuestros ingresos en programas educativos y ambientales para la comunidad.",
 
     "philosophyQuote":"Donde la naturaleza te abraza y Costa Rica te enamora.",
 
-    "mvvTag":"QuiÈnes somos",
-    "mvvTitle":"MisiÛn, VisiÛn & Valores",
+    "mvvTag":"Qui√©nes somos",
+    "mvvTitle":"Misi√≥n, Visi√≥n & Valores",
 
-    "missionTitle":"MisiÛn",
+    "missionTitle":"Misi√≥n",
 
-    "mission":"Brindar a nuestros huÈspedes una experiencia de hospedaje autÈntica, c·lida y sostenible, conect·ndolos con la riqueza natural y cultural de Costa Rica, a travÈs de un 
+    "mission":"Brindar a nuestros hu√©spedes una experiencia de hospedaje aut√©ntica, c√°lida y sostenible, conect√°ndolos con la riqueza natural y cultural de Costa Rica, a trav√©s de un 
                servicio personalizado y comprometido con el bienestar de la comunidad local y el medio ambiente.",
 
-    "visionTitle":"VisiÛn",
+    "visionTitle":"Visi√≥n",
 
-    "vision":"Ser reconocidos como el principal destino de ecoturismo en la regiÛn de Cartago para el aÒo 2030, liderando un modelo de turismo responsable que inspire a otras empresas 
-              hoteleras a adoptar pr·cticas sostenibles.",
+    "vision":"Ser reconocidos como el principal destino de ecoturismo en la regi√≥n de Cartago para el a√±o 2030, liderando un modelo de turismo responsable que inspire a otras empresas 
+              hoteleras a adoptar pr√°cticas sostenibles.",
 
     "valuesTitle":"Valores",
 
@@ -2163,8 +2163,8 @@ DECLARE @AboutUsContentJson NVARCHAR(MAX) = N'
         "Excelencia en el servicio"
     ],
 
-    "galleryTag":"InspÌrate",
-    "galleryTitle":"GalerÌa",
+    "galleryTag":"Insp√≠rate",
+    "galleryTitle":"Galer√≠a",
 
     "gallerySubtext":"Descubre las instalaciones del hotel y los maravillosos lugares que te rodean para planificar tu itinerario perfecto."
 }';
@@ -2175,7 +2175,7 @@ GO
 -------------------------------
 -- Galeria de imagenes
 -------------------------------
-IF OBJECT_ID('dbo.GalleryImages', 'U') IS NOT NULL
+IF OBJECT_ID(N'dbo.GalleryImages', N'U') IS NOT NULL
 BEGIN
     DROP TABLE dbo.GalleryImages;
 END;
@@ -2196,34 +2196,34 @@ GO
 INSERT INTO dbo.GalleryImages
 (Name, Src, Alt, Caption, Category)
 VALUES
-('atencion_personalizada.png', '/uploads/gallery/atencion_personalizada.png', 'AtenciÛn personalizada en el hotel', 'AtenciÛn personalizada', 'hotel'),
-('avistamiento_aves.png', '/uploads/gallery/avistamiento_aves.png', 'Avistamiento de aves en los alrededores', 'Avistamiento de aves', 'lugares'),
-('foto_fondo.png', '/uploads/gallery/foto_fondo.png', 'Hotel Las Purrujas', 'Hotel Las Purrujas', 'fondo'),
-('gastronomia_tipica.png', '/uploads/gallery/gastronomia_tipica.png', 'GastronomÌa tÌpica costarricense', 'GastronomÌa tÌpica', 'hotel'),
-('habitacion_doble.png', '/uploads/gallery/habitacion_doble.png', 'HabitaciÛn doble', 'HabitaciÛn doble', 'hotel'),
-('habitacion_doble_2.png', '/uploads/gallery/habitacion_doble_2.png', 'HabitaciÛn doble con vista', 'HabitaciÛn doble ∑ vista balcÛn', 'hotel'),
-('habitacion_doble_3.png', '/uploads/gallery/habitacion_doble_3.png', 'HabitaciÛn doble adicional', 'HabitaciÛn doble adicional', 'hotel'),
-('internet.png', '/uploads/gallery/internet.png', 'Internet de alta velocidad en el hotel', 'Wi-Fi de alta velocidad', 'hotel'),
-('piscinas_naturales.png', '/uploads/gallery/piscinas_naturales.png', 'Piscinas naturales del hotel', 'Piscinas naturales', 'hotel'),
-('restaurante_la_ceiba.png', '/uploads/gallery/restaurante_la_ceiba.png', 'Restaurante La Ceiba', 'Restaurante La Ceiba', 'hotel'),
-('salon_eventos.png', '/uploads/gallery/salon_eventos.png', 'SalÛn de eventos rodeado de naturaleza', 'SalÛn de eventos', 'hotel'),
-('senderismo_volcan.png', '/uploads/gallery/senderismo_volcan.png', 'Senderismo en el volc·n Turrialba', 'Senderismo en el volc·n', 'lugares'),
-('senderos.png', '/uploads/gallery/senderos.png', 'Senderos ecolÛgicos de la zona', 'Senderos ecolÛgicos', 'lugares'),
-('spa.png', '/uploads/gallery/spa.png', 'Spa con plantas locales', 'Spa y bienestar', 'hotel'),
-('transporte.png', '/uploads/gallery/transporte.png', 'Transporte privado desde San JosÈ', 'Transporte privado', 'hotel'),
-('villa_familiar.png', '/uploads/gallery/villa_familiar.png', 'Villa familiar', 'Villa familiar', 'hotel'),
-('vista_balcon_noche.png', '/uploads/gallery/vista_balcon_noche.png', 'Vista nocturna desde el balcÛn', 'Vista desde el balcÛn de noche', 'hotel'),
-('vista_balcon.png', '/uploads/gallery/vista_balcon.png', 'Vista desde el balcÛn', 'Vista desde el balcÛn', 'hotel');
+(N'atencion_personalizada.png', N'/uploads/gallery/atencion_personalizada.png', N'Atenci√≥n personalizada en el hotel', N'Atenci√≥n personalizada', N'hotel'),
+(N'avistamiento_aves.png', N'/uploads/gallery/avistamiento_aves.png', N'Avistamiento de aves en los alrededores', N'Avistamiento de aves', N'lugares'),
+(N'foto_fondo.png', N'/uploads/gallery/foto_fondo.png', N'Hotel Las Purrujas', N'Hotel Las Purrujas', N'fondo'),
+(N'gastronomia_tipica.png', N'/uploads/gallery/gastronomia_tipica.png', N'Gastronom√≠a t√≠pica costarricense', N'Gastronom√≠a t√≠pica', N'hotel'),
+(N'habitacion_doble.png', N'/uploads/gallery/habitacion_doble.png', N'Habitaci√≥n doble', N'Habitaci√≥n doble', N'hotel'),
+(N'habitacion_doble_2.png', N'/uploads/gallery/habitacion_doble_2.png', N'Habitaci√≥n doble con vista', N'Habitaci√≥n doble ¬∑ vista balc√≥n', N'hotel'),
+(N'habitacion_doble_3.png', N'/uploads/gallery/habitacion_doble_3.png', N'Habitaci√≥n doble adicional', N'Habitaci√≥n doble adicional', N'hotel'),
+(N'internet.png', N'/uploads/gallery/internet.png', N'Internet de alta velocidad en el hotel', N'Wi-Fi de alta velocidad', N'hotel'),
+(N'piscinas_naturales.png', N'/uploads/gallery/piscinas_naturales.png', N'Piscinas naturales del hotel', N'Piscinas naturales', N'hotel'),
+(N'restaurante_la_ceiba.png', N'/uploads/gallery/restaurante_la_ceiba.png', N'Restaurante La Ceiba', N'Restaurante La Ceiba', N'hotel'),
+(N'salon_eventos.png', N'/uploads/gallery/salon_eventos.png', N'Sal√≥n de eventos rodeado de naturaleza', N'Sal√≥n de eventos', N'hotel'),
+(N'senderismo_volcan.png', N'/uploads/gallery/senderismo_volcan.png', N'Senderismo en el volc√°n Turrialba', N'Senderismo en el volc√°n', N'lugares'),
+(N'senderos.png', N'/uploads/gallery/senderos.png', N'Senderos ecol√≥gicos de la zona', N'Senderos ecol√≥gicos', N'lugares'),
+(N'spa.png', N'/uploads/gallery/spa.png', N'Spa con plantas locales', N'Spa y bienestar', N'hotel'),
+(N'transporte.png', N'/uploads/gallery/transporte.png', N'Transporte privado desde San Jos√©', N'Transporte privado', N'hotel'),
+(N'villa_familiar.png', N'/uploads/gallery/villa_familiar.png', N'Villa familiar', N'Villa familiar', N'hotel'),
+(N'vista_balcon_noche.png', N'/uploads/gallery/vista_balcon_noche.png', N'Vista nocturna desde el balc√≥n', N'Vista desde el balc√≥n de noche', N'hotel'),
+(N'vista_balcon.png', N'/uploads/gallery/vista_balcon.png', N'Vista desde el balc√≥n', N'Vista desde el balc√≥n', N'hotel');
 GO
 
 -------------------------
 -- Home
 -------------------------
-IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'HomePageContent')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'HomePageContent')
 BEGIN
     CREATE TABLE HomePageContent (
         Id INT PRIMARY KEY IDENTITY(1,1),
-        ContentJson NVARCHAR(MAX) NOT NULL DEFAULT '{}',
+        ContentJson NVARCHAR(MAX) NOT NULL DEFAULT N'{}',
         CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
         UpdatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
     );
@@ -2236,7 +2236,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT TOP 1
-        ISNULL(ContentJson, '{}') AS ContentJson
+        ISNULL(ContentJson, N'{}') AS ContentJson
     FROM HomePageContent
     ORDER BY CreatedAt DESC;
 END;
@@ -2273,7 +2273,7 @@ GO
 ------------------------------------
 -- Disponibilidad de habitaciones
 -------------------------------------
-IF OBJECT_ID('dbo.RoomType', 'U') IS NULL
+IF OBJECT_ID(N'dbo.RoomType', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.RoomType (
         RoomTypeId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2284,7 +2284,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.RoomStatus', 'U') IS NULL
+IF OBJECT_ID(N'dbo.RoomStatus', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.RoomStatus (
         RoomStatusId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2295,7 +2295,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Room', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2309,7 +2309,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.ReservationStatus', 'U') IS NULL
+IF OBJECT_ID(N'dbo.ReservationStatus', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.ReservationStatus (
         ReservationStatusId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2320,7 +2320,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Customer', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Customer', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Customer (
         CustomerId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2334,7 +2334,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Reservation', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Reservation', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Reservation (
         ReservationId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2453,7 +2453,7 @@ END;
 GO
 
 -- Patch: 2026-05-07-reservation-online
--- Agrega stored procedures para disponibilidad de habitaciones y b˙squeda de clientes por email
+-- Agrega stored procedures para disponibilidad de habitaciones y b√∫squeda de clientes por email
 
 -- =============================================
 -- usp_Room_GetFirstAvailableByTypeKey
@@ -2467,7 +2467,7 @@ BEGIN
     SET NOCOUNT ON;
 
     IF @StartDate >= @EndDate
-        THROW 50031, 'La fecha de salida debe ser posterior a la fecha de entrada.', 1;
+        THROW 50031, N'La fecha de salida debe ser posterior a la fecha de entrada.', 1;
 
     DECLARE @RoomTypeId INT;
 
@@ -2475,14 +2475,14 @@ BEGIN
     FROM RoomType rt
     WHERE rt.IsActive = 1
       AND (
-            (LOWER(@RoomTypeKey) = 'doble'  AND LOWER(rt.Name) LIKE '%doble%')
-         OR (LOWER(@RoomTypeKey) = 'suite'  AND LOWER(rt.Name) LIKE '%suite%')
-         OR (LOWER(@RoomTypeKey) = 'villa'  AND LOWER(rt.Name) LIKE '%villa%')
-         OR LOWER(rt.Name) LIKE '%' + LOWER(@RoomTypeKey) + '%'
+            (LOWER(@RoomTypeKey) = N'doble'  AND LOWER(rt.Name) LIKE N'%doble%')
+         OR (LOWER(@RoomTypeKey) = N'suite'  AND LOWER(rt.Name) LIKE N'%suite%')
+         OR (LOWER(@RoomTypeKey) = N'villa'  AND LOWER(rt.Name) LIKE N'%villa%')
+         OR LOWER(rt.Name) LIKE N'%' + LOWER(@RoomTypeKey) + N'%'
       );
 
     IF @RoomTypeId IS NULL
-        THROW 50029, 'Tipo de habitaciÛn no encontrado.', 1;
+        THROW 50029, N'Tipo de habitaci√≥n no encontrado.', 1;
 
     SELECT TOP 1
         r.RoomId,
@@ -2503,7 +2503,7 @@ BEGIN
             AND res.ReservationStatusId NOT IN (
                 SELECT ReservationStatusId
                 FROM ReservationStatus
-                WHERE Name IN ('Cancelada', 'Finalizada')
+                WHERE Name IN (N'Cancelada', N'Finalizada')
             )
             AND @StartDate < CAST(res.EndDate AS DATE)
             AND @EndDate   > CAST(res.StartDate AS DATE)
@@ -2511,7 +2511,7 @@ BEGIN
     ORDER BY r.RoomNumber;
 
     IF @@ROWCOUNT = 0
-        THROW 50030, 'No hay habitaciones disponibles de ese tipo para las fechas indicadas.', 1;
+        THROW 50030, N'No hay habitaciones disponibles de ese tipo para las fechas indicadas.', 1;
 END;
 GO
 
@@ -2528,26 +2528,26 @@ BEGIN
 
     IF @StartDate >= @EndDate
     BEGIN
-        SELECT 0 AS AvailableCount, '' AS RoomTypeName;
+        SELECT 0 AS AvailableCount, N'' AS RoomTypeName;
         RETURN;
     END
 
     DECLARE @RoomTypeId INT;
-    DECLARE @RoomTypeName NVARCHAR(255) = '';
+    DECLARE @RoomTypeName NVARCHAR(255) = N'';
 
     SELECT TOP 1 @RoomTypeId = rt.RoomTypeId, @RoomTypeName = rt.Name
     FROM RoomType rt
     WHERE rt.IsActive = 1
       AND (
-            (LOWER(@RoomTypeKey) = 'doble'  AND LOWER(rt.Name) LIKE '%doble%')
-         OR (LOWER(@RoomTypeKey) = 'suite'  AND LOWER(rt.Name) LIKE '%suite%')
-         OR (LOWER(@RoomTypeKey) = 'villa'  AND LOWER(rt.Name) LIKE '%villa%')
-         OR LOWER(rt.Name) LIKE '%' + LOWER(@RoomTypeKey) + '%'
+            (LOWER(@RoomTypeKey) = N'doble'  AND LOWER(rt.Name) LIKE N'%doble%')
+         OR (LOWER(@RoomTypeKey) = N'suite'  AND LOWER(rt.Name) LIKE N'%suite%')
+         OR (LOWER(@RoomTypeKey) = N'villa'  AND LOWER(rt.Name) LIKE N'%villa%')
+         OR LOWER(rt.Name) LIKE N'%' + LOWER(@RoomTypeKey) + N'%'
       );
 
     IF @RoomTypeId IS NULL
     BEGIN
-        SELECT 0 AS AvailableCount, '' AS RoomTypeName;
+        SELECT 0 AS AvailableCount, N'' AS RoomTypeName;
         RETURN;
     END
 
@@ -2568,7 +2568,7 @@ BEGIN
             AND res.ReservationStatusId NOT IN (
                 SELECT ReservationStatusId
                 FROM ReservationStatus
-                WHERE Name IN ('Cancelada', 'Finalizada')
+                WHERE Name IN (N'Cancelada', N'Finalizada')
             )
             AND @StartDate < CAST(res.EndDate AS DATE)
             AND @EndDate   > CAST(res.StartDate AS DATE)
@@ -2602,7 +2602,7 @@ GO
 -------------------------------------------------------
 -- Room availability admin
 -------------------------------------------------------
-IF OBJECT_ID('dbo.RoomType', 'U') IS NULL
+IF OBJECT_ID(N'dbo.RoomType', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.RoomType (
         RoomTypeId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2613,7 +2613,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.RoomStatus', 'U') IS NULL
+IF OBJECT_ID(N'dbo.RoomStatus', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.RoomStatus (
         RoomStatusId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2624,7 +2624,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Room', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2638,7 +2638,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.ReservationStatus', 'U') IS NULL
+IF OBJECT_ID(N'dbo.ReservationStatus', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.ReservationStatus (
         ReservationStatusId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2649,7 +2649,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Customer', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Customer', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Customer (
         CustomerId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2663,7 +2663,7 @@ BEGIN
 END;
 GO
 
-IF OBJECT_ID('dbo.Reservation', 'U') IS NULL
+IF OBJECT_ID(N'dbo.Reservation', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Reservation (
         ReservationId INT IDENTITY(1,1) PRIMARY KEY,
@@ -2784,10 +2784,10 @@ GO
 ----------------------------------------------
 -- four rooms per type
 ----------------------------------------------
--- Patch: 4 habitaciones por tipo de habitaciÛn
+-- Patch: 4 habitaciones por tipo de habitaci√≥n
 -- Agrega las habitaciones faltantes para llegar a 4 por tipo
 -- Doble (RoomTypeId=1): agrega 103, 104
--- Suite Volc·n (RoomTypeId=2): agrega 203, 204
+-- Suite Volc√°n (RoomTypeId=2): agrega 203, 204
 -- Villa Familiar (RoomTypeId=3): agrega 302, 303, 304
 -- Estado inicial: Disponible (RoomStatusId=1)
 
@@ -2894,10 +2894,10 @@ BEGIN
 END;
 GO
 
-DECLARE @GettingThereContentJson NVARCHAR(MAX) = N'{"sectionTag":"VisÌtanos","sectionTitle":"øCÛmo llegar?","sectionSubtext":"A 45 minutos de San JosÈ, en las faldas del Volc·n Turrialba.","coordinatesTitle":"Coordenadas","coordinatesDescription":"9.975878207007307∞ N,83.770258333651∞ W ∑ Las Purrujas, Cartago.","directionsItems":["Ruta 32 hasta Turrialba, luego desvÌo a La Pastora.","Transporte privado disponible desde el aeropuerto SJO.","Parqueo gratuito y seguro dentro de la propiedad."],"mapButtonLabel":"Abrir en Google Maps"}';
+DECLARE @GettingThereContentJson NVARCHAR(MAX) = N'{"sectionTag":"Vis√≠tanos","sectionTitle":"¬øC√≥mo llegar?","sectionSubtext":"A 45 minutos de San Jos√©, en las faldas del Volc√°n Turrialba.","coordinatesTitle":"Coordenadas","coordinatesDescription":"9.975878207007307¬∞ N,83.770258333651¬∞ W ¬∑ Las Purrujas, Cartago.","directionsItems":["Ruta 32 hasta Turrialba, luego desv√≠o a La Pastora.","Transporte privado disponible desde el aeropuerto SJO.","Parqueo gratuito y seguro dentro de la propiedad."],"mapButtonLabel":"Abrir en Google Maps"}';
 
 EXEC usp_GettingTherePageContent_Upsert
-    @SectionTitle = N'øCÛmo llegar?',
-    @SectionTag = N'VisÌtanos',
+    @SectionTitle = N'¬øC√≥mo llegar?',
+    @SectionTag = N'Vis√≠tanos',
     @DescriptionJson = @GettingThereContentJson;
 GO
