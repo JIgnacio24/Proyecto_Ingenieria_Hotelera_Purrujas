@@ -5,6 +5,7 @@ import { AboutUsEditorComponent } from './pages/about-us-editor/about-us-editor.
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ReservationsComponent } from './pages/reservations/reservations.component';
 import { HomeEditorComponent } from './pages/home-editor/home-editor.component';
+import { RoomTypesComponent } from './pages/room-types/room-types.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'ingreso' },
@@ -13,5 +14,6 @@ export const routes: Routes = [
   { path: 'panel/home', component: HomeEditorComponent, canActivate: [authGuard] },
   { path: 'panel/sobre-nosotros', component: AboutUsEditorComponent, canActivate: [authGuard] },
   { path: 'panel/reservas', component: ReservationsComponent, canActivate: [authGuard] },
+  { path: 'panel/tipos-habitacion', component: RoomTypesComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'ingreso' }
 ];

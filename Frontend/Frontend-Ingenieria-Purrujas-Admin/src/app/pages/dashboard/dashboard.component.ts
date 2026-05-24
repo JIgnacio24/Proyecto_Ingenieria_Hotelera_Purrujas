@@ -145,6 +145,7 @@ export class DashboardComponent implements AfterViewInit {
     }
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
+  readonly mobileMenuOpen = signal(false);
   readonly moduleCards: readonly DashboardModuleCard[] = [
     {
       key: 'home-editor',
@@ -175,10 +176,12 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'rooms',
-      title: 'Administrar habitaciones',
-      status: 'Pendiente de interfaz',
+      title: 'Listado de tipos de habitación',
+      status: 'Disponible',
       description:
-        'Aquí irá la administración de tipos de habitación, tarifas base y estado operativo cuando el módulo esté disponible.'
+        'Administra los tipos de habitación, sus nombres y tarifas base desde una vista dedicada.',
+      link: '/panel/tipos-habitacion',
+      actionLabel: 'Administrar tipos'
     },
     {
       key: 'ads',
@@ -217,7 +220,6 @@ export class DashboardComponent implements AfterViewInit {
   availabilityStartDate = this.todayInputValue();
   availabilityEndDate = this.addDaysInputValue(1);
   availabilityRoomTypeId: number | null = null;
-
   constructor() {
     void this.loadProfile();
     void this.loadFacilitiesContent();
@@ -408,6 +410,7 @@ export class DashboardComponent implements AfterViewInit {
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
+    this.closeMobileMenu();
     const targetId = this.menuItems.find((item) => item.key === menuKey)?.targetId;
 
     if (!targetId) {
@@ -514,6 +517,14 @@ export class DashboardComponent implements AfterViewInit {
   @HostListener('window:scroll')
   onWindowScroll(): void {
     this.syncActiveMenuItem();
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {

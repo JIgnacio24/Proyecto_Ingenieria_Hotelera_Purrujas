@@ -100,6 +100,13 @@ button:disabled {
   border: 1px solid rgba(26, 58, 42, 0.1);
 }
 
+.form-feedback {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(159, 45, 32, 0.18);
+}
+
 .success-feedback {
   color: #24543b;
   background: rgba(82, 183, 136, 0.12);
