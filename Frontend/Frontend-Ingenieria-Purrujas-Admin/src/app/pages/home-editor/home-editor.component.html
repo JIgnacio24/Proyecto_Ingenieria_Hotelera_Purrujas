@@ -46,25 +46,38 @@
         </div>
       </section>
 
-      <form class="editor-panel" (ngSubmit)="save()">
+      <form id="home-editor-panel" class="editor-panel" (ngSubmit)="save()">
         <div class="panel-head">
           <p>Hero principal</p>
           <span>Estos campos reemplazan el texto visible sobre la imagen del inicio.</span>
         </div>
 
+        @if (panelError()) {
+          <p class="form-feedback error-feedback">{{ panelError() }}</p>
+        }
+
         <label class="field">
           <span>Etiqueta</span>
           <input type="text" name="heroEyebrow" [(ngModel)]="homeContent.heroEyebrow" (ngModelChange)="markChanged()" />
+          @if (fieldErrors()['heroEyebrow']) {
+            <small class="field-error">{{ fieldErrors()['heroEyebrow'] }}</small>
+          }
         </label>
 
         <label class="field">
           <span>Título</span>
           <input type="text" name="heroTitle" [(ngModel)]="homeContent.heroTitle" (ngModelChange)="markChanged()" />
+          @if (fieldErrors()['heroTitle']) {
+            <small class="field-error">{{ fieldErrors()['heroTitle'] }}</small>
+          }
         </label>
 
         <label class="field">
           <span>Subtítulo</span>
           <textarea rows="3" name="heroSubtitle" [(ngModel)]="homeContent.heroSubtitle" (ngModelChange)="markChanged()"></textarea>
+          @if (fieldErrors()['heroSubtitle']) {
+            <small class="field-error">{{ fieldErrors()['heroSubtitle'] }}</small>
+          }
         </label>
 
         <label class="field">

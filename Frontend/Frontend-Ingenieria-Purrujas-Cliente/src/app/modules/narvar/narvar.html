@@ -6,19 +6,34 @@
         <span>Hotel Las Purrujas</span>
       </a>
     </div>
-    <ul class="nav-links">
+
+    <button
+      type="button"
+      class="nav-toggle"
+      [class.nav-toggle--open]="menuOpen"
+      [attr.aria-expanded]="menuOpen"
+      aria-controls="main-navigation"
+      aria-label="Abrir menu de navegacion"
+      (click)="toggleMenu()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <ul id="main-navigation" class="nav-links" [class.nav-links--open]="menuOpen">
       <li><a href="" (click)="goToSection($event, 'home')" [class.active-route]="isHomeFragmentActive('home')">Home</a></li>
       <li><a href="" (click)="goToSection($event, 'facilidades')" [class.active-route]="isHomeFragmentActive('facilidades')">Facilidades</a></li>
       <li><a href="" (click)="goToSection($event, 'tarifas')" [class.active-route]="isHomeFragmentActive('tarifas')">Tarifas</a></li>
-      <li><a href="" (click)="goToSection($event, 'como-llegar')" [class.active-route]="isHomeFragmentActive('como-llegar')">¿Cómo llegar?</a></li>
-      <li><a href="" (click)="goToSection($event, 'contactenos')" [class.active-route]="isHomeFragmentActive('contactenos')">Contáctenos</a></li>
-      <li><a routerLink="/cotizar" [class.active-route]="isRouteActive('/cotizar')">Cotización rápida</a></li>
-      <li><a routerLink="/about-us" [class.active-route]="isRouteActive('/about-us')">Sobre nosotros</a></li>
-      <li><a routerLink="/promociones" [class.active-route]="isRouteActive('/promociones')">Promociones</a></li>
-      <li><a routerLink="/publicidad" [class.active-route]="isRouteActive('/publicidad')">Publicidad</a></li>
+      <li><a href="" (click)="goToSection($event, 'como-llegar')" [class.active-route]="isHomeFragmentActive('como-llegar')">Como llegar</a></li>
+      <li><a href="" (click)="goToSection($event, 'contactenos')" [class.active-route]="isHomeFragmentActive('contactenos')">Contactenos</a></li>
+      <li><a routerLink="/cotizar" [class.active-route]="isRouteActive('/cotizar')" (click)="closeMenu()">Cotizacion rapida</a></li>
+      <li><a routerLink="/about-us" [class.active-route]="isRouteActive('/about-us')" (click)="closeMenu()">Sobre nosotros</a></li>
+      <li><a routerLink="/promociones" [class.active-route]="isRouteActive('/promociones')" (click)="closeMenu()">Promociones</a></li>
+      <li><a routerLink="/publicidad" [class.active-route]="isRouteActive('/publicidad')" (click)="closeMenu()">Publicidad</a></li>
       <li class="reservation-item">
-        <a routerLink="/reservar" class="reservation-link" [class.reservation-current]="isRouteActive('/reservar')">
-          Reservas en línea
+        <a routerLink="/reservar" class="reservation-link" [class.reservation-current]="isRouteActive('/reservar')" (click)="closeMenu()">
+          Reservas en linea
         </a>
       </li>
     </ul>
