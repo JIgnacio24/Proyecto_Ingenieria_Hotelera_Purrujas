@@ -73,6 +73,18 @@
     <p class="feedback">{{ errorMessage() }}</p>
   }
 
+  @if (dashboardFeedback()) {
+    <p
+      class="feedback"
+      [class.success-feedback]="dashboardFeedbackTone() === 'success'"
+      [class.error-feedback]="dashboardFeedbackTone() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >
+      {{ dashboardFeedback() }}
+    </p>
+  }
+
   <div class="dashboard-grid">
     <section id="dashboard-home" class="hero-card dashboard-section">
       <div class="hero-media" aria-hidden="true"></div>
