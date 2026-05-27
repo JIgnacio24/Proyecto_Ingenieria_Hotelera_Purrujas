@@ -1,141 +1,3 @@
-<<<<<<< Updated upstream
-<div class="room-types-page">
-  <header class="page-header">
-    <div class="header-left">
-      <a routerLink="/panel" class="back-link">← Panel</a>
-      <h1 class="page-title">Tipos de habitación</h1>
-    </div>
-    <p class="page-subtitle">Administra los tipos de habitación y sus tarifas base.</p>
-  </header>
-
-  <div
-    class="feedback-banner"
-    *ngIf="feedback()"
-    [class.feedback-banner--success]="feedbackTone() === 'success'"
-    [class.feedback-banner--error]="feedbackTone() === 'error'"
-    role="alert"
-    aria-live="polite"
-  >
-    {{ feedback() }}
-  </div>
-
-  <section class="editor-card">
-    <form class="room-type-form" (ngSubmit)="saveRoomType()">
-      <div>
-        <h2>{{ editingRoomTypeId ? 'Editar tipo de habitación' : 'Nuevo tipo de habitación' }}</h2>
-        <p>La tarifa base se usa como precio por noche antes de aplicar temporada o descuentos.</p>
-      </div>
-
-      <label class="field">
-        <span>Nombre</span>
-        <input
-          type="text"
-          name="roomTypeName"
-          [(ngModel)]="roomTypeForm.name"
-          [disabled]="saving()"
-          required
-          maxlength="255"
-        />
-      </label>
-
-      <label class="field">
-        <span>Tarifa base por noche (USD)</span>
-        <input
-          type="number"
-          name="roomTypeBasePrice"
-          [(ngModel)]="roomTypeForm.basePrice"
-          [disabled]="saving()"
-          required
-          min="0.01"
-          step="0.01"
-        />
-      </label>
-
-      <div class="form-actions">
-        <button type="button" class="secondary-button" (click)="resetForm()" [disabled]="saving()">
-          Nuevo tipo
-        </button>
-        <button
-          type="submit"
-          class="primary-button"
-          [disabled]="saving() || !roomTypeForm.name.trim() || !roomTypeForm.basePrice"
-        >
-          {{ saving() ? 'Guardando...' : editingRoomTypeId ? 'Guardar cambios' : 'Crear tipo' }}
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <section class="table-card">
-    <div class="table-head">
-      <div>
-        <h2>Listado de tipos de habitación</h2>
-        <p>{{ roomTypes().length }} tipo{{ roomTypes().length === 1 ? '' : 's' }} activo{{ roomTypes().length === 1 ? '' : 's' }}</p>
-      </div>
-      <button type="button" class="secondary-button" (click)="loadRoomTypes()" [disabled]="loading() || saving()">
-        {{ loading() ? 'Cargando...' : 'Recargar' }}
-      </button>
-    </div>
-
-    <div class="skeleton-list" *ngIf="loading()" aria-label="Cargando tipos de habitación">
-      <div class="skeleton-row" *ngFor="let i of [1,2,3]"></div>
-    </div>
-
-    <div class="empty-state" *ngIf="!loading() && roomTypes().length === 0">
-      <p>No hay tipos de habitación registrados.</p>
-    </div>
-
-    <div class="table-wrapper" *ngIf="!loading() && roomTypes().length > 0">
-      <table class="room-types-table" aria-label="Lista de tipos de habitación">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Tipo</th>
-            <th scope="col">Tarifa base</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let roomType of roomTypes()">
-            <td class="id-cell">{{ roomType.roomTypeId }}</td>
-            <td>{{ roomType.name }}</td>
-            <td class="amount">{{ formatUsd(roomType.basePrice) }}</td>
-            <td><span class="status-badge">{{ roomType.isActive ? 'Activo' : 'Inactivo' }}</span></td>
-            <td>
-              <div class="table-actions">
-                <button type="button" class="secondary-button table-button" (click)="editRoomType(roomType)" [disabled]="saving()">
-                  Editar
-                </button>
-                <button type="button" class="danger-button table-button" (click)="requestDelete(roomType)" [disabled]="saving()">
-                  Eliminar
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="modal-backdrop" *ngIf="pendingDeletion() as roomTypeToDelete" role="presentation" (click)="cancelDeletion()">
-    <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-room-type-title" (click)="$event.stopPropagation()">
-      <span class="modal-kicker">Confirmar eliminación</span>
-      <h2 id="delete-room-type-title">Eliminar tipo de habitación</h2>
-      <p>
-        ¿Deseas eliminar <strong>{{ roomTypeToDelete.name }}</strong>? Se ocultará para nuevas gestiones sin borrar el historial asociado.
-      </p>
-
-      <div class="modal-actions">
-        <button type="button" class="secondary-button" (click)="cancelDeletion()" [disabled]="saving()">Cancelar</button>
-        <button type="button" class="danger-confirm-button" (click)="confirmDeletion()" [disabled]="saving()">
-          {{ saving() ? 'Eliminando...' : 'Eliminar tipo' }}
-        </button>
-      </div>
-    </section>
-  </div>
-</div>
-=======
 <section class="rt-shell">
   <div class="rt-veil" aria-hidden="true"></div>
 
@@ -144,7 +6,7 @@
     <div class="rt-topbar-copy">
       <p class="eyebrow">Hotel Las Purrujas</p>
       <h1>Tipos de habitación</h1>
-      <p class="rt-topbar-sub">Selecciona un tipo para ver su información completa.</p>
+      <p class="rt-topbar-sub">Gestiona los tipos de habitación. Selecciona una tarjeta para ver sus detalles o crear uno nuevo.</p>
     </div>
     <a routerLink="/panel" class="back-link" aria-label="Volver al panel">
       <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
@@ -154,14 +16,78 @@
     </a>
   </header>
 
+  <!-- ── Feedback global ── -->
+  @if (feedback()) {
+    <div
+      class="rt-feedback"
+      [class.rt-feedback--success]="feedbackTone() === 'success'"
+      [class.rt-feedback--error]="feedbackTone() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >
+      {{ feedback() }}
+    </div>
+  }
+
+  <!-- ── Formulario crear / editar ── -->
+  <section class="rt-form-card" aria-label="Formulario de tipo de habitación">
+    <div class="section-head">
+      <p>{{ editingRoomTypeId ? 'Editar tipo' : 'Nuevo tipo' }}</p>
+      <span>{{ editingRoomTypeId ? 'Modificá el nombre o la tarifa base.' : 'Completá el nombre y la tarifa base por noche.' }}</span>
+    </div>
+
+    <form class="rt-form" (ngSubmit)="saveRoomType()">
+      <div class="rt-form__fields">
+        <label class="rt-field">
+          <span class="rt-field__label">Nombre</span>
+          <input
+            type="text"
+            name="roomTypeName"
+            [(ngModel)]="roomTypeForm.name"
+            [disabled]="saving()"
+            required
+            maxlength="255"
+            placeholder="Ej.: Suite Volcán"
+            class="rt-field__input"
+          />
+        </label>
+
+        <label class="rt-field">
+          <span class="rt-field__label">Tarifa base por noche (USD)</span>
+          <input
+            type="number"
+            name="roomTypeBasePrice"
+            [(ngModel)]="roomTypeForm.basePrice"
+            [disabled]="saving()"
+            required
+            min="0.01"
+            step="0.01"
+            placeholder="0.00"
+            class="rt-field__input"
+          />
+        </label>
+      </div>
+
+      <div class="rt-form__actions">
+        @if (editingRoomTypeId) {
+          <button type="button" class="btn-secondary" (click)="resetForm()" [disabled]="saving()">
+            Cancelar edición
+          </button>
+        }
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="saving() || !roomTypeForm.name.trim() || !roomTypeForm.basePrice"
+        >
+          {{ saving() ? 'Guardando...' : editingRoomTypeId ? 'Guardar cambios' : 'Crear tipo' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ── Cuerpo: selector + detalle ── -->
   <div class="rt-body">
 
-    <!-- ── Error global ── -->
-    @if (error()) {
-      <p class="feedback error-feedback" role="alert">{{ error() }}</p>
-    }
-
-    <!-- ── Cargando ── -->
     @if (loading()) {
       <p class="loading-state" role="status">Cargando tipos de habitación...</p>
     } @else {
@@ -170,11 +96,11 @@
       <section class="type-selector" aria-label="Tipos de habitación disponibles">
         <div class="section-head">
           <p>Selecciona un tipo</p>
-          <span>Pulsa una tarjeta para ver los detalles.</span>
+          <span>Pulsa una tarjeta para ver los detalles y las acciones.</span>
         </div>
 
         @if (roomTypes().length === 0) {
-          <p class="empty-state">No hay tipos de habitación registrados.</p>
+          <p class="empty-state">No hay tipos de habitación registrados. Crea uno con el formulario de arriba.</p>
         } @else {
           <div class="type-cards">
             @for (type of roomTypes(); track type.roomTypeId) {
@@ -203,7 +129,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
-                    {{ type.capacity }} persona{{ type.capacity !== 1 ? 's' : '' }}
+                    {{ type.capacity > 0 ? (type.capacity + ' persona' + (type.capacity !== 1 ? 's' : '')) : 'Sin cap.' }}
                   </span>
                 </div>
 
@@ -221,7 +147,7 @@
       <!-- ── Panel de detalles ── -->
       <section class="type-detail" aria-label="Información del tipo seleccionado" aria-live="polite">
 
-        <!-- Ningún tipo seleccionado -->
+        <!-- Sin selección -->
         @if (selectedTypeId() === null) {
           <div class="detail-placeholder">
             <svg viewBox="0 0 24 24" aria-hidden="true" width="40" height="40">
@@ -232,14 +158,25 @@
         }
 
         @if (selectedType(); as type) {
+
           <!-- Información no disponible -->
           @if (hasNoDescriptiveInfo(type)) {
             <div class="detail-unavailable">
               <p class="detail-unavailable__title">{{ type.name }}</p>
               <p>Información no disponible</p>
               <small>Este tipo de habitación no posee descripción, capacidad ni imágenes registradas.</small>
+              <div class="detail-actions">
+                <button type="button" class="btn-secondary" (click)="editRoomType(type)" [disabled]="saving()">
+                  Editar
+                </button>
+                <button type="button" class="btn-danger" (click)="requestDelete(type)" [disabled]="saving()">
+                  Eliminar
+                </button>
+              </div>
             </div>
+
           } @else {
+
             <!-- Ficha completa -->
             <article class="detail-card">
 
@@ -279,14 +216,11 @@
               </dl>
 
               <!-- Imágenes -->
-              <div class="detail-images">
-                <div class="group-head">
-                  <h3>Imágenes</h3>
-                </div>
-
-                @if (type.images.length === 0) {
-                  <p class="empty-state">No hay imágenes asociadas a este tipo de habitación.</p>
-                } @else {
+              @if (type.images.length > 0) {
+                <div class="detail-images">
+                  <div class="group-head">
+                    <h3>Imágenes</h3>
+                  </div>
                   <div class="image-grid">
                     @for (img of type.images; track img.roomTypeImageId) {
                       <figure class="image-figure">
@@ -302,7 +236,23 @@
                       </figure>
                     }
                   </div>
-                }
+                </div>
+              }
+
+              <!-- Acciones -->
+              <div class="detail-actions">
+                <button type="button" class="btn-secondary" (click)="editRoomType(type)" [disabled]="saving()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Editar nombre / tarifa
+                </button>
+                <button type="button" class="btn-danger" (click)="requestDelete(type)" [disabled]="saving()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
+                  Eliminar
+                </button>
               </div>
 
             </article>
@@ -312,5 +262,33 @@
 
     }
   </div>
+
+  <!-- ── Modal confirmación de eliminación ── -->
+  @if (pendingDeletion(); as roomTypeToDelete) {
+    <div class="modal-backdrop" role="presentation" (click)="cancelDeletion()">
+      <section
+        class="confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-rt-title"
+        (click)="$event.stopPropagation()"
+      >
+        <span class="modal-kicker">Confirmar eliminación</span>
+        <h2 id="delete-rt-title">Eliminar tipo de habitación</h2>
+        <p>
+          ¿Deseas eliminar <strong>{{ roomTypeToDelete.name }}</strong>?
+          Se ocultará para nuevas gestiones sin borrar el historial asociado.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cancelDeletion()" [disabled]="saving()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-danger-confirm" (click)="confirmDeletion()" [disabled]="saving()">
+            {{ saving() ? 'Eliminando...' : 'Eliminar tipo' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+
 </section>
->>>>>>> Stashed changes
