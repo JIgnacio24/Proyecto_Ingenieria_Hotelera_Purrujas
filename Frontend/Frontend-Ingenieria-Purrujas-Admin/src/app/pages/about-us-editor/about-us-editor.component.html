@@ -1,5 +1,18 @@
 <section class="admin-about-shell">
-  <aside class="side-nav" aria-label="Navegación del editor Sobre nosotros">
+  <button
+    type="button"
+    class="mobile-menu-button"
+    [class.mobile-menu-button--open]="mobileMenuOpen()"
+    [attr.aria-expanded]="mobileMenuOpen()"
+    aria-controls="about-editor-menu"
+    aria-label="Abrir menu de secciones"
+    (click)="toggleMobileMenu()"
+  >
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <aside id="about-editor-menu" class="side-nav" [class.side-nav--open]="mobileMenuOpen()" aria-label="Navegacion del editor Sobre nosotros">
     <button type="button" class="side-nav__brand" (click)="scrollToTop()">
       <span class="brand-monogram">SN</span>
     </button>
@@ -33,7 +46,7 @@
         Descartar cambios
       </button>
       <button type="button" class="primary-button" (click)="saveContent()" [disabled]="loading() || saving() || !hasChanges()">
-        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+        {{ saving() ? 'Guardando...' : 'Aceptar' }}
       </button>
     </div>
   </header>
@@ -62,6 +75,9 @@
     <div class="container">
       @if (editingBlock() === 'history') {
         <article class="edit-panel">
+          @if (sectionError('editor-historia')) {
+            <p class="form-feedback field-full error-feedback">{{ sectionError('editor-historia') }}</p>
+          }
           <label class="field">
             <span>Etiqueta</span>
             <input type="text" [(ngModel)]="aboutUsContent.historyTag" (ngModelChange)="markChanged()" />
@@ -119,6 +135,9 @@
         <button type="button" class="edit-button" (click)="editBlock('team')">Editar</button>
         @if (editingBlock() === 'team') {
           <div class="edit-panel">
+            @if (sectionError('editor-equipo')) {
+              <p class="form-feedback field-full error-feedback">{{ sectionError('editor-equipo') }}</p>
+            }
             <label class="field">
               <span>Etiqueta</span>
               <input type="text" [(ngModel)]="aboutUsContent.teamTag" (ngModelChange)="markChanged()" />
@@ -178,6 +197,9 @@
         <button type="button" class="edit-button" (click)="editBlock('director')">Editar</button>
         @if (editingBlock() === 'director') {
           <div class="edit-panel edit-panel-compact">
+            @if (sectionError('editor-equipo')) {
+              <p class="form-feedback field-full error-feedback">{{ sectionError('editor-equipo') }}</p>
+            }
             <label class="field">
               <span>Nombre</span>
               <input type="text" [(ngModel)]="aboutUsContent.directorName" (ngModelChange)="markChanged()" />
@@ -204,6 +226,9 @@
         <button type="button" class="edit-button edit-button-light" (click)="editBlock('philosophy')">Editar</button>
         @if (editingBlock() === 'philosophy') {
           <div class="edit-panel">
+            @if (sectionError('editor-equipo')) {
+              <p class="form-feedback field-full error-feedback">{{ sectionError('editor-equipo') }}</p>
+            }
             <label class="field">
               <span>Título</span>
               <input type="text" [(ngModel)]="aboutUsContent.philosophyTitle" (ngModelChange)="markChanged()" />
@@ -234,6 +259,9 @@
     <div class="container">
       @if (editingBlock() === 'mvv') {
         <article class="edit-panel">
+          @if (sectionError('editor-mvv')) {
+            <p class="form-feedback field-full error-feedback">{{ sectionError('editor-mvv') }}</p>
+          }
           <label class="field">
             <span>Etiqueta</span>
             <input type="text" [(ngModel)]="aboutUsContent.mvvTag" (ngModelChange)="markChanged()" />
@@ -304,6 +332,9 @@
     <div class="container">
       @if (editingBlock() === 'gallery') {
         <article class="edit-panel">
+          @if (sectionError('editor-galeria')) {
+            <p class="form-feedback field-full error-feedback">{{ sectionError('editor-galeria') }}</p>
+          }
           @if (inlineFeedback()) {
             <p
               class="form-feedback field-full"
@@ -424,3 +455,4 @@
     </div>
   </section>
 </section>
+

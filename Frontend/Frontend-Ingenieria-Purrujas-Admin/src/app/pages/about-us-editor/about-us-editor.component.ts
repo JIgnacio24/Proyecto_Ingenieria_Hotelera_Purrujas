@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, Pipe, PipeTransform, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -43,6 +43,7 @@ export class ReplaceNewlinesPipe implements PipeTransform {
 })
 export class AboutUsEditorComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly aboutUsContentService = inject(AboutUsContentService);
   private readonly galleryImagesService = inject(GalleryImagesService);
   private readonly apiAssetBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
@@ -56,9 +57,11 @@ export class AboutUsEditorComponent implements AfterViewInit {
   readonly feedbackTone = signal<'success' | 'error' | ''>('');
   readonly inlineFeedback = signal('');
   readonly inlineFeedbackTone = signal<'success' | 'error' | ''>('');
+  readonly sectionErrors = signal<Record<string, string>>({});
   readonly editingBlock = signal<EditableBlock>(null);
   readonly hasChanges = signal(false);
   readonly activeSection = signal('editor-hero');
+  readonly mobileMenuOpen = signal(false);
 
   readonly editorSections = [
     { id: 'editor-hero', label: 'Encabezado', compactLabel: 'Inicio', icon: 'landscape' },
@@ -128,6 +131,10 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.clearFeedback();
 
     try {
+      if (!this.validateContent()) {
+        return;
+      }
+
       const savedContent = await firstValueFrom(
         this.aboutUsContentService.updateContent(this.buildPayload())
       );
@@ -137,15 +144,12 @@ export class AboutUsEditorComponent implements AfterViewInit {
       await this.loadGalleryImages();
       this.hasChanges.set(false);
       this.editingBlock.set(null);
-      this.feedbackTone.set('success');
-      this.feedback.set('Los cambios de Sobre nosotros se guardaron correctamente.');
-      this.scrollToTop();
+      await this.navigateToPanelWithFeedback('success', 'Los cambios de Sobre nosotros se guardaron correctamente.');
     } catch (error) {
-      this.feedbackTone.set('error');
-      const message = this.resolveError(error, 'No fue posible guardar los cambios.');
-      this.feedback.set(message);
-      this.inlineFeedbackTone.set('error');
-      this.inlineFeedback.set(message);
+      await this.navigateToPanelWithFeedback(
+        'error',
+        this.resolveError(error, 'No fue posible guardar los cambios.')
+      );
     } finally {
       this.saving.set(false);
     }
@@ -165,6 +169,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.feedback.set('Los cambios fueron descartados.');
     this.inlineFeedback.set('');
     this.inlineFeedbackTone.set('');
+    this.sectionErrors.set({});
     void this.loadGalleryImages();
     this.scrollToTop();
   }
@@ -172,6 +177,10 @@ export class AboutUsEditorComponent implements AfterViewInit {
   editBlock(block: EditableBlock): void {
     this.editingBlock.set(block);
     this.clearFeedback();
+  }
+
+  sectionError(sectionId: string): string {
+    return this.sectionErrors()[sectionId] ?? '';
   }
 
   setFilter(filter: 'todos' | 'hotel' | 'lugares'): void {
@@ -230,6 +239,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
   }
 
   scrollToSection(sectionId: string): void {
+    this.closeMobileMenu();
     const element = this.document.getElementById(sectionId);
     if (!element) {
       return;
@@ -241,8 +251,17 @@ export class AboutUsEditorComponent implements AfterViewInit {
   }
 
   scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
+    this.closeMobileMenu();
     this.document.defaultView?.scrollTo({ top: 0, left: 0, behavior });
     this.activeSection.set('editor-hero');
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 
   getInitials(name: string): string {
@@ -267,10 +286,7 @@ export class AboutUsEditorComponent implements AfterViewInit {
       this.galleryItems = await firstValueFrom(this.galleryImagesService.getAll());
     } catch (error) {
       const message = this.resolveError(error, 'No fue posible cargar las imágenes de la galería.');
-      this.feedbackTone.set('error');
-      this.feedback.set(message);
-      this.inlineFeedbackTone.set('error');
-      this.inlineFeedback.set(message);
+      this.setSectionError('editor-galeria', message);
     }
   }
 
@@ -314,6 +330,102 @@ export class AboutUsEditorComponent implements AfterViewInit {
     this.feedbackTone.set('');
     this.inlineFeedback.set('');
     this.inlineFeedbackTone.set('');
+    this.sectionErrors.set({});
+  }
+
+  private validateContent(): boolean {
+    const errors: Record<string, string> = {};
+    const addError = (sectionId: string, message: string): void => {
+      if (!errors[sectionId]) {
+        errors[sectionId] = message;
+      }
+    };
+
+    if (!this.aboutUsContent.historyTag.trim() || !this.aboutUsContent.historyTitle.trim() ||
+        !this.aboutUsContent.historyDescription.trim() || !this.aboutUsContent.historyTimelineStartYear.trim() ||
+        !this.aboutUsContent.historyTimelineEndLabel.trim() || this.parseLines(this.historyMilestonesText).length === 0) {
+      addError('editor-historia', 'Completa todos los campos de Historia antes de guardar.');
+    }
+
+    if (!this.aboutUsContent.teamTag.trim() || !this.aboutUsContent.teamTitle.trim() ||
+        !this.aboutUsContent.collaboratorsLabel.trim() || !this.aboutUsContent.localTalentLabel.trim() ||
+        !this.aboutUsContent.experienceLabel.trim() || this.aboutUsContent.collaboratorsCount === null ||
+        this.aboutUsContent.localTalentPercentage === null || this.aboutUsContent.experienceYears === null) {
+      addError('editor-equipo', 'Completa todos los campos de Equipo antes de guardar.');
+    }
+
+    if (!this.aboutUsContent.directorName.trim() || !this.aboutUsContent.directorTitle.trim() ||
+        !this.aboutUsContent.directorBiography.trim()) {
+      addError('editor-equipo', 'Completa todos los campos de Direccion antes de guardar.');
+    }
+
+    if (!this.aboutUsContent.philosophyTitle.trim() || !this.aboutUsContent.philosophyDescription.trim() ||
+        !this.aboutUsContent.philosophyQuote.trim()) {
+      addError('editor-equipo', 'Completa todos los campos de Filosofia antes de guardar.');
+    }
+
+    if (!this.aboutUsContent.mvvTag.trim() || !this.aboutUsContent.mvvTitle.trim() ||
+        !this.aboutUsContent.missionTitle.trim() || !this.aboutUsContent.visionTitle.trim() ||
+        !this.aboutUsContent.valuesTitle.trim() || !this.aboutUsContent.mission.trim() ||
+        !this.aboutUsContent.vision.trim() || this.parseLines(this.aboutUsValuesText).length === 0) {
+      addError('editor-mvv', 'Completa todos los campos de Mision, Vision y Valores antes de guardar.');
+    }
+
+    if (!this.aboutUsContent.galleryTag.trim() || !this.aboutUsContent.galleryTitle.trim() ||
+        !this.aboutUsContent.gallerySubtext.trim()) {
+      addError('editor-galeria', 'Completa todos los textos de Galeria antes de guardar.');
+    }
+
+    if (this.galleryItems.some((image) => !image.name.trim() || !image.alt.trim() || !image.caption.trim() || !image.category.trim())) {
+      addError('editor-galeria', 'Completa nombre, texto alternativo, leyenda y categoria en todas las imagenes.');
+    }
+
+    this.sectionErrors.set(errors);
+    const firstSectionId = Object.keys(errors)[0];
+
+    if (!firstSectionId) {
+      return true;
+    }
+
+    this.editingBlock.set(this.blockForSectionId(firstSectionId));
+    this.scrollToSection(firstSectionId);
+    return false;
+  }
+
+  private setSectionError(sectionId: string, message: string): void {
+    this.sectionErrors.set({ ...this.sectionErrors(), [sectionId]: message });
+  }
+
+  private sectionIdForBlock(block: EditableBlock): string {
+    switch (block) {
+      case 'history':
+        return 'editor-historia';
+      case 'team':
+      case 'director':
+      case 'philosophy':
+        return 'editor-equipo';
+      case 'mvv':
+        return 'editor-mvv';
+      case 'gallery':
+        return 'editor-galeria';
+      default:
+        return 'editor-hero';
+    }
+  }
+
+  private blockForSectionId(sectionId: string): EditableBlock {
+    switch (sectionId) {
+      case 'editor-historia':
+        return 'history';
+      case 'editor-equipo':
+        return 'team';
+      case 'editor-mvv':
+        return 'mvv';
+      case 'editor-galeria':
+        return 'gallery';
+      default:
+        return null;
+    }
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {
@@ -326,6 +438,17 @@ export class AboutUsEditorComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private navigateToPanelWithFeedback(tone: 'success' | 'error', message: string): Promise<boolean> {
+    return this.router.navigate(['/panel'], {
+      state: {
+        adminFeedback: {
+          tone,
+          message
+        }
+      }
+    });
   }
 
   private updateActiveSection(): void {

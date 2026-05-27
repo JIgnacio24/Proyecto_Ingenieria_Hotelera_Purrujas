@@ -16,6 +16,7 @@ type HomeSectionId = typeof HOME_SECTION_IDS[number];
 export class Narvar {
   currentPath = '/';
   currentFragment = 'home';
+  menuOpen = false;
 
   constructor(
     private router: Router,
@@ -27,6 +28,7 @@ export class Narvar {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.updateCurrentLocation(event.urlAfterRedirects);
+        this.closeMenu();
         queueMicrotask(() => this.updateActiveSection());
       });
   }
@@ -38,7 +40,18 @@ export class Narvar {
 
   @HostListener('window:resize')
   onWindowResize(): void {
+    if ((this.document.defaultView?.innerWidth ?? 0) > 900) {
+      this.closeMenu();
+    }
     this.updateActiveSection();
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu(): void {
+    this.menuOpen = false;
   }
 
   isRouteActive(path: string): boolean {
@@ -52,6 +65,7 @@ export class Narvar {
   async goToSection(event: Event, sectionId: HomeSectionId): Promise<void> {
     event.preventDefault();
     this.currentFragment = sectionId;
+    this.closeMenu();
 
     if (this.currentPath !== '/') {
       await this.router.navigate(['/'], { fragment: sectionId });

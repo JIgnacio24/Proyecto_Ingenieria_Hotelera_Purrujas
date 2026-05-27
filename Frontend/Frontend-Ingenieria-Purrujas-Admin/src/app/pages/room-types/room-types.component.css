@@ -1,0 +1,253 @@
+.room-types-page {
+  padding: 2rem 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header,
+.editor-card,
+.table-card {
+  margin-bottom: 1.5rem;
+}
+
+.back-link {
+  font-size: 0.85rem;
+  color: #2d6a4f;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.page-title,
+.editor-card h2,
+.table-card h2,
+.confirm-modal h2 {
+  color: #1a3a2a;
+  margin: 0;
+}
+
+.page-title {
+  font-size: 1.6rem;
+}
+
+.page-subtitle,
+.editor-card p,
+.table-card p,
+.field span {
+  color: #5a7a65;
+}
+
+.feedback-banner {
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.feedback-banner--success {
+  background: rgba(82,183,136,0.12);
+  color: #1a6b3c;
+  border: 1px solid rgba(82,183,136,0.3);
+}
+
+.feedback-banner--error {
+  background: rgba(178,59,59,0.08);
+  color: #8b1a1a;
+  border: 1px solid rgba(178,59,59,0.25);
+}
+
+.editor-card,
+.table-card {
+  padding: 1.2rem;
+  border-radius: 18px;
+  background: rgba(245, 240, 232, 0.7);
+  border: 1px solid #d8e8d8;
+}
+
+.room-type-form {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field input {
+  border: 1px solid #ccd8cc;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  color: #1a3a2a;
+}
+
+.field input:focus {
+  outline: 2px solid rgba(82,183,136,0.45);
+}
+
+.form-actions,
+.table-head,
+.table-actions,
+.modal-actions {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.table-head {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.danger-confirm-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #c9a84c;
+  color: #183726;
+}
+
+.secondary-button {
+  background: rgba(26, 58, 42, 0.08);
+  color: #183726;
+  border: 1px solid rgba(26, 58, 42, 0.12);
+}
+
+.danger-button,
+.danger-confirm-button {
+  background: rgba(178,59,59,0.12);
+  color: #8b1a1a;
+  border: 1px solid rgba(178,59,59,0.25);
+}
+
+.danger-confirm-button {
+  background: #a84636;
+  color: #fffaf3;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.skeleton-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.skeleton-row {
+  height: 52px;
+  background: linear-gradient(90deg, #eef2ee 25%, #e0ebe0 50%, #eef2ee 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.empty-state {
+  color: #5a7a65;
+  padding: 1.4rem 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #d8e8d8;
+  margin-top: 1rem;
+}
+
+.room-types-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.room-types-table th {
+  background: #1a3a2a;
+  color: rgba(245,240,232,0.9);
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.room-types-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e8f0e8;
+  color: #1c2b22;
+}
+
+.id-cell,
+.amount {
+  font-weight: 700;
+  color: #2d6a4f;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.28rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(82,183,136,0.15);
+  color: #1a6b3c;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.table-button {
+  padding: 0.45rem 0.75rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(13, 32, 22, 0.46);
+}
+
+.confirm-modal {
+  width: min(100%, 430px);
+  padding: 1.35rem;
+  border-radius: 22px;
+  background: #fffaf3;
+  box-shadow: 0 24px 60px rgba(13, 32, 22, 0.28);
+}
+
+.modal-kicker {
+  color: #9b7428;
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.confirm-modal p {
+  color: #4d6555;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .room-types-page { padding: 1.2rem; }
+  .room-type-form { grid-template-columns: 1fr; }
+  .table-head { align-items: flex-start; flex-direction: column; }
+}

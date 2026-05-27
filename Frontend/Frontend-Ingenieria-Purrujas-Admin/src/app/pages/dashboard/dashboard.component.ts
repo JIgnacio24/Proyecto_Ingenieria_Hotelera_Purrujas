@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { AdminUser } from '../../core/auth.models';
@@ -56,6 +56,14 @@ interface DashboardModuleCard {
   actionLabel?: string;
 }
 
+interface DashboardNavigationState {
+  adminFeedback?: {
+    tone: 'success' | 'error';
+    message: string;
+  };
+  [key: string]: unknown;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -65,6 +73,7 @@ interface DashboardModuleCard {
 })
 export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
   private readonly gettingThereContentService = inject(GettingThereContentService);
@@ -145,6 +154,7 @@ export class DashboardComponent implements AfterViewInit {
     }
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
+  readonly mobileMenuOpen = signal(false);
   readonly moduleCards: readonly DashboardModuleCard[] = [
     {
       key: 'home-editor',
@@ -175,10 +185,12 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'rooms',
-      title: 'Administrar habitaciones',
-      status: 'Pendiente de interfaz',
+      title: 'Listado de tipos de habitación',
+      status: 'Disponible',
       description:
-        'Aquí irá la administración de tipos de habitación, tarifas base y estado operativo cuando el módulo esté disponible.'
+        'Administra los tipos de habitación, sus nombres y tarifas base desde una vista dedicada.',
+      link: '/panel/tipos-habitacion',
+      actionLabel: 'Administrar tipos'
     },
     {
       key: 'ads',
@@ -191,6 +203,8 @@ export class DashboardComponent implements AfterViewInit {
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
+  readonly dashboardFeedback = signal('');
+  readonly dashboardFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly profile = signal<AdminUser | null>(this.authService.currentUser());
   readonly facilitiesLoading = signal(true);
   readonly facilitiesSaving = signal(false);
@@ -217,8 +231,8 @@ export class DashboardComponent implements AfterViewInit {
   availabilityStartDate = this.todayInputValue();
   availabilityEndDate = this.addDaysInputValue(1);
   availabilityRoomTypeId: number | null = null;
-
   constructor() {
+    this.consumeNavigationFeedback();
     void this.loadProfile();
     void this.loadFacilitiesContent();
     void this.loadGettingThereContent();
@@ -408,6 +422,7 @@ export class DashboardComponent implements AfterViewInit {
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
+    this.closeMobileMenu();
     const targetId = this.menuItems.find((item) => item.key === menuKey)?.targetId;
 
     if (!targetId) {
@@ -516,6 +531,14 @@ export class DashboardComponent implements AfterViewInit {
     this.syncActiveMenuItem();
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
   private resolveError(error: unknown, fallbackMessage: string): string {
     if (error instanceof HttpErrorResponse) {
       return error.error?.message || error.message || fallbackMessage;
@@ -526,6 +549,42 @@ export class DashboardComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private consumeNavigationFeedback(): void {
+    const state = this.currentNavigationState();
+    const feedback = state?.adminFeedback;
+
+    if (
+      !feedback ||
+      typeof feedback.message !== 'string' ||
+      (feedback.tone !== 'success' && feedback.tone !== 'error')
+    ) {
+      return;
+    }
+
+    this.dashboardFeedbackTone.set(feedback.tone);
+    this.dashboardFeedback.set(feedback.message);
+    this.clearNavigationFeedbackState();
+  }
+
+  private currentNavigationState(): DashboardNavigationState | null {
+    const state = this.router.getCurrentNavigation()?.extras.state
+      ?? this.document.defaultView?.history.state
+      ?? null;
+
+    return state as DashboardNavigationState | null;
+  }
+
+  private clearNavigationFeedbackState(): void {
+    const view = this.document.defaultView;
+
+    if (!view?.history.state) {
+      return;
+    }
+
+    const { adminFeedback, ...remainingState } = view.history.state as DashboardNavigationState;
+    view.history.replaceState(remainingState, this.document.title, view.location.href);
   }
 
   private applyFacilitiesContent(content: FacilitiesPageContent): void {

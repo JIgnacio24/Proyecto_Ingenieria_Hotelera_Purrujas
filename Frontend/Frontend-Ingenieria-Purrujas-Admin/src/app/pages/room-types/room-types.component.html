@@ -1,0 +1,136 @@
+<div class="room-types-page">
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/panel" class="back-link">← Panel</a>
+      <h1 class="page-title">Tipos de habitación</h1>
+    </div>
+    <p class="page-subtitle">Administra los tipos de habitación y sus tarifas base.</p>
+  </header>
+
+  <div
+    class="feedback-banner"
+    *ngIf="feedback()"
+    [class.feedback-banner--success]="feedbackTone() === 'success'"
+    [class.feedback-banner--error]="feedbackTone() === 'error'"
+    role="alert"
+    aria-live="polite"
+  >
+    {{ feedback() }}
+  </div>
+
+  <section class="editor-card">
+    <form class="room-type-form" (ngSubmit)="saveRoomType()">
+      <div>
+        <h2>{{ editingRoomTypeId ? 'Editar tipo de habitación' : 'Nuevo tipo de habitación' }}</h2>
+        <p>La tarifa base se usa como precio por noche antes de aplicar temporada o descuentos.</p>
+      </div>
+
+      <label class="field">
+        <span>Nombre</span>
+        <input
+          type="text"
+          name="roomTypeName"
+          [(ngModel)]="roomTypeForm.name"
+          [disabled]="saving()"
+          required
+          maxlength="255"
+        />
+      </label>
+
+      <label class="field">
+        <span>Tarifa base por noche (USD)</span>
+        <input
+          type="number"
+          name="roomTypeBasePrice"
+          [(ngModel)]="roomTypeForm.basePrice"
+          [disabled]="saving()"
+          required
+          min="0.01"
+          step="0.01"
+        />
+      </label>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-button" (click)="resetForm()" [disabled]="saving()">
+          Nuevo tipo
+        </button>
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="saving() || !roomTypeForm.name.trim() || !roomTypeForm.basePrice"
+        >
+          {{ saving() ? 'Guardando...' : editingRoomTypeId ? 'Guardar cambios' : 'Crear tipo' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="table-card">
+    <div class="table-head">
+      <div>
+        <h2>Listado de tipos de habitación</h2>
+        <p>{{ roomTypes().length }} tipo{{ roomTypes().length === 1 ? '' : 's' }} activo{{ roomTypes().length === 1 ? '' : 's' }}</p>
+      </div>
+      <button type="button" class="secondary-button" (click)="loadRoomTypes()" [disabled]="loading() || saving()">
+        {{ loading() ? 'Cargando...' : 'Recargar' }}
+      </button>
+    </div>
+
+    <div class="skeleton-list" *ngIf="loading()" aria-label="Cargando tipos de habitación">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3]"></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading() && roomTypes().length === 0">
+      <p>No hay tipos de habitación registrados.</p>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading() && roomTypes().length > 0">
+      <table class="room-types-table" aria-label="Lista de tipos de habitación">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Tarifa base</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let roomType of roomTypes()">
+            <td class="id-cell">{{ roomType.roomTypeId }}</td>
+            <td>{{ roomType.name }}</td>
+            <td class="amount">{{ formatUsd(roomType.basePrice) }}</td>
+            <td><span class="status-badge">{{ roomType.isActive ? 'Activo' : 'Inactivo' }}</span></td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="secondary-button table-button" (click)="editRoomType(roomType)" [disabled]="saving()">
+                  Editar
+                </button>
+                <button type="button" class="danger-button table-button" (click)="requestDelete(roomType)" [disabled]="saving()">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="pendingDeletion() as roomTypeToDelete" role="presentation" (click)="cancelDeletion()">
+    <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-room-type-title" (click)="$event.stopPropagation()">
+      <span class="modal-kicker">Confirmar eliminación</span>
+      <h2 id="delete-room-type-title">Eliminar tipo de habitación</h2>
+      <p>
+        ¿Deseas eliminar <strong>{{ roomTypeToDelete.name }}</strong>? Se ocultará para nuevas gestiones sin borrar el historial asociado.
+      </p>
+
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" (click)="cancelDeletion()" [disabled]="saving()">Cancelar</button>
+        <button type="button" class="danger-confirm-button" (click)="confirmDeletion()" [disabled]="saving()">
+          {{ saving() ? 'Eliminando...' : 'Eliminar tipo' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

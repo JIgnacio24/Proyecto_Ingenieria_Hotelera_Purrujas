@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { GalleryImage, GalleryImagesService } from '../../core/gallery-images.service';
@@ -22,6 +22,7 @@ import {
 })
 export class HomeEditorComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly homeContentService = inject(HomeContentService);
   private readonly galleryImagesService = inject(GalleryImagesService);
   private readonly apiAssetBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
@@ -33,7 +34,9 @@ export class HomeEditorComponent implements AfterViewInit {
   readonly saving = signal(false);
   readonly feedback = signal('');
   readonly feedbackTone = signal<'success' | 'error' | ''>('');
+  readonly panelError = signal('');
   readonly imageError = signal('');
+  readonly fieldErrors = signal<Record<string, string>>({});
   readonly hasChanges = signal(false);
 
   homeContent: HomePageContent = createDefaultHomePageContent();
@@ -84,6 +87,7 @@ export class HomeEditorComponent implements AfterViewInit {
 
   markChanged(): void {
     this.hasChanges.set(true);
+    this.panelError.set('');
   }
 
   onHeroImageSelected(event: Event): void {
@@ -115,6 +119,10 @@ export class HomeEditorComponent implements AfterViewInit {
     this.clearFeedback();
 
     try {
+      if (!this.validateContent()) {
+        return;
+      }
+
       const savedContent = await firstValueFrom(
         this.homeContentService.updateContent(cloneHomePageContent(this.homeContent))
       );
@@ -136,11 +144,12 @@ export class HomeEditorComponent implements AfterViewInit {
       this.originalContent = cloneHomePageContent(savedContent);
       this.selectedHeroFile = null;
       this.hasChanges.set(false);
-      this.feedbackTone.set('success');
-      this.feedback.set('El hero del inicio se guardó correctamente.');
+      await this.navigateToPanelWithFeedback('success', 'El hero del inicio se guardó correctamente.');
     } catch (error) {
-      this.feedbackTone.set('error');
-      this.feedback.set(this.resolveError(error, 'No fue posible guardar el hero del inicio.'));
+      await this.navigateToPanelWithFeedback(
+        'error',
+        this.resolveError(error, 'No fue posible guardar el hero del inicio.')
+      );
     } finally {
       this.saving.set(false);
     }
@@ -152,6 +161,8 @@ export class HomeEditorComponent implements AfterViewInit {
     this.heroImagePreviewUrl = this.heroImage ? this.imageUrl(this.heroImage.src) : '';
     this.imageInput?.nativeElement && (this.imageInput.nativeElement.value = '');
     this.imageError.set('');
+    this.panelError.set('');
+    this.fieldErrors.set({});
     this.hasChanges.set(false);
   }
 
@@ -166,6 +177,48 @@ export class HomeEditorComponent implements AfterViewInit {
   private clearFeedback(): void {
     this.feedback.set('');
     this.feedbackTone.set('');
+    this.panelError.set('');
+    this.fieldErrors.set({});
+  }
+
+  private validateContent(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!this.homeContent.heroEyebrow.trim()) {
+      errors['heroEyebrow'] = 'La etiqueta del hero es obligatoria.';
+    }
+
+    if (!this.homeContent.heroTitle.trim()) {
+      errors['heroTitle'] = 'El titulo del hero es obligatorio.';
+    }
+
+    if (!this.homeContent.heroSubtitle.trim()) {
+      errors['heroSubtitle'] = 'El subtitulo del hero es obligatorio.';
+    }
+
+    this.fieldErrors.set(errors);
+
+    if (Object.keys(errors).length === 0) {
+      return true;
+    }
+
+    this.panelError.set('Revisa los campos marcados antes de guardar.');
+    this.scrollToEditorPanel();
+    return false;
+  }
+
+  private scrollToTop(behavior: ScrollBehavior = 'smooth'): void {
+    this.document.defaultView?.scrollTo({ top: 0, left: 0, behavior });
+  }
+
+  private scrollToEditorPanel(): void {
+    const element = this.document.getElementById('home-editor-panel');
+    if (!element) {
+      return;
+    }
+
+    const top = element.getBoundingClientRect().top + (this.document.defaultView?.scrollY ?? 0) - 92;
+    this.document.defaultView?.scrollTo({ top, behavior: 'smooth' });
   }
 
   private resolveError(error: unknown, fallbackMessage: string): string {
@@ -178,5 +231,16 @@ export class HomeEditorComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private navigateToPanelWithFeedback(tone: 'success' | 'error', message: string): Promise<boolean> {
+    return this.router.navigate(['/panel'], {
+      state: {
+        adminFeedback: {
+          tone,
+          message
+        }
+      }
+    });
   }
 }
