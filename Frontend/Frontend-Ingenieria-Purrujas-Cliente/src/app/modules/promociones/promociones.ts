@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { PublicidadService, Promocion } from '../../services/publicidad.service';
 import { ChangeDetectorRef } from '@angular/core';
 
@@ -8,6 +8,13 @@ const ROOM_NAMES: Record<number, string> = {
   1: 'Habitación Doble',
   2: 'Suite Volcán',
   3: 'Villa Familiar'
+};
+
+/** Mapea roomTypeId → key que usa ReservarComponent */
+const ROOM_ID_MAP: Record<number, string> = {
+  1: 'doble',
+  2: 'suite',
+  3: 'villa'
 };
 
 @Component({
@@ -19,7 +26,8 @@ const ROOM_NAMES: Record<number, string> = {
 })
 export class Promociones implements OnInit {
   private publicidadService = inject(PublicidadService);
-  private cdr = inject(ChangeDetectorRef); // Inject ChangeDetectorRef
+  private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
 
   promociones: Promocion[] = [];
   filtroActivo: 'todas' | 'activas' | 'proximas' = 'todas';
@@ -66,5 +74,18 @@ export class Promociones implements OnInit {
 
   roomName(roomTypeId: number): string {
     return ROOM_NAMES[roomTypeId] ?? `Tipo ${roomTypeId}`;
+  }
+
+  /** Navega a /reservar con fechas, habitación y descuento pre-cargados */
+  aprovecharOferta(promo: Promocion): void {
+    const habitacion = ROOM_ID_MAP[promo.roomTypeId] ?? 'doble';
+    this.router.navigate(['/reservar'], {
+      queryParams: {
+        inicio: promo.startDate.split('T')[0],
+        fin: promo.endDate.split('T')[0],
+        habitacion,
+        descuento: promo.discount
+      }
+    });
   }
 }

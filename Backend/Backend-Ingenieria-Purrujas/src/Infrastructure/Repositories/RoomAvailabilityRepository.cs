@@ -47,6 +47,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         DateOnly startDate,
         DateOnly endDate,
         int? roomTypeId,
+        int? excludeReservationId = null,
         CancellationToken cancellationToken = default)
     {
         EnsureConnectionString();
@@ -84,6 +85,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
                       AND reservationStatus.IsFinal = 0
                       AND reservation.StartDate < @EndDate
                       AND reservation.EndDate > @StartDate
+                      AND (@ExcludeReservationId IS NULL OR reservation.ReservationId <> @ExcludeReservationId)
               )
             ORDER BY rt.Name, r.RoomNumber;
             """;
@@ -93,6 +95,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = startDate.ToDateTime(TimeOnly.MinValue);
         command.Parameters.Add("@EndDate", SqlDbType.DateTime).Value = endDate.ToDateTime(TimeOnly.MinValue);
         command.Parameters.Add("@RoomTypeId", SqlDbType.Int).Value = roomTypeId.HasValue ? roomTypeId.Value : DBNull.Value;
+        command.Parameters.Add("@ExcludeReservationId", SqlDbType.Int).Value = excludeReservationId.HasValue ? excludeReservationId.Value : DBNull.Value;
 
         var rooms = new List<RoomAvailabilityItem>();
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken))

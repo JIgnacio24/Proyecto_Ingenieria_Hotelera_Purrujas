@@ -34,6 +34,8 @@ type DashboardMenuKey =
   | 'about-us'
   | 'reservations'
   | 'rooms'
+  | 'seasons'
+  | 'promotions'
   | 'status'
   | 'availability'
   | 'ads';
@@ -48,7 +50,7 @@ interface DashboardMenuItem {
 }
 
 interface DashboardModuleCard {
-  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'ads'>;
+  key: string;
   title: string;
   status: string;
   description: string;
@@ -176,10 +178,10 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'reservations',
-      title: 'Listado de reservaciones',
+      title: 'Administración de Reservaciones',
       status: 'Disponible',
       description:
-        'Ver y gestionar todas las reservas en línea. Actualiza el estado de cada reservación desde la vista de lista.',
+        'Ver y gestionar todas las reservas en línea. Actualiza, elimina y visualiza reservaciones.',
       link: '/panel/reservas',
       actionLabel: 'Ver reservaciones'
     },
@@ -191,6 +193,24 @@ export class DashboardComponent implements AfterViewInit {
         'Administra los tipos de habitación, sus nombres y tarifas base desde una vista dedicada.',
       link: '/panel/tipos-habitacion',
       actionLabel: 'Administrar tipos'
+    },
+    {
+      key: 'seasons',
+      title: 'Temporadas',
+      status: 'Disponible',
+      description:
+        'Gestiona los periodos de precio diferenciado: crea, edita y elimina temporadas altas y bajas.',
+      link: '/panel/temporadas',
+      actionLabel: 'Administrar temporadas'
+    },
+    {
+      key: 'promotions',
+      title: 'Ofertas especiales',
+      status: 'Disponible',
+      description:
+        'Crea, edita y elimina descuentos y promociones especiales por tipo de habitación.',
+      link: '/panel/ofertas',
+      actionLabel: 'Administrar ofertas'
     },
     {
       key: 'ads',

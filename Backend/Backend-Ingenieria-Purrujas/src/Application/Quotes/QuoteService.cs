@@ -22,10 +22,11 @@ public class QuoteService : IQuoteService
 
     public async Task<QuoteResponseDto> CalculateAsync(
         QuoteRequestDto request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool allowPastDates = false)
     {
         var roomTypeKey = NormalizeRoomTypeKey(request.RoomTypeKey);
-        ValidateStayDates(request.StartDate, request.EndDate);
+        ValidateStayDates(request.StartDate, request.EndDate, allowPastDates);
         var currency = NormalizeCurrency(request.Currency);
 
         var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
@@ -78,17 +79,20 @@ public class QuoteService : IQuoteService
         return roomTypeKey.Trim().ToLowerInvariant();
     }
 
-    private static void ValidateStayDates(DateOnly startDate, DateOnly endDate)
+    private static void ValidateStayDates(DateOnly startDate, DateOnly endDate, bool allowPastDates = false)
     {
         if (startDate == default || endDate == default)
         {
             throw new ArgumentException("Debe seleccionar una fecha de entrada y una fecha de salida.");
         }
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        if (startDate < today)
+        if (!allowPastDates)
         {
-            throw new ArgumentException("La fecha de entrada no puede estar en el pasado.");
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (startDate < today)
+            {
+                throw new ArgumentException("La fecha de entrada no puede estar en el pasado.");
+            }
         }
 
         if (endDate <= startDate)
