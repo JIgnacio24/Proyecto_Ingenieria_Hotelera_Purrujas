@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 
+<<<<<<< Updated upstream
+=======
+/// <summary>
+/// Expone los tipos de habitación con descripción, capacidad e imágenes
+/// para el módulo administrativo.
+/// </summary>
+>>>>>>> Stashed changes
 [ApiController]
 [Authorize(Policy = "AdminOnly")]
 [Route("api/admin/room-types")]
@@ -17,12 +24,23 @@ public class RoomTypesController : ControllerBase
         _roomTypeRepository = roomTypeRepository;
     }
 
+<<<<<<< Updated upstream
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoomType>>> GetAll(CancellationToken cancellationToken)
+=======
+    /// <summary>
+    /// Retorna todos los tipos de habitación con su descripción completa,
+    /// capacidad, precio base, estado y lista de imágenes.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<RoomType>>> GetAll(
+        CancellationToken cancellationToken)
+>>>>>>> Stashed changes
     {
         var roomTypes = await _roomTypeRepository.GetAllAsync(cancellationToken);
         return Ok(roomTypes);
     }
+<<<<<<< Updated upstream
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<RoomType>> GetById(int id, CancellationToken cancellationToken)
@@ -98,3 +116,6 @@ public class RoomTypesController : ControllerBase
 }
 
 public sealed record RoomTypeRequest(string Name, decimal BasePrice);
+=======
+}
+>>>>>>> Stashed changes

@@ -1,21 +1,33 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+<<<<<<< Updated upstream
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RoomType, RoomTypesService } from '../../core/room-types.service';
+=======
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { RoomTypeDetail, RoomTypesService } from '../../core/room-types.service';
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'app-room-types',
   standalone: true,
+<<<<<<< Updated upstream
   imports: [CommonModule, FormsModule, RouterModule],
+=======
+  imports: [CommonModule, RouterModule],
+>>>>>>> Stashed changes
   templateUrl: './room-types.component.html',
   styleUrl: './room-types.component.css'
 })
 export class RoomTypesComponent {
   private readonly roomTypesService = inject(RoomTypesService);
 
+<<<<<<< Updated upstream
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly feedback = signal('');
@@ -25,11 +37,28 @@ export class RoomTypesComponent {
 
   roomTypeForm = this.createEmptyForm();
   editingRoomTypeId: number | null = null;
+=======
+  // ── Estado ──────────────────────────────────────────────────────────────
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly roomTypes = signal<RoomTypeDetail[]>([]);
+  readonly selectedTypeId = signal<number | null>(null);
+
+  /**
+   * Tipo actualmente seleccionado; null si ninguno está elegido.
+   */
+  readonly selectedType = computed<RoomTypeDetail | null>(() => {
+    const id = this.selectedTypeId();
+    if (id === null) return null;
+    return this.roomTypes().find(rt => rt.roomTypeId === id) ?? null;
+  });
+>>>>>>> Stashed changes
 
   constructor() {
     void this.loadRoomTypes();
   }
 
+<<<<<<< Updated upstream
   async loadRoomTypes(): Promise<void> {
     this.loading.set(true);
     this.clearFeedback();
@@ -127,10 +156,23 @@ export class RoomTypesComponent {
   }
 
   formatUsd(value: number | null | undefined): string {
+=======
+  // ── Acciones ─────────────────────────────────────────────────────────────
+
+  selectType(id: number): void {
+    // Si se vuelve a pulsar el tipo ya seleccionado, se deselecciona.
+    this.selectedTypeId.set(this.selectedTypeId() === id ? null : id);
+  }
+
+  // ── Formateo ──────────────────────────────────────────────────────────────
+
+  formatUsd(value: number): string {
+>>>>>>> Stashed changes
     return new Intl.NumberFormat('es-CR', {
       style: 'currency',
       currency: 'USD',
       maximumFractionDigits: 2
+<<<<<<< Updated upstream
     }).format(value ?? 0);
   }
 
@@ -165,5 +207,40 @@ export class RoomTypesComponent {
     }
 
     return fallbackMessage;
+=======
+    }).format(value);
+  }
+
+  /**
+   * Indica si el tipo seleccionado carece de toda información descriptiva.
+   * Se muestra el mensaje "Información no disponible" en ese caso.
+   */
+  hasNoDescriptiveInfo(type: RoomTypeDetail): boolean {
+    return (
+      !type.description.trim() &&
+      type.capacity <= 0 &&
+      type.images.length === 0
+    );
+  }
+
+  // ── Carga de datos ────────────────────────────────────────────────────────
+
+  private async loadRoomTypes(): Promise<void> {
+    this.loading.set(true);
+    this.error.set('');
+
+    try {
+      const types = await firstValueFrom(this.roomTypesService.getAll());
+      this.roomTypes.set(types);
+    } catch (err) {
+      this.error.set(
+        err instanceof HttpErrorResponse
+          ? err.error?.message ?? err.message ?? 'No se pudieron cargar los tipos de habitación.'
+          : 'Error inesperado al cargar los tipos de habitación.'
+      );
+    } finally {
+      this.loading.set(false);
+    }
+>>>>>>> Stashed changes
   }
 }
