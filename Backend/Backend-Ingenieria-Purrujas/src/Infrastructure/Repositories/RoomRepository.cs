@@ -113,4 +113,23 @@ public class RoomRepository : IRoomRepository
             _       => roomTypeKey
         };
     }
+
+    public async Task<string?> GetRoomTypeKeyByRoomIdAsync(int roomId, CancellationToken cancellationToken = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT LOWER(rt.Name)
+            FROM Room r
+            INNER JOIN RoomType rt ON rt.RoomTypeId = r.RoomTypeId
+            WHERE r.RoomId = @RoomId AND r.IsActive = 1
+            """;
+
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@RoomId", roomId);
+
+        var result = await cmd.ExecuteScalarAsync(cancellationToken);
+        return result is string key ? key : null;
+    }
 }

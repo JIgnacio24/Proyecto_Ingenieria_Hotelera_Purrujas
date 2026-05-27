@@ -78,6 +78,7 @@ public class RoomAvailabilityController : ControllerBase
         [FromQuery] DateOnly startDate,
         [FromQuery] DateOnly endDate,
         [FromQuery] int? roomTypeId,
+        [FromQuery] int? excludeReservationId,
         CancellationToken cancellationToken)
     {
         try
@@ -86,6 +87,7 @@ public class RoomAvailabilityController : ControllerBase
                 startDate,
                 endDate,
                 roomTypeId,
+                excludeReservationId,
                 cancellationToken);
 
             return Ok(result);

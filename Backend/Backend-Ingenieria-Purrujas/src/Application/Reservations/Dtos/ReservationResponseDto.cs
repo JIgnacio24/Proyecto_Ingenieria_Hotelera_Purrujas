@@ -3,6 +3,7 @@ namespace Backend_Ingenieria_Purrujas.Application.Reservations.Dtos;
 public record ReservationResponseDto
 {
     public int ReservationId { get; init; }
+    public int RoomId { get; init; }
     public string RoomNumber { get; init; } = string.Empty;
     public string RoomTypeName { get; init; } = string.Empty;
     public string CustomerFullName { get; init; } = string.Empty;

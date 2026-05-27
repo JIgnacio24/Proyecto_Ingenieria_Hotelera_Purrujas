@@ -10,5 +10,6 @@ public interface IRoomAvailabilityRepository
         DateOnly startDate,
         DateOnly endDate,
         int? roomTypeId,
+        int? excludeReservationId = null,
         CancellationToken cancellationToken = default);
 }
