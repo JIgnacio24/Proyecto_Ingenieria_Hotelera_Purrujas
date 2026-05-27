@@ -78,6 +78,59 @@ public class ReservationController(IReservationService reservationService) : Con
     }
 
     [Authorize(Policy = "AdminOnly")]
+    [HttpGet("deleted")]
+    public async Task<ActionResult<IReadOnlyCollection<ReservationResponseDto>>> GetDeleted(CancellationToken cancellationToken)
+    {
+        var results = await reservationService.GetDeletedAsync(cancellationToken);
+        return Ok(results);
+    }
+
+    [Authorize(Policy = "AdminOnly")]
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<ReservationResponseDto>> Update(int id, [FromBody] UpdateReservationRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        try
+        {
+            var result = await reservationService.UpdateAsync(id, request, cancellationToken);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Policy = "AdminOnly")]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await reservationService.DeleteAsync(id, cancellationToken);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Policy = "AdminOnly")]
     [HttpPatch("{id:int}/status")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusRequestDto request, CancellationToken cancellationToken)
     {

@@ -90,7 +90,7 @@ Abre otra terminal desde la raiz del proyecto:
 ```cmd
 cd Frontend\Frontend-Ingenieria-Purrujas-Cliente
 npm install
-npm run
+npm run o npm start
 ```
 
 Abre:
