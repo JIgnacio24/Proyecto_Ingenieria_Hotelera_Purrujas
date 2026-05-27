@@ -167,10 +167,10 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'reservations',
-      title: 'Listado de reservaciones',
+      title: 'Administración de Reservaciones',
       status: 'Disponible',
       description:
-        'Ver y gestionar todas las reservas en línea. Actualiza el estado de cada reservación desde la vista de lista.',
+        'Ver y gestionar todas las reservas en línea. Actualiza, elimina y visualiza reservaciones.',
       link: '/panel/reservas',
       actionLabel: 'Ver reservaciones'
     },
