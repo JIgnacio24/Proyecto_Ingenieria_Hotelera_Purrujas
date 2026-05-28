@@ -7,13 +7,13 @@ const HOME_SECTION_IDS = ['home', 'facilidades', 'tarifas', 'como-llegar', 'cont
 type HomeSectionId = typeof HOME_SECTION_IDS[number];
 
 @Component({
-  selector: 'app-narvar',
+  selector: 'app-navbar',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './narvar.html',
-  styleUrl: './narvar.css'
+  templateUrl: './navbar.html',
+  styleUrl: './navbar.css'
 })
-export class Narvar {
+export class NavbarComponent {
   currentPath = '/';
   currentFragment = 'home';
   menuOpen = false;
