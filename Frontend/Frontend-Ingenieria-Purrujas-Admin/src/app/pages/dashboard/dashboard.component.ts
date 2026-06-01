@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { AdminUser } from '../../core/auth.models';
@@ -34,6 +34,8 @@ type DashboardMenuKey =
   | 'about-us'
   | 'reservations'
   | 'rooms'
+  | 'seasons'
+  | 'promotions'
   | 'status'
   | 'availability'
   | 'ads';
@@ -48,12 +50,20 @@ interface DashboardMenuItem {
 }
 
 interface DashboardModuleCard {
-  key: 'home-editor' | 'about-us' | Extract<DashboardMenuKey, 'reservations' | 'rooms' | 'ads'>;
+  key: string;
   title: string;
   status: string;
   description: string;
   link?: string;
   actionLabel?: string;
+}
+
+interface DashboardNavigationState {
+  adminFeedback?: {
+    tone: 'success' | 'error';
+    message: string;
+  };
+  [key: string]: unknown;
 }
 
 @Component({
@@ -65,6 +75,7 @@ interface DashboardModuleCard {
 })
 export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
   private readonly gettingThereContentService = inject(GettingThereContentService);
@@ -167,10 +178,10 @@ export class DashboardComponent implements AfterViewInit {
     },
     {
       key: 'reservations',
-      title: 'Listado de reservaciones',
+      title: 'Administración de Reservaciones',
       status: 'Disponible',
       description:
-        'Ver y gestionar todas las reservas en línea. Actualiza el estado de cada reservación desde la vista de lista.',
+        'Ver y gestionar todas las reservas en línea. Actualiza, elimina y visualiza reservaciones.',
       link: '/panel/reservas',
       actionLabel: 'Ver reservaciones'
     },
@@ -184,6 +195,24 @@ export class DashboardComponent implements AfterViewInit {
       actionLabel: 'Administrar tipos'
     },
     {
+      key: 'seasons',
+      title: 'Temporadas',
+      status: 'Disponible',
+      description:
+        'Gestiona los periodos de precio diferenciado: crea, edita y elimina temporadas altas y bajas.',
+      link: '/panel/temporadas',
+      actionLabel: 'Administrar temporadas'
+    },
+    {
+      key: 'promotions',
+      title: 'Ofertas especiales',
+      status: 'Disponible',
+      description:
+        'Crea, edita y elimina descuentos y promociones especiales por tipo de habitación.',
+      link: '/panel/ofertas',
+      actionLabel: 'Administrar ofertas'
+    },
+    {
       key: 'ads',
       title: 'Publicidad',
       status: 'Interfaz pendiente',
@@ -194,6 +223,8 @@ export class DashboardComponent implements AfterViewInit {
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
+  readonly dashboardFeedback = signal('');
+  readonly dashboardFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly profile = signal<AdminUser | null>(this.authService.currentUser());
   readonly facilitiesLoading = signal(true);
   readonly facilitiesSaving = signal(false);
@@ -221,6 +252,7 @@ export class DashboardComponent implements AfterViewInit {
   availabilityEndDate = this.addDaysInputValue(1);
   availabilityRoomTypeId: number | null = null;
   constructor() {
+    this.consumeNavigationFeedback();
     void this.loadProfile();
     void this.loadFacilitiesContent();
     void this.loadGettingThereContent();
@@ -537,6 +569,42 @@ export class DashboardComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private consumeNavigationFeedback(): void {
+    const state = this.currentNavigationState();
+    const feedback = state?.adminFeedback;
+
+    if (
+      !feedback ||
+      typeof feedback.message !== 'string' ||
+      (feedback.tone !== 'success' && feedback.tone !== 'error')
+    ) {
+      return;
+    }
+
+    this.dashboardFeedbackTone.set(feedback.tone);
+    this.dashboardFeedback.set(feedback.message);
+    this.clearNavigationFeedbackState();
+  }
+
+  private currentNavigationState(): DashboardNavigationState | null {
+    const state = this.router.getCurrentNavigation()?.extras.state
+      ?? this.document.defaultView?.history.state
+      ?? null;
+
+    return state as DashboardNavigationState | null;
+  }
+
+  private clearNavigationFeedbackState(): void {
+    const view = this.document.defaultView;
+
+    if (!view?.history.state) {
+      return;
+    }
+
+    const { adminFeedback, ...remainingState } = view.history.state as DashboardNavigationState;
+    view.history.replaceState(remainingState, this.document.title, view.location.href);
   }
 
   private applyFacilitiesContent(content: FacilitiesPageContent): void {

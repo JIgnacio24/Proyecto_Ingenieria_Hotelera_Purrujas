@@ -89,6 +89,7 @@ public class ReservationService(
         var dto = new ReservationResponseDto
         {
             ReservationId    = reservationId,
+            RoomId           = room.RoomId,
             RoomNumber       = room.RoomNumber,
             RoomTypeName     = room.RoomTypeName,
             CustomerFullName = $"{customer.Name} {customer.LastName}",
@@ -162,6 +163,65 @@ public class ReservationService(
         }
     }
 
+    public async Task<ReservationResponseDto> UpdateAsync(int id, UpdateReservationRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (request.EndDate <= request.StartDate)
+            throw new ArgumentException("La fecha de salida debe ser posterior a la fecha de entrada.");
+
+        var current = await reservationRepository.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Reserva #{id} no encontrada.");
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (current.EndDate < today)
+            throw new InvalidOperationException("No se pueden modificar reservaciones cuya fecha de salida ya pasó.");
+
+        var roomTypeKey = await roomRepository.GetRoomTypeKeyByRoomIdAsync(request.RoomId, cancellationToken)
+            ?? throw new ArgumentException("La habitación seleccionada no fue encontrada.");
+
+        var quote = await quoteService.CalculateAsync(
+            new QuoteRequestDto(roomTypeKey, request.StartDate, request.EndDate, "USD"),
+            cancellationToken,
+            allowPastDates: true);
+
+        await reservationRepository.UpdateAsync(
+            id,
+            current.ReservationDate,
+            request.StartDate,
+            request.EndDate,
+            request.RoomId,
+            current.CustomerId,
+            current.ReservationStatusId,
+            cancellationToken);
+
+        var basePrice = quote.BasePricePerNight * quote.NightsTotal;
+        var seasonAmount = quote.Total - basePrice;
+        await reservationRepository.UpdateBillAsync(id, basePrice, seasonAmount, cancellationToken);
+
+        var updated = await reservationRepository.GetByIdAsync(id, cancellationToken);
+        return MapToDto(updated!);
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var detail = await reservationRepository.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Reserva #{id} no encontrada o ya fue eliminada.");
+
+        if (detail.ReservationStatusName != "Cancelada")
+            throw new InvalidOperationException("Solo se pueden eliminar reservaciones con estado Cancelada.");
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (detail.EndDate < today)
+            throw new InvalidOperationException("No se pueden eliminar reservaciones cuya fecha de salida ya pasó.");
+
+        await reservationRepository.DeleteAsync(id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<ReservationResponseDto>> GetDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        var details = await reservationRepository.GetDeletedAsync(cancellationToken);
+        return details.Select(MapToDto).ToList().AsReadOnly();
+    }
+
     private static ReservationResponseDto MapToDto(ReservationDetail d)
     {
         var nights = d.EndDate.DayNumber - d.StartDate.DayNumber;
@@ -169,6 +229,7 @@ public class ReservationService(
         return new ReservationResponseDto
         {
             ReservationId    = d.ReservationId,
+            RoomId           = d.RoomId,
             RoomNumber       = d.RoomNumber,
             RoomTypeName     = d.RoomTypeName,
             CustomerFullName = $"{d.CustomerName} {d.CustomerLastName}",

@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { GalleryImage, GalleryImagesService } from '../../core/gallery-images.service';
@@ -22,6 +22,7 @@ import {
 })
 export class HomeEditorComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly homeContentService = inject(HomeContentService);
   private readonly galleryImagesService = inject(GalleryImagesService);
   private readonly apiAssetBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
@@ -143,12 +144,12 @@ export class HomeEditorComponent implements AfterViewInit {
       this.originalContent = cloneHomePageContent(savedContent);
       this.selectedHeroFile = null;
       this.hasChanges.set(false);
-      this.feedbackTone.set('success');
-      this.scrollToTop();
-      this.feedback.set('El hero del inicio se guardó correctamente.');
+      await this.navigateToPanelWithFeedback('success', 'El hero del inicio se guardó correctamente.');
     } catch (error) {
-      this.panelError.set(this.resolveError(error, 'No fue posible guardar el hero del inicio.'));
-      this.scrollToEditorPanel();
+      await this.navigateToPanelWithFeedback(
+        'error',
+        this.resolveError(error, 'No fue posible guardar el hero del inicio.')
+      );
     } finally {
       this.saving.set(false);
     }
@@ -230,5 +231,16 @@ export class HomeEditorComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private navigateToPanelWithFeedback(tone: 'success' | 'error', message: string): Promise<boolean> {
+    return this.router.navigate(['/panel'], {
+      state: {
+        adminFeedback: {
+          tone,
+          message
+        }
+      }
+    });
   }
 }

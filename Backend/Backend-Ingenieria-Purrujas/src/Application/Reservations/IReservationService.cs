@@ -9,4 +9,7 @@ public interface IReservationService
     Task<IReadOnlyCollection<ReservationResponseDto>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<ReservationResponseDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task UpdateStatusAsync(int id, string status, CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<ReservationResponseDto>> GetDeletedAsync(CancellationToken cancellationToken = default);
+    Task<ReservationResponseDto> UpdateAsync(int id, UpdateReservationRequestDto request, CancellationToken cancellationToken = default);
 }

@@ -96,6 +96,7 @@ builder.Services.AddScoped<IHomePageContentRepository, HomePageContentRepository
 builder.Services.AddScoped<IGettingTherePageContentRepository, GettingTherePageContentRepository>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<ISeasonRepository, SeasonRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();

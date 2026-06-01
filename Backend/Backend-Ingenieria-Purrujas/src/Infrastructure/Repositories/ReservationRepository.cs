@@ -175,6 +175,110 @@ public class ReservationRepository : IReservationRepository
         return result is int id ? id : null;
     }
 
+    public async Task UpdateAsync(int id, DateTime reservationDate, DateOnly startDate, DateOnly endDate, int roomId, int customerId, int statusId, CancellationToken cancellationToken = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        await using var cmd = new SqlCommand("usp_Reservation_Update", conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+        cmd.Parameters.AddWithValue("@ReservationId", id);
+        cmd.Parameters.AddWithValue("@ReservationDate", reservationDate);
+        cmd.Parameters.AddWithValue("@StartDate", startDate.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@EndDate", endDate.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@CustomerId", customerId);
+        cmd.Parameters.AddWithValue("@RoomId", roomId);
+        cmd.Parameters.AddWithValue("@ReservationStatusId", statusId);
+
+        try
+        {
+            await cmd.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch (SqlException ex) when (ex.Number == 50014)
+        {
+            throw new InvalidOperationException("Existe un conflicto de disponibilidad para la habitación y fechas seleccionadas.");
+        }
+    }
+
+    public async Task UpdateBillAsync(int reservationId, decimal basePrice, decimal seasonAmount, CancellationToken cancellationToken = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        const string sql = """
+            UPDATE Bill
+            SET BasePrice = @BasePrice, SeasonAmount = @SeasonAmount
+            WHERE ReservationId = @ReservationId
+            """;
+
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@ReservationId", reservationId);
+        cmd.Parameters.AddWithValue("@BasePrice", basePrice);
+        cmd.Parameters.AddWithValue("@SeasonAmount", seasonAmount);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        const string sql = """
+            UPDATE Reservation
+            SET IsActive = 0
+            WHERE ReservationId = @Id AND IsActive = 1
+            """;
+
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Id", id);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<ReservationDetail>> GetDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(cancellationToken);
+
+        const string sql = """
+            SELECT
+                r.ReservationId,
+                r.ReservationDate,
+                CAST(r.StartDate AS DATE)         AS StartDate,
+                CAST(r.EndDate   AS DATE)         AS EndDate,
+                r.CustomerId,
+                c.Name                            AS CustomerName,
+                c.LastName                        AS CustomerLastName,
+                c.Email                           AS CustomerEmail,
+                r.RoomId,
+                rm.RoomNumber,
+                rt.Name                           AS RoomTypeName,
+                ISNULL(b.BasePrice, 0)            AS BasePrice,
+                ISNULL(b.Discount, 0)             AS Discount,
+                ISNULL(b.SeasonAmount, 0)         AS SeasonAmount,
+                r.ReservationStatusId,
+                rs.Name                           AS ReservationStatusName
+            FROM Reservation r
+            INNER JOIN Customer          c  ON c.CustomerId           = r.CustomerId
+            INNER JOIN Room              rm ON rm.RoomId              = r.RoomId
+            INNER JOIN RoomType          rt ON rt.RoomTypeId          = rm.RoomTypeId
+            INNER JOIN ReservationStatus rs ON rs.ReservationStatusId = r.ReservationStatusId
+            LEFT  JOIN Bill              b  ON b.ReservationId        = r.ReservationId
+            WHERE r.IsActive = 0
+            ORDER BY r.ReservationDate DESC
+            """;
+
+        await using var cmd = new SqlCommand(sql, conn);
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        var results = new List<ReservationDetail>();
+        while (await reader.ReadAsync(cancellationToken))
+            results.Add(ReadDetail(reader));
+
+        return results.AsReadOnly();
+    }
+
     private static ReservationDetail ReadDetail(SqlDataReader reader) => new()
     {
         ReservationId         = reader.GetInt32(reader.GetOrdinal("ReservationId")),

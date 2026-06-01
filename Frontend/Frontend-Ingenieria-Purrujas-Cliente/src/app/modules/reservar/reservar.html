@@ -121,6 +121,15 @@
         </div>
       </div>
 
+      <!-- Promo banner -->
+      <div class="promo-aplicada" *ngIf="promoDescuento > 0">
+        <span class="promo-aplicada__icon" aria-hidden="true">🏷️</span>
+        <div>
+          <strong>{{ promoNombre || 'Oferta especial' }} — {{ promoDescuento }}% off</strong>
+          <span>Descuento aplicado automáticamente a estas fechas</span>
+        </div>
+      </div>
+
       <!-- Availability badge -->
       <div class="availability-row" *ngIf="availabilityStatus !== 'idle'">
         <span class="availability-badge availability-badge--checking" *ngIf="availabilityStatus === 'checking'">
@@ -155,7 +164,15 @@
 
       <div class="price-display" *ngIf="nochesTotales > 0">
         <span class="price-label">Total estimado ({{ nochesTotales }} {{ nochesTotales === 1 ? 'noche' : 'noches' }})</span>
-        <strong class="price-amount">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
+        <div class="price-right">
+          <span class="price-original" *ngIf="promoDescuento > 0">
+            {{ currencySymbol }}{{ total | number:'1.2-2' }}
+          </span>
+          <strong class="price-amount">{{ currencySymbol }}{{ totalConDescuento | number:'1.2-2' }}</strong>
+          <span class="promo-savings" *ngIf="promoDescuento > 0">
+            Ahorrás {{ currencySymbol }}{{ promoAhorro | number:'1.2-2' }}
+          </span>
+        </div>
       </div>
 
       <div class="quote-error" *ngIf="quoteError" role="alert">{{ quoteError }}</div>

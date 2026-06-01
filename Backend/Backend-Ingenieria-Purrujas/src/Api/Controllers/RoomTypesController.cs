@@ -17,6 +17,7 @@ public class RoomTypesController : ControllerBase
         _roomTypeRepository = roomTypeRepository;
     }
 
+    // GET api/admin/room-types
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoomType>>> GetAll(CancellationToken cancellationToken)
     {
@@ -24,76 +25,60 @@ public class RoomTypesController : ControllerBase
         return Ok(roomTypes);
     }
 
+    // GET api/admin/room-types/{id}
     [HttpGet("{id:int}")]
     public async Task<ActionResult<RoomType>> GetById(int id, CancellationToken cancellationToken)
     {
         var roomType = await _roomTypeRepository.GetByIdAsync(id, cancellationToken);
-        return roomType is null ? NotFound(new { message = "Tipo de habitación no encontrado." }) : Ok(roomType);
+        return roomType is null
+            ? NotFound(new { message = "Tipo de habitación no encontrado." })
+            : Ok(roomType);
     }
 
+    // POST api/admin/room-types
     [HttpPost]
     public async Task<ActionResult<RoomType>> Create(
-        [FromBody] RoomTypeRequest request,
-        CancellationToken cancellationToken)
+        [FromBody] RoomTypeRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var created = await _roomTypeRepository.CreateAsync(
-                new RoomType
-                {
-                    Name = request.Name,
-                    BasePrice = request.BasePrice
-                },
+                new RoomType { Name = request.Name, BasePrice = request.BasePrice },
                 cancellationToken);
 
             return CreatedAtAction(nameof(GetById), new { id = created.RoomTypeId }, created);
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    // PUT api/admin/room-types/{id}
     [HttpPut("{id:int}")]
     public async Task<ActionResult<RoomType>> Update(
-        int id,
-        [FromBody] RoomTypeRequest request,
-        CancellationToken cancellationToken)
+        int id, [FromBody] RoomTypeRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var updated = await _roomTypeRepository.UpdateAsync(
-                new RoomType
-                {
-                    RoomTypeId = id,
-                    Name = request.Name,
-                    BasePrice = request.BasePrice
-                },
+                new RoomType { RoomTypeId = id, Name = request.Name, BasePrice = request.BasePrice },
                 cancellationToken);
 
             return updated is null
                 ? NotFound(new { message = "Tipo de habitación no encontrado." })
                 : Ok(updated);
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    // DELETE api/admin/room-types/{id}
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var deleted = await _roomTypeRepository.DeleteAsync(id, cancellationToken);
-        return deleted ? NoContent() : NotFound(new { message = "Tipo de habitación no encontrado." });
+        return deleted
+            ? NoContent()
+            : NotFound(new { message = "Tipo de habitación no encontrado." });
     }
 }
 

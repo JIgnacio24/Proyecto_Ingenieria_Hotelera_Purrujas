@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, Pipe, PipeTransform, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -43,6 +43,7 @@ export class ReplaceNewlinesPipe implements PipeTransform {
 })
 export class AboutUsEditorComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly aboutUsContentService = inject(AboutUsContentService);
   private readonly galleryImagesService = inject(GalleryImagesService);
   private readonly apiAssetBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
@@ -143,14 +144,12 @@ export class AboutUsEditorComponent implements AfterViewInit {
       await this.loadGalleryImages();
       this.hasChanges.set(false);
       this.editingBlock.set(null);
-      this.feedbackTone.set('success');
-      this.feedback.set('Los cambios de Sobre nosotros se guardaron correctamente.');
-      this.scrollToTop();
+      await this.navigateToPanelWithFeedback('success', 'Los cambios de Sobre nosotros se guardaron correctamente.');
     } catch (error) {
-      const message = this.resolveError(error, 'No fue posible guardar los cambios.');
-      const sectionId = this.sectionIdForBlock(this.editingBlock());
-      this.setSectionError(sectionId, message);
-      this.scrollToSection(sectionId);
+      await this.navigateToPanelWithFeedback(
+        'error',
+        this.resolveError(error, 'No fue posible guardar los cambios.')
+      );
     } finally {
       this.saving.set(false);
     }
@@ -439,6 +438,17 @@ export class AboutUsEditorComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private navigateToPanelWithFeedback(tone: 'success' | 'error', message: string): Promise<boolean> {
+    return this.router.navigate(['/panel'], {
+      state: {
+        adminFeedback: {
+          tone,
+          message
+        }
+      }
+    });
   }
 
   private updateActiveSection(): void {

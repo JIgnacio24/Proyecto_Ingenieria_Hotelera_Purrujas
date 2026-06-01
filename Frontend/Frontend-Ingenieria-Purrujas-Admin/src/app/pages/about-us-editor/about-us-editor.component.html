@@ -46,7 +46,7 @@
         Descartar cambios
       </button>
       <button type="button" class="primary-button" (click)="saveContent()" [disabled]="loading() || saving() || !hasChanges()">
-        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+        {{ saving() ? 'Guardando...' : 'Aceptar' }}
       </button>
     </div>
   </header>

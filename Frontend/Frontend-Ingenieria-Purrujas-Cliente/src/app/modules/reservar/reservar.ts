@@ -2,12 +2,13 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
+import { PublicidadService, Promocion } from '../../services/publicidad.service';
 
 type RoomId = 'doble' | 'suite' | 'villa';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable';
@@ -21,6 +22,13 @@ interface RoomOption {
   precioBaja: number;
   icon: string;
 }
+
+/** Mapea el id de habitación al roomTypeId del backend */
+const ROOM_TYPE_ID: Record<RoomId, number> = {
+  doble: 1,
+  suite: 2,
+  villa: 3
+};
 
 @Component({
   selector: 'app-reservar',
@@ -65,6 +73,11 @@ export class ReservarComponent implements OnInit, OnDestroy {
   fechaInicio = '';
   fechaFin = '';
 
+  /** Porcentaje de descuento detectado (0 = sin promo) */
+  promoDescuento = 0;
+  /** Nombre de la promo aplicada */
+  promoNombre = '';
+
   nochesTotales = 0;
   nochesAlta = 0;
   nochesBaja = 0;
@@ -84,12 +97,15 @@ export class ReservarComponent implements OnInit, OnDestroy {
   guestForm: FormGroup;
 
   private subs = new Subscription();
+  private promociones: Promocion[] = [];
 
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
+    private route: ActivatedRoute,
     public currencyService: CurrencyService,
     private reservationService: ReservationService,
+    private publicidadService: PublicidadService,
     private cdr: ChangeDetectorRef
   ) {
     this.guestForm = this.fb.group({
@@ -114,6 +130,17 @@ export class ReservarComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Precio final después de aplicar el descuento promocional */
+  get totalConDescuento(): number {
+    if (this.promoDescuento <= 0 || this.total <= 0) return this.total;
+    return Math.round(this.total * (1 - this.promoDescuento / 100) * 100) / 100;
+  }
+
+  /** Ahorro absoluto en la moneda seleccionada */
+  get promoAhorro(): number {
+    return Math.round((this.total - this.totalConDescuento) * 100) / 100;
+  }
+
   ngOnInit(): void {
     this.subs.add(
       this.currencyService.currencyChanges$.subscribe((curr) => {
@@ -122,6 +149,27 @@ export class ReservarComponent implements OnInit, OnDestroy {
         this.updateDisplayTotal();
       })
     );
+
+    // Cargar catálogo de promociones para detección automática
+    this.subs.add(
+      this.publicidadService.getPromociones().subscribe(promos => {
+        this.promociones = promos;
+        // Re-detectar si ya hay fechas (ej: llegó desde el botón de promo)
+        if (this.fechaInicio && this.fechaFin) this.detectPromo();
+      })
+    );
+
+    // Pre-cargar datos cuando se llega desde el botón "Aprovechar oferta"
+    const params = this.route.snapshot.queryParamMap;
+    if (params.has('inicio')) this.fechaInicio = params.get('inicio')!;
+    if (params.has('fin'))    this.fechaFin    = params.get('fin')!;
+    if (params.has('habitacion')) {
+      const room = this.habitaciones.find(h => h.id === params.get('habitacion'));
+      if (room) this.selectedRoom = room;
+    }
+    if (this.fechaInicio && this.fechaFin) {
+      this.refreshQuoteAndAvailability();
+    }
   }
 
   ngOnDestroy(): void {
@@ -209,6 +257,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
     return new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
   }
 
+  // ── Privados ──────────────────────────────────────────────────────────────
+
   private refreshQuoteAndAvailability(): void {
     if (!this.fechaInicio || !this.fechaFin) return;
 
@@ -242,6 +292,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
           this.totalUsd = r.total;
           this.totalCrc = r.total * 500;
           this.updateDisplayTotal();
+          // Detectar promo aplicable una vez que tenemos el precio base
+          this.detectPromo();
         },
         error: (err) => {
           this.resetQuoteAndAvailability();
@@ -270,6 +322,39 @@ export class ReservarComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Busca la mejor promoción (mayor descuento) cuyo período de vigencia
+   * se solape con las fechas seleccionadas y corresponda al tipo de habitación activo.
+   */
+  private detectPromo(): void {
+    if (!this.fechaInicio || !this.fechaFin || this.promociones.length === 0) {
+      this.promoDescuento = 0;
+      this.promoNombre = '';
+      return;
+    }
+
+    const roomTypeId = ROOM_TYPE_ID[this.selectedRoom.id];
+    const inicio = new Date(this.fechaInicio + 'T00:00:00');
+    const fin    = new Date(this.fechaFin    + 'T00:00:00');
+
+    const candidatas = this.promociones.filter(p =>
+      p.roomTypeId === roomTypeId &&
+      new Date(p.startDate + (p.startDate.includes('T') ? '' : 'T00:00:00')) <= fin &&
+      new Date(p.endDate   + (p.endDate.includes('T')   ? '' : 'T00:00:00')) >= inicio
+    );
+
+    if (candidatas.length === 0) {
+      this.promoDescuento = 0;
+      this.promoNombre = '';
+    } else {
+      const mejor = candidatas.reduce((best, p) => p.discount > best.discount ? p : best);
+      this.promoDescuento = mejor.discount;
+      this.promoNombre = mejor.name;
+    }
+
+    this.cdr.detectChanges();
   }
 
   private updateDisplayTotal(): void {
@@ -304,6 +389,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
     this.availabilityStatus = 'idle';
     this.availableRooms = 0;
     this.availabilityError = '';
+    this.promoDescuento = 0;
+    this.promoNombre = '';
   }
 
   private formatDate(d: Date): string {
