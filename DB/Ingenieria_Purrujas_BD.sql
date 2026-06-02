@@ -60,7 +60,7 @@ GO
 
 CREATE TABLE Room (
     RoomId INT PRIMARY KEY IDENTITY,
-    RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+    RoomNumber NVARCHAR(50) NOT NULL,
     IsActive BIT NOT NULL DEFAULT 1,
     RoomTypeId INT NOT NULL,
     RoomStatusId INT NOT NULL,
@@ -876,6 +876,21 @@ BEGIN
             RoomStatusId = @RoomStatusId
         WHERE RoomId = @RoomId
           AND IsActive = 1;
+
+        SELECT
+            r.RoomId,
+            r.RoomNumber,
+            r.IsActive,
+            r.RoomTypeId,
+            rt.Name AS RoomTypeName,
+            r.RoomStatusId,
+            rs.Name AS RoomStatusName
+        FROM Room r
+        INNER JOIN RoomType rt ON r.RoomTypeId = rt.RoomTypeId
+        INNER JOIN RoomStatus rs ON r.RoomStatusId = rs.RoomStatusId
+        WHERE r.RoomId = @RoomId
+          AND r.IsActive = 1
+          AND rt.IsActive = 1;
 
         COMMIT;
     END TRY
@@ -2299,7 +2314,7 @@ IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
-        RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+        RoomNumber NVARCHAR(50) NOT NULL,
         IsActive BIT NOT NULL DEFAULT 1,
         RoomTypeId INT NOT NULL,
         RoomStatusId INT NOT NULL,
@@ -2628,13 +2643,40 @@ IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
-        RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+        RoomNumber NVARCHAR(50) NOT NULL,
         IsActive BIT NOT NULL DEFAULT 1,
         RoomTypeId INT NOT NULL,
         RoomStatusId INT NOT NULL,
         CONSTRAINT FK_Room_RoomType FOREIGN KEY (RoomTypeId) REFERENCES dbo.RoomType(RoomTypeId),
         CONSTRAINT FK_Room_RoomStatus FOREIGN KEY (RoomStatusId) REFERENCES dbo.RoomStatus(RoomStatusId)
     );
+END;
+GO
+
+IF OBJECT_ID(N'dbo.Room', N'U') IS NOT NULL
+BEGIN
+    DECLARE @DropRoomUniqueConstraintsSql NVARCHAR(MAX) = N'';
+
+    SELECT @DropRoomUniqueConstraintsSql = @DropRoomUniqueConstraintsSql +
+        N'ALTER TABLE dbo.Room DROP CONSTRAINT ' + QUOTENAME(kc.name) + N';'
+    FROM sys.key_constraints kc
+    WHERE kc.parent_object_id = OBJECT_ID(N'dbo.Room')
+      AND kc.type = N'UQ';
+
+    IF LEN(@DropRoomUniqueConstraintsSql) > 0
+        EXEC sp_executesql @DropRoomUniqueConstraintsSql;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.indexes
+        WHERE name = N'UX_Room_RoomNumber_Active'
+          AND object_id = OBJECT_ID(N'dbo.Room')
+    )
+    BEGIN
+        CREATE UNIQUE INDEX UX_Room_RoomNumber_Active
+            ON dbo.Room(RoomNumber)
+            WHERE IsActive = 1;
+    END
 END;
 GO
 

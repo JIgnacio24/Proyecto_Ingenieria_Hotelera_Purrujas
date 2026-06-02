@@ -5,6 +5,7 @@ import { AboutUsEditorComponent } from './pages/about-us-editor/about-us-editor.
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ReservationsComponent } from './pages/reservations/reservations.component';
 import { HomeEditorComponent } from './pages/home-editor/home-editor.component';
+import { RoomsComponent } from './pages/rooms/rooms.component';
 import { RoomTypesComponent } from './pages/room-types/room-types.component';
 import { SeasonsComponent } from './pages/seasons/seasons.component';
 import { PromotionsComponent } from './pages/promotions/promotions.component';
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'panel/sobre-nosotros', component: AboutUsEditorComponent, canActivate: [authGuard] },
   { path: 'panel/reservas', component: ReservationsComponent, canActivate: [authGuard] },
   { path: 'panel/tipos-habitacion', component: RoomTypesComponent, canActivate: [authGuard] },
+  { path: 'panel/habitaciones', component: RoomsComponent, canActivate: [authGuard] },
   { path: 'panel/temporadas', component: SeasonsComponent, canActivate: [authGuard] },
   { path: 'panel/ofertas', component: PromotionsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'ingreso' }

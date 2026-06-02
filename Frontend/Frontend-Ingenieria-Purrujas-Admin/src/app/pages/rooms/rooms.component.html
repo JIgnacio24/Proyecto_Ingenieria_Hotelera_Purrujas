@@ -1,0 +1,259 @@
+<section class="rt-shell">
+  <div class="rt-veil" aria-hidden="true"></div>
+
+  <header class="rt-topbar">
+    <div class="rt-topbar-copy">
+      <p class="eyebrow">Hotel Las Purrujas</p>
+      <h1>Gestión de habitaciones</h1>
+      <p class="rt-topbar-sub">Administra cada habitación del hotel: crear, editar, eliminar y revisar su estado operativo.</p>
+    </div>
+    <a routerLink="/panel" class="back-link" aria-label="Volver al panel">
+      <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+        <path d="M19 12H5M12 5l-7 7 7 7" />
+      </svg>
+      Volver al panel
+    </a>
+  </header>
+
+  @if (feedback()) {
+    <div
+      class="rt-feedback"
+      [class.rt-feedback--success]="feedbackTone() === 'success'"
+      [class.rt-feedback--error]="feedbackTone() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >
+      {{ feedback() }}
+    </div>
+  }
+
+  <section class="rt-form-card" aria-label="Formulario de habitación">
+    <div class="section-head">
+      <p>{{ editingRoomId ? 'Editar habitación' : 'Nueva habitación' }}</p>
+      <span>{{ editingRoomId ? 'Modifica el número, tipo o estado.' : 'Completa el número, el tipo y el estado.' }}</span>
+    </div>
+
+    <form class="rt-form" (ngSubmit)="saveRoom()">
+      <div class="rt-form__fields">
+        <label class="rt-field">
+          <span class="rt-field__label">Número de habitación</span>
+          <input
+            type="text"
+            name="roomNumber"
+            [(ngModel)]="roomForm.roomNumber"
+            [readonly]="editingRoomId !== null"
+            [disabled]="saving()"
+            required
+            maxlength="50"
+            placeholder="Ej.: 101"
+            class="rt-field__input"
+          />
+        </label>
+
+        <label class="rt-field">
+          <span class="rt-field__label">Tipo de habitación</span>
+          <select
+            name="roomTypeId"
+            [(ngModel)]="roomForm.roomTypeId"
+            [disabled]="saving()"
+            required
+            class="rt-field__input"
+          >
+            <option [ngValue]="null">Selecciona un tipo</option>
+            @for (roomType of roomTypes(); track roomType.roomTypeId) {
+              <option [ngValue]="roomType.roomTypeId">{{ roomType.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="rt-field">
+          <span class="rt-field__label">Estado operativo</span>
+          <select
+            name="roomStatusId"
+            [(ngModel)]="roomForm.roomStatusId"
+            [disabled]="saving()"
+            required
+            class="rt-field__input"
+          >
+            <option [ngValue]="null">Selecciona un estado</option>
+            @for (status of roomStatuses(); track status.roomStatusId) {
+              <option [ngValue]="status.roomStatusId">{{ status.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="rt-form__actions">
+        @if (editingRoomId) {
+          <button type="button" class="btn-secondary" (click)="resetForm()" [disabled]="saving()">
+            Cancelar edición
+          </button>
+        }
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="saving() || !roomForm.roomNumber.trim() || roomForm.roomTypeId === null || roomForm.roomStatusId === null"
+        >
+          {{ saving() ? 'Guardando...' : editingRoomId ? 'Guardar cambios' : 'Crear habitación' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <div class="rt-body">
+    @if (loading()) {
+      <p class="loading-state" role="status">Cargando habitaciones...</p>
+    } @else {
+      <section class="type-selector" aria-label="Habitaciones registradas">
+        <div class="section-head">
+          <p>Selecciona una habitación</p>
+          <span>Pulsa una tarjeta para revisar sus datos o abrir la edición.</span>
+        </div>
+
+        @if (rooms().length === 0) {
+          <p class="empty-state">No hay habitaciones registradas. Crea la primera con el formulario de arriba.</p>
+        } @else {
+          <div class="type-cards">
+            @for (room of rooms(); track room.roomId) {
+              <button
+                type="button"
+                class="type-card"
+                [class.type-card--active]="selectedRoomId() === room.roomId"
+                [attr.aria-pressed]="selectedRoomId() === room.roomId"
+                [attr.aria-label]="'Ver detalles de la habitación ' + room.roomNumber"
+                (click)="selectRoom(room.roomId)"
+              >
+                <div class="type-card__top">
+                  <span class="type-card__name">Habitación {{ room.roomNumber }}</span>
+                  <span
+                    class="type-badge"
+                    [class.type-badge--active]="getStatus(room.roomStatusId)?.isAvailableForBooking"
+                    [class.type-badge--inactive]="!getStatus(room.roomStatusId)?.isAvailableForBooking"
+                  >
+                    {{ room.roomStatusName }}
+                  </span>
+                </div>
+
+                <div class="type-card__meta">
+                  <span class="type-card__capacity">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    {{ room.roomTypeName }}
+                  </span>
+                  <span class="type-card__price">{{ getStatusLabel(room.roomStatusId) }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="type-detail" aria-label="Información de la habitación seleccionada" aria-live="polite">
+        @if (selectedRoomId() === null) {
+          <div class="detail-placeholder">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="40" height="40">
+              <path d="M5 20V7.5A1.5 1.5 0 0 1 6.5 6h11A1.5 1.5 0 0 1 19 7.5V20M3 20h18M8 10h8M8 14h5" />
+            </svg>
+            <p>Selecciona una habitación para ver su información.</p>
+          </div>
+        }
+
+        @if (selectedRoom(); as room) {
+          @if (hasNoDetails(room)) {
+            <div class="detail-unavailable">
+              <p class="detail-unavailable__title">Habitación {{ room.roomNumber }}</p>
+              <p>Información no disponible</p>
+              <small>Esta habitación no tiene datos básicos válidos para mostrar.</small>
+              <div class="detail-actions">
+                <button type="button" class="btn-secondary" (click)="editRoom(room)" [disabled]="saving()">
+                  Editar
+                </button>
+                <button type="button" class="btn-danger" (click)="requestDelete(room)" [disabled]="saving()">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          } @else {
+            <article class="detail-card">
+              <div class="detail-card__header">
+                <div>
+                  <h2 class="detail-card__title">Habitación {{ room.roomNumber }}</h2>
+                  <span
+                    class="detail-badge"
+                    [class.detail-badge--active]="getStatus(room.roomStatusId)?.isAvailableForBooking"
+                    [class.detail-badge--inactive]="!getStatus(room.roomStatusId)?.isAvailableForBooking"
+                  >
+                    {{ room.roomStatusName }}
+                  </span>
+                </div>
+                <span class="detail-card__price-hero">{{ room.roomTypeName }}</span>
+              </div>
+
+              <dl class="detail-list">
+                <div class="detail-list__row">
+                  <dt>Número</dt>
+                  <dd>{{ room.roomNumber }}</dd>
+                </div>
+                <div class="detail-list__row">
+                  <dt>Tipo</dt>
+                  <dd>{{ room.roomTypeName }}</dd>
+                </div>
+                <div class="detail-list__row">
+                  <dt>Estado</dt>
+                  <dd>{{ room.roomStatusName }}</dd>
+                </div>
+                <div class="detail-list__row">
+                  <dt>Disponibilidad</dt>
+                  <dd>{{ getStatus(room.roomStatusId)?.isAvailableForBooking ? 'Disponible para reservas' : 'No disponible para reservas' }}</dd>
+                </div>
+              </dl>
+
+              <div class="detail-actions">
+                <button type="button" class="btn-secondary" (click)="editRoom(room)" [disabled]="saving()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Editar habitación
+                </button>
+                <button type="button" class="btn-danger" (click)="requestDelete(room)" [disabled]="saving()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  </svg>
+                  Eliminar
+                </button>
+              </div>
+            </article>
+          }
+        }
+      </section>
+    }
+  </div>
+
+  @if (pendingDeletion(); as roomToDelete) {
+    <div class="modal-backdrop" role="presentation" (click)="cancelDeletion()">
+      <section
+        class="confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-room-title"
+        (click)="$event.stopPropagation()"
+      >
+        <span class="modal-kicker">Confirmar eliminación</span>
+        <h2 id="delete-room-title">Eliminar habitación</h2>
+        <p>
+          ¿Deseas eliminar la habitación <strong>{{ roomToDelete.roomNumber }}</strong>?
+          Se ocultará del listado administrativo.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cancelDeletion()" [disabled]="saving()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-danger-confirm" (click)="confirmDeletion()" [disabled]="saving()">
+            {{ saving() ? 'Eliminando...' : 'Eliminar habitación' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</section>

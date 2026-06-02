@@ -195,6 +195,15 @@ export class DashboardComponent implements AfterViewInit {
       actionLabel: 'Administrar tipos'
     },
     {
+      key: 'room-management',
+      title: 'Gestión de habitaciones',
+      status: 'Disponible',
+      description:
+        'Registra cada habitación física del hotel, asigna su tipo y cambia su estado operativo.',
+      link: '/panel/habitaciones',
+      actionLabel: 'Administrar habitaciones'
+    },
+    {
       key: 'seasons',
       title: 'Temporadas',
       status: 'Disponible',
