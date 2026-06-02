@@ -23,7 +23,8 @@ import {
   RoomAvailabilityReportResponse,
   RoomAvailabilitySearchResult,
   RoomAvailabilityService,
-  RoomAvailabilitySummary
+  RoomAvailabilitySummary,
+  RoomTypeAvailabilityItem
 } from '../../core/room-availability.service';
 
 type DashboardMenuKey =
@@ -526,6 +527,42 @@ export class DashboardComponent implements AfterViewInit {
       currency: 'USD',
       maximumFractionDigits: 2
     }).format(value ?? 0);
+  }
+
+  availabilityTypeItems(result: RoomAvailabilitySearchResult): RoomTypeAvailabilityItem[] {
+    return result.roomTypeAvailability.filter((item) => {
+      if (result.roomTypeId && item.roomTypeId === result.roomTypeId) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  availabilityEmptyMessage(result: RoomAvailabilitySearchResult): string {
+    const hasOtherAvailability = this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
+
+    if (result.roomTypeId && hasOtherAvailability) {
+      return 'No hay habitaciones disponibles de este tipo, pero existen habitaciones disponibles en otras categorías.';
+    }
+
+    if (result.roomTypeId) {
+      return `No hay habitaciones disponibles de ${result.roomTypeName} para el rango seleccionado.`;
+    }
+
+    return 'No hay habitaciones disponibles para esta consulta.';
+  }
+
+  availabilityDateSuggestionLabel(suggestion: RoomAvailabilitySearchResult['suggestedDateRanges'][number]): string {
+    return `${this.formatAvailabilityDate(suggestion.startDate)} - ${this.formatAvailabilityDate(suggestion.endDate)}`;
+  }
+
+  hasAvailableAlternatives(result: RoomAvailabilitySearchResult): boolean {
+    return this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
+  }
+
+  hasUnavailableTypeSummary(result: RoomAvailabilitySearchResult): boolean {
+    return this.availabilityTypeItems(result).length > 0;
   }
 
   iconPath(icon: (typeof this.menuItems)[number]['icon']): string {

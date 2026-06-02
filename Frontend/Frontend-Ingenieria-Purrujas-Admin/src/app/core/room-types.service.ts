@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -36,7 +36,9 @@ export class RoomTypesService {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
   getAll(): Observable<RoomTypeDetail[]> {
-    return this.http.get<RoomTypeDetail[]>(`${this.apiBaseUrl}/admin/room-types`);
+    return this.http.get<RoomTypeDetail[]>(`${this.apiBaseUrl}/admin/room-types`).pipe(
+      map((roomTypes) => this.dedupeRoomTypes(roomTypes))
+    );
   }
 
   create(payload: RoomTypePayload): Observable<RoomTypeDetail> {
@@ -49,5 +51,42 @@ export class RoomTypesService {
 
   delete(roomTypeId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiBaseUrl}/admin/room-types/${roomTypeId}`);
+  }
+
+  private dedupeRoomTypes(roomTypes: RoomTypeDetail[]): RoomTypeDetail[] {
+    const normalized = new Map<string, RoomTypeDetail>();
+
+    for (const roomType of roomTypes) {
+      const key = this.normalizeRoomTypeKey(roomType.name);
+      const existing = normalized.get(key);
+
+      if (!existing || this.prefersRoomType(roomType, existing)) {
+        normalized.set(key, roomType);
+      }
+    }
+
+    return [...normalized.values()].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  }
+
+  private prefersRoomType(candidate: RoomTypeDetail, current: RoomTypeDetail): boolean {
+    const candidateHasAccents = candidate.name.trim() !== this.stripDiacritics(candidate.name);
+    const currentHasAccents = current.name.trim() !== this.stripDiacritics(current.name);
+
+    if (candidateHasAccents !== currentHasAccents) {
+      return candidateHasAccents;
+    }
+
+    return candidate.roomTypeId < current.roomTypeId;
+  }
+
+  private normalizeRoomTypeKey(value: string): string {
+    return this.stripDiacritics(value).toLocaleLowerCase('en-US');
+  }
+
+  private stripDiacritics(value: string): string {
+    return value
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 }

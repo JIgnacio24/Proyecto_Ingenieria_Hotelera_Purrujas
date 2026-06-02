@@ -1,8 +1,10 @@
 using System.Data;
+using System.Globalization;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Text;
 
 namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 
@@ -61,6 +63,52 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         await connection.OpenAsync(cancellationToken);
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
 
+        var rooms = await ReadAvailableRoomsAsync(
+            connection,
+            startDate,
+            endDate,
+            roomTypeId,
+            excludeReservationId,
+            seasons,
+            cancellationToken);
+
+        var roomTypeName = "Todos los tipos";
+        if (roomTypeId.HasValue)
+        {
+            var roomTypes = await ReadRoomTypesAsync(connection, cancellationToken);
+            roomTypeName = roomTypes.FirstOrDefault(type => type.RoomTypeId == roomTypeId.Value)?.Name ?? roomTypeName;
+        }
+
+        var roomTypeAvailability = rooms.Count == 0
+            ? await ReadRoomTypeAvailabilityAsync(connection, startDate, endDate, excludeReservationId, cancellationToken)
+            : [];
+
+        var suggestedDateRanges = rooms.Count == 0
+            ? await ReadNearbyDateSuggestionsAsync(connection, startDate, endDate, roomTypeId, excludeReservationId, cancellationToken)
+            : [];
+
+        return new RoomAvailabilitySearchResult
+        {
+            StartDate = startDate,
+            EndDate = endDate,
+            RoomTypeId = roomTypeId,
+            RoomTypeName = roomTypeName,
+            AvailableRooms = rooms.Count,
+            Rooms = rooms,
+            RoomTypeAvailability = roomTypeAvailability,
+            SuggestedDateRanges = suggestedDateRanges
+        };
+    }
+
+    private async Task<List<RoomAvailabilityItem>> ReadAvailableRoomsAsync(
+        SqlConnection connection,
+        DateOnly startDate,
+        DateOnly endDate,
+        int? roomTypeId,
+        int? excludeReservationId,
+        IReadOnlyCollection<Season> seasons,
+        CancellationToken cancellationToken)
+    {
         const string query = """
             SELECT
                 r.RoomId,
@@ -98,46 +146,195 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         command.Parameters.Add("@ExcludeReservationId", SqlDbType.Int).Value = excludeReservationId.HasValue ? excludeReservationId.Value : DBNull.Value;
 
         var rooms = new List<RoomAvailabilityItem>();
-        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
         {
-            while (await reader.ReadAsync(cancellationToken))
+            var room = new RoomAvailabilityItem
             {
-                var room = new RoomAvailabilityItem
-                {
-                    RoomId = reader.GetInt32(0),
-                    RoomNumber = reader.GetString(1),
-                    RoomTypeName = reader.GetString(2),
-                    OperationalStatus = reader.GetString(3),
-                    BasePricePerNight = reader.GetDecimal(4)
-                };
+                RoomId = reader.GetInt32(0),
+                RoomNumber = reader.GetString(1),
+                RoomTypeName = reader.GetString(2),
+                OperationalStatus = reader.GetString(3),
+                BasePricePerNight = reader.GetDecimal(4)
+            };
 
-                var quoteBreakdown = BuildQuoteBreakdown(startDate, endDate, room.BasePricePerNight, seasons);
-                room.NightsTotal = quoteBreakdown.TotalNights;
-                room.HighSeasonNights = quoteBreakdown.HighSeasonNights;
-                room.LowSeasonNights = quoteBreakdown.LowSeasonNights;
-                room.HighestSeasonMultiplier = quoteBreakdown.HighestMultiplier;
-                room.TotalUsd = decimal.Round(quoteBreakdown.TotalUsd, 2);
+            var quoteBreakdown = BuildQuoteBreakdown(startDate, endDate, room.BasePricePerNight, seasons);
+            room.NightsTotal = quoteBreakdown.TotalNights;
+            room.HighSeasonNights = quoteBreakdown.HighSeasonNights;
+            room.LowSeasonNights = quoteBreakdown.LowSeasonNights;
+            room.HighestSeasonMultiplier = quoteBreakdown.HighestMultiplier;
+            room.TotalUsd = decimal.Round(quoteBreakdown.TotalUsd, 2);
 
-                rooms.Add(room);
+            rooms.Add(room);
+        }
+
+        return rooms;
+    }
+
+    private static async Task<List<RoomTypeAvailabilityItem>> ReadRoomTypeAvailabilityAsync(
+        SqlConnection connection,
+        DateOnly startDate,
+        DateOnly endDate,
+        int? excludeReservationId,
+        CancellationToken cancellationToken)
+    {
+        const string query = """
+            ;WITH AvailableRooms AS (
+                SELECT
+                    r.RoomTypeId,
+                    COUNT(*) AS AvailableRooms
+                FROM dbo.Room r
+                INNER JOIN dbo.RoomType rt ON r.RoomTypeId = rt.RoomTypeId
+                INNER JOIN dbo.RoomStatus rs ON r.RoomStatusId = rs.RoomStatusId
+                WHERE r.IsActive = 1
+                  AND rt.IsActive = 1
+                  AND rs.IsAvailableForBooking = 1
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM dbo.Reservation reservation
+                        INNER JOIN dbo.ReservationStatus reservationStatus
+                            ON reservation.ReservationStatusId = reservationStatus.ReservationStatusId
+                        WHERE reservation.RoomId = r.RoomId
+                          AND reservation.IsActive = 1
+                          AND reservationStatus.IsFinal = 0
+                          AND reservation.StartDate < @EndDate
+                          AND reservation.EndDate > @StartDate
+                          AND (@ExcludeReservationId IS NULL OR reservation.ReservationId <> @ExcludeReservationId)
+                  )
+                GROUP BY r.RoomTypeId
+            )
+            SELECT
+                rt.RoomTypeId,
+                rt.Name AS RoomTypeName,
+                COALESCE(ar.AvailableRooms, 0) AS AvailableRooms
+            FROM dbo.RoomType rt
+            LEFT JOIN AvailableRooms ar ON ar.RoomTypeId = rt.RoomTypeId
+            WHERE rt.IsActive = 1
+            ORDER BY rt.Name;
+            """;
+
+        await using var command = new SqlCommand(query, connection);
+        command.CommandType = CommandType.Text;
+        command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = startDate.ToDateTime(TimeOnly.MinValue);
+        command.Parameters.Add("@EndDate", SqlDbType.DateTime).Value = endDate.ToDateTime(TimeOnly.MinValue);
+        command.Parameters.Add("@ExcludeReservationId", SqlDbType.Int).Value = excludeReservationId.HasValue ? excludeReservationId.Value : DBNull.Value;
+
+        var roomTypes = new List<RoomTypeAvailabilityItem>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            roomTypes.Add(new RoomTypeAvailabilityItem
+            {
+                RoomTypeId = reader.GetInt32(0),
+                RoomTypeName = reader.GetString(1),
+                AvailableRooms = reader.GetInt32(2)
+            });
+        }
+
+        return DeduplicateRoomTypeAvailability(roomTypes);
+    }
+
+    private async Task<List<RoomAvailabilityDateSuggestion>> ReadNearbyDateSuggestionsAsync(
+        SqlConnection connection,
+        DateOnly startDate,
+        DateOnly endDate,
+        int? roomTypeId,
+        int? excludeReservationId,
+        CancellationToken cancellationToken)
+    {
+        var suggestedRanges = new List<RoomAvailabilityDateSuggestion>();
+        var stayLength = endDate.DayNumber - startDate.DayNumber;
+
+        foreach (var offset in BuildNearbyOffsets())
+        {
+            var candidateStart = startDate.AddDays(offset);
+            var candidateEnd = candidateStart.AddDays(stayLength);
+
+            if (candidateEnd <= candidateStart)
+            {
+                continue;
+            }
+
+            var availableRooms = await CountAvailableRoomsAsync(
+                connection,
+                candidateStart,
+                candidateEnd,
+                roomTypeId,
+                excludeReservationId,
+                cancellationToken);
+
+            if (availableRooms == 0)
+            {
+                continue;
+            }
+
+            suggestedRanges.Add(new RoomAvailabilityDateSuggestion
+            {
+                StartDate = candidateStart,
+                EndDate = candidateEnd,
+                AvailableRooms = availableRooms
+            });
+
+            if (suggestedRanges.Count == 3)
+            {
+                break;
             }
         }
 
-        var roomTypeName = "Todos los tipos";
-        if (roomTypeId.HasValue)
-        {
-            var roomTypes = await ReadRoomTypesAsync(connection, cancellationToken);
-            roomTypeName = roomTypes.FirstOrDefault(type => type.RoomTypeId == roomTypeId.Value)?.Name ?? roomTypeName;
-        }
+        return suggestedRanges;
+    }
 
-        return new RoomAvailabilitySearchResult
+    private static IEnumerable<int> BuildNearbyOffsets()
+    {
+        const int radius = 7;
+
+        for (var step = 1; step <= radius; step++)
         {
-            StartDate = startDate,
-            EndDate = endDate,
-            RoomTypeId = roomTypeId,
-            RoomTypeName = roomTypeName,
-            AvailableRooms = rooms.Count,
-            Rooms = rooms
-        };
+            yield return step;
+            yield return -step;
+        }
+    }
+
+    private static async Task<int> CountAvailableRoomsAsync(
+        SqlConnection connection,
+        DateOnly startDate,
+        DateOnly endDate,
+        int? roomTypeId,
+        int? excludeReservationId,
+        CancellationToken cancellationToken)
+    {
+        const string query = """
+            SELECT COUNT(*)
+            FROM dbo.Room r
+            INNER JOIN dbo.RoomType rt ON r.RoomTypeId = rt.RoomTypeId
+            INNER JOIN dbo.RoomStatus rs ON r.RoomStatusId = rs.RoomStatusId
+            WHERE r.IsActive = 1
+              AND rt.IsActive = 1
+              AND rs.IsAvailableForBooking = 1
+              AND (@RoomTypeId IS NULL OR r.RoomTypeId = @RoomTypeId)
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM dbo.Reservation reservation
+                    INNER JOIN dbo.ReservationStatus reservationStatus
+                        ON reservation.ReservationStatusId = reservationStatus.ReservationStatusId
+                    WHERE reservation.RoomId = r.RoomId
+                      AND reservation.IsActive = 1
+                      AND reservationStatus.IsFinal = 0
+                      AND reservation.StartDate < @EndDate
+                      AND reservation.EndDate > @StartDate
+                      AND (@ExcludeReservationId IS NULL OR reservation.ReservationId <> @ExcludeReservationId)
+              );
+            """;
+
+        await using var command = new SqlCommand(query, connection);
+        command.CommandType = CommandType.Text;
+        command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = startDate.ToDateTime(TimeOnly.MinValue);
+        command.Parameters.Add("@EndDate", SqlDbType.DateTime).Value = endDate.ToDateTime(TimeOnly.MinValue);
+        command.Parameters.Add("@RoomTypeId", SqlDbType.Int).Value = roomTypeId.HasValue ? roomTypeId.Value : DBNull.Value;
+        command.Parameters.Add("@ExcludeReservationId", SqlDbType.Int).Value = excludeReservationId.HasValue ? excludeReservationId.Value : DBNull.Value;
+
+        var scalar = await command.ExecuteScalarAsync(cancellationToken);
+        return scalar is int count ? count : Convert.ToInt32(scalar);
     }
 
     private static async Task<List<RoomStatusTodayItem>> ReadTodayRoomsAsync(
@@ -231,7 +428,69 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
             });
         }
 
-        return roomTypes;
+        return DeduplicateRoomTypeOptions(roomTypes);
+    }
+
+    private static List<RoomTypeOption> DeduplicateRoomTypeOptions(IEnumerable<RoomTypeOption> roomTypes)
+    {
+        return roomTypes
+            .GroupBy(roomType => NormalizeRoomTypeKey(roomType.Name))
+            .Select(group => group
+                .OrderBy(roomType => HasAccents(roomType.Name) ? 0 : 1)
+                .ThenBy(roomType => roomType.RoomTypeId)
+                .First())
+            .OrderBy(roomType => roomType.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private static List<RoomTypeAvailabilityItem> DeduplicateRoomTypeAvailability(IEnumerable<RoomTypeAvailabilityItem> roomTypes)
+    {
+        return roomTypes
+            .GroupBy(roomType => NormalizeRoomTypeKey(roomType.RoomTypeName))
+            .Select(group =>
+            {
+                var ordered = group
+                    .OrderBy(roomType => HasAccents(roomType.RoomTypeName) ? 0 : 1)
+                    .ThenBy(roomType => roomType.RoomTypeId)
+                    .ToList();
+
+                return new RoomTypeAvailabilityItem
+                {
+                    RoomTypeId = ordered[0].RoomTypeId,
+                    RoomTypeName = ordered[0].RoomTypeName,
+                    AvailableRooms = ordered.Sum(roomType => roomType.AvailableRooms)
+                };
+            })
+            .OrderBy(roomType => roomType.RoomTypeName, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private static string NormalizeRoomTypeKey(string value)
+    {
+        return StripDiacritics(value).ToLowerInvariant();
+    }
+
+    private static string StripDiacritics(string value)
+    {
+        var trimmed = value.Trim().Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(trimmed.Length);
+
+        foreach (var character in trimmed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+            {
+                continue;
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static bool HasAccents(string value)
+    {
+        return !string.Equals(value.Trim(), StripDiacritics(value), StringComparison.Ordinal);
     }
 
     private void EnsureConnectionString()

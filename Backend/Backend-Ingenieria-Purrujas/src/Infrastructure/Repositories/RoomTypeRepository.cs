@@ -1,8 +1,10 @@
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using System.Globalization;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Text;
 
 namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 
@@ -42,7 +44,7 @@ public class RoomTypeRepository : IRoomTypeRepository
             roomTypes.Add(MapRoomType(reader));
         }
 
-        return roomTypes;
+        return DeduplicateRoomTypes(roomTypes);
     }
 
     public async Task<RoomType?> GetByIdAsync(int roomTypeId, CancellationToken cancellationToken = default)
@@ -81,9 +83,12 @@ public class RoomTypeRepository : IRoomTypeRepository
                 FROM RoomType
                 WHERE IsActive = 1
                   AND (
-                    LOWER(Name) = LOWER(@nameKey)
-                    OR LOWER(Name) LIKE '%' + LOWER(@nameKey) + '%'
+                    LTRIM(RTRIM(Name)) COLLATE Latin1_General_100_CI_AI = LTRIM(RTRIM(@nameKey)) COLLATE Latin1_General_100_CI_AI
+                    OR LTRIM(RTRIM(Name)) COLLATE Latin1_General_100_CI_AI LIKE '%' + LTRIM(RTRIM(@nameKey)) + '%'
                   )
+                ORDER BY
+                    CASE WHEN Name LIKE N'%[ÁÉÍÓÚáéíóúÑñ]%' THEN 0 ELSE 1 END,
+                    RoomTypeId;
             """;
 
             await using var cmd = new SqlCommand(sql, conn);
@@ -238,6 +243,46 @@ public class RoomTypeRepository : IRoomTypeRepository
         cmd.Parameters["@BasePrice"].Scale = 2;
     }
 
+    private static IReadOnlyList<RoomType> DeduplicateRoomTypes(IEnumerable<RoomType> roomTypes)
+    {
+        return roomTypes
+            .GroupBy(roomType => NormalizeRoomTypeKey(roomType.Name))
+            .Select(group => group
+                .OrderBy(roomType => HasAccents(roomType.Name) ? 0 : 1)
+                .ThenBy(roomType => roomType.RoomTypeId)
+                .First())
+            .OrderBy(roomType => roomType.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private static string NormalizeRoomTypeKey(string value)
+    {
+        return StripDiacritics(value).ToLowerInvariant();
+    }
+
+    private static string StripDiacritics(string value)
+    {
+        var trimmed = value.Trim().Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(trimmed.Length);
+
+        foreach (var character in trimmed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+            {
+                continue;
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static bool HasAccents(string value)
+    {
+        return !string.Equals(value.Trim(), StripDiacritics(value), StringComparison.Ordinal);
+    }
+
     private static async Task EnsureNameIsAvailableAsync(
         SqlConnection conn,
         string name,
@@ -248,7 +293,7 @@ public class RoomTypeRepository : IRoomTypeRepository
             SELECT COUNT(1)
             FROM RoomType
             WHERE IsActive = 1
-              AND LOWER(Name) = LOWER(@Name)
+              AND LTRIM(RTRIM(Name)) COLLATE Latin1_General_100_CI_AI = LTRIM(RTRIM(@Name)) COLLATE Latin1_General_100_CI_AI
               AND (@CurrentRoomTypeId IS NULL OR RoomTypeId <> @CurrentRoomTypeId);
         """;
 
