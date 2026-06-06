@@ -16,7 +16,7 @@ export interface GalleryImage {
   providedIn: 'root'
 })
 export class GalleryImagesService {
-  private readonly apiUrl = 'http://localhost:5232/api/gallery-images';
+  private readonly apiUrl = 'http://localhost:5234/api/gallery-images';
 
   constructor(private readonly http: HttpClient) {}
 

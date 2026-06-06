@@ -1,0 +1,79 @@
+services:
+  db:
+    build:
+      context: ./DB
+    container_name: ingenieria-purrujas-db
+    restart: unless-stopped
+    env_file:
+      - ./Backend/.env
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_TCP_PORT: "1435"
+      RESET_DATABASE_ON_START: "false"
+    ports:
+      - "1435:1435"
+    volumes:
+      - purrujas_sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/sqlserver-healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - Ingenieria-Purrujas-Sistema-Hotelero
+
+  backend:
+    build:
+      context: ./Backend
+    container_name: ingenieria-purrujas-backend
+    restart: unless-stopped
+    env_file:
+      - ./Backend/.env
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:5234"
+      Cors__AllowedOrigins__0: "http://localhost:4203"
+      Cors__AllowedOrigins__1: "http://127.0.0.1:4203"
+      Cors__AllowedOrigins__2: "http://localhost:4204"
+      Cors__AllowedOrigins__3: "http://127.0.0.1:4204"
+    ports:
+      - "5234:5234"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - Ingenieria-Purrujas-Sistema-Hotelero
+
+  frontend-admin:
+    build:
+      context: ./Frontend/Frontend-Ingenieria-Purrujas-Admin
+    container_name: ingenieria-purrujas-frontend-admin
+    restart: unless-stopped
+    ports:
+      - "4203:4203"
+    depends_on:
+      - backend
+    networks:
+      - Ingenieria-Purrujas-Sistema-Hotelero
+
+  frontend-cliente:
+    build:
+      context: ./Frontend/Frontend-Ingenieria-Purrujas-Cliente
+    container_name: ingenieria-purrujas-frontend-cliente
+    restart: unless-stopped
+    ports:
+      - "4204:4204"
+    depends_on:
+      - backend
+    networks:
+      - Ingenieria-Purrujas-Sistema-Hotelero
+
+volumes:
+  purrujas_sqlserver_data:
+
+networks:
+  Ingenieria-Purrujas-Sistema-Hotelero:
+    name: Ingenieria-Purrujas-Sistema-Hotelero
+    driver: bridge

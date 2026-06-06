@@ -1,0 +1,9 @@
+.env
+.vscode/
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.lscache
+**/*.log

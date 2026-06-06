@@ -2,9 +2,9 @@
 
 Esta guia explica como levantar el proyecto despues de bajarlo desde Git. El sistema tiene tres partes:
 
-- Backend ASP.NET Core: `http://localhost:5232`
-- Frontend cliente Angular: `http://localhost:4200`
-- Frontend admin Angular: `http://localhost:4201`
+- Backend ASP.NET Core: `http://localhost:5234`
+- Frontend cliente Angular: `http://localhost:4204`
+- Frontend admin Angular: `http://localhost:4203`
 - Base de datos SQL Server: `Ingenieria_Purrujas_BD`
 
 ## 1. Requisitos
@@ -17,6 +17,7 @@ Instala antes de comenzar:
 - .NET SDK compatible con `net9.0`
 - Node.js
 - npm o Bun
+- Docker Desktop, si quieres levantar todo con contenedores
 
 Para verificar versiones:
 
@@ -26,6 +27,38 @@ dotnet --version
 node --version
 npm --version
 ```
+
+## Ejecucion con Docker
+
+Desde la raiz del repositorio puedes levantar backend, frontends y SQL Server juntos:
+
+```cmd
+copy Backend\.env.example Backend\.env
+docker compose up --build
+```
+
+Servicios expuestos:
+
+```text
+Frontend admin:   http://localhost:4203
+Frontend cliente: http://localhost:4204
+Backend API:      http://localhost:5234
+SQL Server:       localhost,1435
+```
+
+Todos los contenedores quedan conectados a la red Docker:
+
+```text
+Ingenieria-Purrujas-Sistema-Hotelero
+```
+
+La base de datos se inicializa automaticamente desde:
+
+```text
+DB\Ingenieria_Purrujas_BD.sql
+```
+
+El volumen `purrujas_sqlserver_data` conserva los datos entre reinicios. Si quieres forzar que el script elimine y recree la base al iniciar, cambia `RESET_DATABASE_ON_START` a `true` en `docker-compose.yml`.
 
 ## 2. Clonar el repositorio
 
@@ -77,7 +110,7 @@ dotnet run
 Debe quedar escuchando en:
 
 ```text
-http://localhost:5232
+http://localhost:5234
 ```
 
 
@@ -96,13 +129,13 @@ npm run o npm start
 Abre:
 
 ```text
-http://localhost:4200
+http://localhost:4204
 ```
 
 El cliente usa proxy para `/api` hacia:
 
 ```text
-http://localhost:5232
+http://localhost:5234
 ```
 
 ## 7. Levantar el frontend admin
@@ -118,13 +151,13 @@ npm run
 Abre:
 
 ```text
-http://localhost:4201
+http://localhost:4203
 ```
 
 El admin en desarrollo apunta directamente a:
 
 ```text
-http://localhost:5232/api
+http://localhost:5234/api
 ```
 
 ## 8. Usuarios admin de prueba
@@ -146,9 +179,9 @@ Rol: Supervisor
 ## 9. Orden recomendado para ejecutar todo
 
 1. Ejecutar `DB\Ingenieria_Purrujas_BD.sql`.
-2. Levantar backend en `http://localhost:5232`.
-3. Levantar frontend cliente en `http://localhost:4200`.
-4. Levantar frontend admin en `http://localhost:4201`.
+2. Levantar backend en `http://localhost:5234`.
+3. Levantar frontend cliente en `http://localhost:4204`.
+4. Levantar frontend admin en `http://localhost:4203`.
 
 ## 10. Problemas comunes
 
@@ -178,7 +211,7 @@ Tambien confirma que el servicio de SQL Server este iniciado.
 Verifica que el backend este activo en:
 
 ```text
-http://localhost:5232
+http://localhost:5234
 ```
 
 Y revisa la consola del navegador por errores de API o CORS.

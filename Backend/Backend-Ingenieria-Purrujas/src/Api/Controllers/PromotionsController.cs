@@ -12,13 +12,13 @@ public class PromotionsController : ControllerBase
 {
     private static readonly List<PublicPromotion> _promotions =
     [
-        new(1, "Escapada Romántica",  "http://localhost:4200/about-us#reservas", 25,
+        new(1, "Escapada Romántica",  "http://localhost:4204/about-us#reservas", 25,
             new DateTime(2026, 4, 1),  new DateTime(2026, 5, 31),  2),
-        new(2, "Semana Ecológica",    "http://localhost:4200/about-us#reservas", 20,
+        new(2, "Semana Ecológica",    "http://localhost:4204/about-us#reservas", 20,
             new DateTime(2026, 4, 15), new DateTime(2026, 6, 30),  1),
-        new(3, "Aventura Familiar",   "http://localhost:4200/about-us#reservas", 30,
+        new(3, "Aventura Familiar",   "http://localhost:4204/about-us#reservas", 30,
             new DateTime(2026, 5, 1),  new DateTime(2026, 7, 15),  3),
-        new(4, "Retiro de Bienestar", "http://localhost:4200/about-us#reservas", 15,
+        new(4, "Retiro de Bienestar", "http://localhost:4204/about-us#reservas", 15,
             new DateTime(2026, 6, 1),  new DateTime(2026, 8, 31),  2),
     ];
 
