@@ -16,7 +16,7 @@ Instala antes de comenzar:
 - SQL Server Management Studio, Azure Data Studio o `sqlcmd`
 - .NET SDK compatible con `net9.0`
 - Node.js
-- npm o Bun
+- Bun
 - Docker Desktop, si quieres levantar todo con contenedores
 
 Para verificar versiones:
@@ -25,7 +25,7 @@ Para verificar versiones:
 git --version
 dotnet --version
 node --version
-npm --version
+bun --version
 ```
 
 ## Ejecucion con Docker
@@ -122,8 +122,8 @@ Abre otra terminal desde la raiz del proyecto:
 
 ```cmd
 cd Frontend\Frontend-Ingenieria-Purrujas-Cliente
-npm install
-npm run o npm start
+bun install
+bun run start
 ```
 
 Abre:
@@ -144,8 +144,8 @@ Abre otra terminal desde la raiz del proyecto:
 
 ```cmd
 cd Frontend\Frontend-Ingenieria-Purrujas-Admin
-npm install
-npm run
+bun install
+bun run start
 ```
 
 Abre:
@@ -185,16 +185,14 @@ Rol: Supervisor
 
 ## 10. Problemas comunes
 
-### PowerShell bloquea npm
+### Bun no esta instalado
 
-Si PowerShell muestra un error parecido a `npm.ps1 no se puede cargar`, usa:
+Si `bun --version` no responde, instala Bun y vuelve a abrir la terminal. Luego ejecuta:
 
 ```cmd
-npm.cmd install
-npm.cmd run start
+bun install
+bun run start
 ```
-
-O ejecuta los comandos desde CMD.
 
 ### No conecta a SQL Server
 
@@ -239,12 +237,12 @@ Frontend cliente:
 
 ```cmd
 cd Frontend\Frontend-Ingenieria-Purrujas-Cliente
-npm run build
+bun run build
 ```
 
 Frontend admin:
 
 ```cmd
 cd Frontend\Frontend-Ingenieria-Purrujas-Admin
-npm run build
+bun run build
 ```
