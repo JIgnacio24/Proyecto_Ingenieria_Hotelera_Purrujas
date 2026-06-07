@@ -25,6 +25,13 @@ docker-compose --version
 
 Ambos comandos deben responder con un número de versión.
 
+> **Si Docker Desktop no levanta o da error de WSL**, abre PowerShell como administrador y ejecuta:
+> ```powershell
+> wsl --update
+> wsl --install
+> ```
+> Luego reinicia la computadora y vuelve a abrir Docker Desktop.
+
 ---
 
 ### 2. Configurar el archivo `.env` para Docker
