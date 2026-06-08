@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -9,11 +12,15 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/home-content")]
 public class HomeContentController : ControllerBase
 {
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly IHomePageContentRepository _homePageContentRepository;
 
-    public HomeContentController(IHomePageContentRepository homePageContentRepository)
+    public HomeContentController(
+        IHomePageContentRepository homePageContentRepository,
+        IAdminAuditLogService adminAuditLogService)
     {
         _homePageContentRepository = homePageContentRepository;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     [HttpGet]
@@ -32,7 +39,14 @@ public class HomeContentController : ControllerBase
     {
         try
         {
+            var previousContent = await _homePageContentRepository.GetAsync(cancellationToken);
             var content = await _homePageContentRepository.UpsertAsync(request, cancellationToken);
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Actualizar inicio",
+                AdminAuditDescriptionBuilder.ContentUpdated("inicio", previousContent, content),
+                cancellationToken);
+
             return Ok(content);
         }
         catch (ArgumentException ex)

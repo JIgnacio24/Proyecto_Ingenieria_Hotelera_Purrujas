@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -9,11 +12,15 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/facilities-content")]
 public class FacilitiesContentController : ControllerBase
 {
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly IFacilitiesPageContentRepository _facilitiesPageContentRepository;
 
-    public FacilitiesContentController(IFacilitiesPageContentRepository facilitiesPageContentRepository)
+    public FacilitiesContentController(
+        IFacilitiesPageContentRepository facilitiesPageContentRepository,
+        IAdminAuditLogService adminAuditLogService)
     {
         _facilitiesPageContentRepository = facilitiesPageContentRepository;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     [HttpGet]
@@ -31,7 +38,14 @@ public class FacilitiesContentController : ControllerBase
     {
         try
         {
+            var previousContent = await _facilitiesPageContentRepository.GetAsync(cancellationToken);
             var content = await _facilitiesPageContentRepository.UpsertAsync(request, cancellationToken);
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Actualizar facilidades",
+                AdminAuditDescriptionBuilder.ContentUpdated("facilidades", previousContent, content),
+                cancellationToken);
+
             return Ok(content);
         }
         catch (ArgumentException ex)

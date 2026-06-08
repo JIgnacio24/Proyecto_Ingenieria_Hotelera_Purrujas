@@ -1,4 +1,7 @@
-﻿IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
+﻿USE master;
+GO
+
+IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
 BEGIN
     ALTER DATABASE Ingenieria_Purrujas_BD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE Ingenieria_Purrujas_BD;
@@ -40,12 +43,30 @@ CREATE TABLE AdminUser (
 );
 GO
 
-select* from AdminUser
+CREATE TABLE AdminAuditLog (
+    AdminAuditLogId INT PRIMARY KEY IDENTITY,
+    AdminUserId INT NOT NULL,
+    OccurredAt DATETIME2 NOT NULL CONSTRAINT DF_AdminAuditLog_OccurredAt DEFAULT SYSDATETIME(),
+    [Action] NVARCHAR(150) NOT NULL,
+    Description NVARCHAR(600) NOT NULL,
+    CONSTRAINT FK_AdminAuditLog_AdminUser FOREIGN KEY (AdminUserId) REFERENCES AdminUser(AdminUserId)
+);
+GO
+
+CREATE INDEX IX_AdminAuditLog_OccurredAt
+ON AdminAuditLog (OccurredAt DESC, AdminAuditLogId DESC);
+GO
+
+CREATE INDEX IX_AdminAuditLog_AdminUserId
+ON AdminAuditLog (AdminUserId, OccurredAt DESC);
+GO
 
 CREATE TABLE RoomType (
     RoomTypeId INT PRIMARY KEY IDENTITY,
     Name NVARCHAR(255) NOT NULL,
     BasePrice DECIMAL(10,2) NOT NULL,
+    Description NVARCHAR(MAX) NULL,
+    Capacity INT NOT NULL DEFAULT 2,
     IsActive BIT NOT NULL DEFAULT 1
 );
 GO
@@ -125,7 +146,6 @@ CREATE TABLE Season (
     IsActive BIT NOT NULL DEFAULT 1
 );
 GO
-select * from season
 CREATE TABLE Promotion (
     PromotionId INT PRIMARY KEY IDENTITY,
     Name NVARCHAR(255) NOT NULL,
@@ -195,10 +215,11 @@ GO
 
 CREATE TABLE RoomTypeImage (
     RoomTypeImageId INT PRIMARY KEY IDENTITY,
-    ImageId INT NOT NULL,
     RoomTypeId INT NOT NULL,
-    CONSTRAINT FKRoomTypeImageRoomType FOREIGN KEY (RoomTypeId) REFERENCES RoomType(RoomTypeId),
-    CONSTRAINT FKRoomTypeImageImage FOREIGN KEY (ImageId) REFERENCES Image(ImageId)
+    Url NVARCHAR(500) NOT NULL,
+    AltText NVARCHAR(255) NULL,
+    DisplayOrder INT NOT NULL DEFAULT 0,
+    CONSTRAINT FKRoomTypeImageRoomType FOREIGN KEY (RoomTypeId) REFERENCES RoomType(RoomTypeId)
 );
 GO
 
@@ -408,6 +429,75 @@ BEGIN
     FROM AdminUser
     WHERE AdminUserId = @AdminUserId
       AND IsActive = 1;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE usp_AdminAuditLog_Create
+    @AdminUserId INT,
+    @Action NVARCHAR(150),
+    @Description NVARCHAR(600)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @Action = LTRIM(RTRIM(@Action));
+    SET @Description = LTRIM(RTRIM(@Description));
+
+    IF @AdminUserId IS NULL OR NOT EXISTS (
+        SELECT 1
+        FROM AdminUser
+        WHERE AdminUserId = @AdminUserId
+          AND IsActive = 1
+    )
+        THROW 50100, N'El usuario administrador de la bitacora no existe o esta inactivo.', 1;
+
+    IF @Action IS NULL OR @Action = N''
+        THROW 50101, N'La accion de bitacora es obligatoria.', 1;
+
+    IF @Description IS NULL OR @Description = N''
+        THROW 50102, N'La descripcion de bitacora es obligatoria.', 1;
+
+    INSERT INTO AdminAuditLog (AdminUserId, [Action], Description)
+    VALUES (@AdminUserId, @Action, @Description);
+
+    SELECT
+        l.AdminAuditLogId,
+        l.AdminUserId,
+        u.FullName,
+        u.Username,
+        l.OccurredAt,
+        l.[Action] AS [Action],
+        l.Description
+    FROM AdminAuditLog l
+    INNER JOIN AdminUser u ON u.AdminUserId = l.AdminUserId
+    WHERE l.AdminAuditLogId = CAST(SCOPE_IDENTITY() AS INT);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE usp_AdminAuditLog_GetRecent
+    @Take INT = 100
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Take IS NULL OR @Take <= 0
+        SET @Take = 100;
+
+    IF @Take > 500
+        SET @Take = 500;
+
+    SELECT TOP (@Take)
+        l.AdminAuditLogId,
+        l.AdminUserId,
+        COALESCE(u.FullName, N'Usuario no disponible') AS FullName,
+        COALESCE(u.Username, N'') AS Username,
+        l.OccurredAt,
+        l.[Action] AS [Action],
+        l.Description
+    FROM AdminAuditLog l
+    LEFT JOIN AdminUser u ON u.AdminUserId = l.AdminUserId
+    ORDER BY l.OccurredAt DESC, l.AdminAuditLogId DESC;
 END;
 GO
 

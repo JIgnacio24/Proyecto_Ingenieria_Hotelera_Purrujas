@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -9,11 +12,15 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/getting-there-content")]
 public class GettingThereContentController : ControllerBase
 {
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly IGettingTherePageContentRepository _gettingTherePageContentRepository;
 
-    public GettingThereContentController(IGettingTherePageContentRepository gettingTherePageContentRepository)
+    public GettingThereContentController(
+        IGettingTherePageContentRepository gettingTherePageContentRepository,
+        IAdminAuditLogService adminAuditLogService)
     {
         _gettingTherePageContentRepository = gettingTherePageContentRepository;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     [HttpGet]
@@ -31,7 +38,14 @@ public class GettingThereContentController : ControllerBase
     {
         try
         {
+            var previousContent = await _gettingTherePageContentRepository.GetAsync(cancellationToken);
             var content = await _gettingTherePageContentRepository.UpsertAsync(request, cancellationToken);
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Actualizar como llegar",
+                AdminAuditDescriptionBuilder.ContentUpdated("como llegar", previousContent, content),
+                cancellationToken);
+
             return Ok(content);
         }
         catch (ArgumentException ex)

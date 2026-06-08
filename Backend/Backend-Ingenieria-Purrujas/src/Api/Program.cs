@@ -1,4 +1,5 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Application.Email;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
@@ -87,8 +88,10 @@ builder.Services.AddCors(options =>
 // Dependency Injection
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+builder.Services.AddScoped<IAdminAuditLogRepository, AdminAuditLogRepository>();
 builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
 // Repositorio del contenido editable de la pagina publica "Sobre Nosotros".
 builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();

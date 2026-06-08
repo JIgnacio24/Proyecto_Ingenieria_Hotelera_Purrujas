@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
 using Backend_Ingenieria_Purrujas.Application.Reservations.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +11,9 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ReservationController(IReservationService reservationService) : ControllerBase
+public class ReservationController(
+    IReservationService reservationService,
+    IAdminAuditLogService adminAuditLogService) : ControllerBase
 {
     [HttpGet("availability")]
     public async Task<ActionResult<AvailabilityResponseDto>> CheckAvailability(
@@ -94,7 +99,26 @@ public class ReservationController(IReservationService reservationService) : Con
 
         try
         {
+            var current = await reservationService.GetByIdAsync(id, cancellationToken);
             var result = await reservationService.UpdateAsync(id, request, cancellationToken);
+            if (current is not null)
+            {
+                await adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Actualizar reservacion",
+                    AdminAuditDescriptionBuilder.Updated(
+                        "Reservacion",
+                        ReservationIdentifier(current),
+                        [
+                            AdminAuditDescriptionBuilder.Changed("fecha de llegada", current.StartDate, result.StartDate),
+                            AdminAuditDescriptionBuilder.Changed("fecha de salida", current.EndDate, result.EndDate),
+                            AdminAuditDescriptionBuilder.Changed("habitacion", current.RoomNumber, result.RoomNumber),
+                            AdminAuditDescriptionBuilder.Changed("tipo de habitacion", current.RoomTypeName, result.RoomTypeName),
+                            AdminAuditDescriptionBuilder.Changed("total USD", current.TotalUsd, result.TotalUsd)
+                        ]),
+                    cancellationToken);
+            }
+
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -117,7 +141,17 @@ public class ReservationController(IReservationService reservationService) : Con
     {
         try
         {
+            var current = await reservationService.GetByIdAsync(id, cancellationToken);
             await reservationService.DeleteAsync(id, cancellationToken);
+            if (current is not null)
+            {
+                await adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Eliminar reservacion",
+                    AdminAuditDescriptionBuilder.Deleted("Reservacion", ReservationIdentifier(current)),
+                    cancellationToken);
+            }
+
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -136,7 +170,21 @@ public class ReservationController(IReservationService reservationService) : Con
     {
         try
         {
+            var current = await reservationService.GetByIdAsync(id, cancellationToken);
             await reservationService.UpdateStatusAsync(id, request.Status, cancellationToken);
+            var updated = await reservationService.GetByIdAsync(id, cancellationToken);
+            if (current is not null)
+            {
+                await adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Actualizar estado de reservacion",
+                    AdminAuditDescriptionBuilder.Updated(
+                        "Reservacion",
+                        ReservationIdentifier(current),
+                        [AdminAuditDescriptionBuilder.Changed("estado", current.Status, updated?.Status ?? request.Status)]),
+                    cancellationToken);
+            }
+
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -147,5 +195,10 @@ public class ReservationController(IReservationService reservationService) : Con
         {
             return NotFound();
         }
+    }
+
+    private static string ReservationIdentifier(ReservationResponseDto reservation)
+    {
+        return $"ID {reservation.ReservationId}, cliente {reservation.CustomerFullName}, habitacion {reservation.RoomNumber}, {reservation.StartDate:yyyy-MM-dd} a {reservation.EndDate:yyyy-MM-dd}";
     }
 }

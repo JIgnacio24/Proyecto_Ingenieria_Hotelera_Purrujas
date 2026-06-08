@@ -37,6 +37,7 @@ type DashboardMenuKey =
   | 'rooms'
   | 'seasons'
   | 'promotions'
+  | 'audit'
   | 'status'
   | 'availability'
   | 'ads';
@@ -149,6 +150,14 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-rooms'
     },
     {
+      key: 'audit',
+      label: 'Bitacoras de uso',
+      compactLabel: 'Bitacoras',
+      icon: 'audit',
+      targetId: 'dashboard-audit',
+      route: '/panel/bitacoras'
+    },
+    {
       key: 'ads',
       label: 'Publicidad',
       compactLabel: 'Publicidad',
@@ -221,6 +230,15 @@ export class DashboardComponent implements AfterViewInit {
         'Crea, edita y elimina descuentos y promociones especiales por tipo de habitación.',
       link: '/panel/ofertas',
       actionLabel: 'Administrar ofertas'
+    },
+    {
+      key: 'audit',
+      title: 'Bitacoras de uso',
+      status: 'Disponible',
+      description:
+        'Consulta quien realizo cada accion administrativa, la fecha y hora, la accion concreta y su resumen.',
+      link: '/panel/bitacoras',
+      actionLabel: 'Ver bitacoras'
     },
     {
       key: 'ads',
@@ -585,6 +603,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M12 4a8 8 0 1 0 8 8h-8zM12 4a8 8 0 0 1 8 8M12 8v4l2.5 2.5';
       case 'availability':
         return 'M4 12h5l2 5 3-10 2 5h4';
+      case 'audit':
+        return 'M5 5h14M5 12h8M5 19h6M16 15v3l2 1';
       case 'ads':
         return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
       default:
