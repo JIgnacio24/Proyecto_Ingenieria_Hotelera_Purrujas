@@ -1,4 +1,4 @@
-@Backend_Ingenieria_Purrujas_HostAddress = http://localhost:5232
+@Backend_Ingenieria_Purrujas_HostAddress = http://localhost:5234
 @admin_token = REEMPLAZAR_TOKEN_ADMIN
 
 POST {{Backend_Ingenieria_Purrujas_HostAddress}}/api/auth/login

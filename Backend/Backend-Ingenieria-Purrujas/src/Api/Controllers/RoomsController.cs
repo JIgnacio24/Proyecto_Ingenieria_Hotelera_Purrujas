@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -11,11 +14,13 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/admin/rooms")]
 public class RoomsController : ControllerBase
 {
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly IRoomRepository _roomRepository;
 
-    public RoomsController(IRoomRepository roomRepository)
+    public RoomsController(IRoomRepository roomRepository, IAdminAuditLogService adminAuditLogService)
     {
         _roomRepository = roomRepository;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     [HttpGet]
@@ -55,6 +60,18 @@ public class RoomsController : ControllerBase
                 },
                 cancellationToken);
 
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Crear habitacion",
+                AdminAuditDescriptionBuilder.Created(
+                    "Habitacion",
+                    $"Habitacion {created.RoomNumber} (ID {created.RoomId})",
+                    [
+                        AdminAuditDescriptionBuilder.Value("tipo de habitacion", created.RoomTypeName),
+                        AdminAuditDescriptionBuilder.Value("estado", created.RoomStatusName)
+                    ]),
+                cancellationToken);
+
             return CreatedAtAction(nameof(GetById), new { id = created.RoomId }, created);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
@@ -67,6 +84,7 @@ public class RoomsController : ControllerBase
     {
         try
         {
+            var current = await _roomRepository.GetByIdAsync(id, cancellationToken);
             var updated = await _roomRepository.UpdateAsync(
                 new Room
                 {
@@ -76,6 +94,19 @@ public class RoomsController : ControllerBase
                     RoomStatusId = request.RoomStatusId
                 },
                 cancellationToken);
+
+            if (current is not null && updated is not null)
+            {
+                await _adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Actualizar habitacion",
+                    AdminAuditDescriptionBuilder.Updated(
+                        "Habitacion",
+                        $"Habitacion {current.RoomNumber} (ID {id})",
+                        current,
+                        updated),
+                    cancellationToken);
+            }
 
             return updated is null
                 ? NotFound(new { message = "Habitación no encontrada." })
@@ -89,7 +120,19 @@ public class RoomsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
+        var current = await _roomRepository.GetByIdAsync(id, cancellationToken);
         var deleted = await _roomRepository.DeleteAsync(id, cancellationToken);
+        if (deleted && current is not null)
+        {
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Eliminar habitacion",
+                AdminAuditDescriptionBuilder.Deleted(
+                    "Habitacion",
+                    $"Habitacion {current.RoomNumber} (ID {id}), tipo {current.RoomTypeName}, estado {current.RoomStatusName}"),
+                cancellationToken);
+        }
+
         return deleted
             ? NoContent()
             : NotFound(new { message = "Habitación no encontrada." });

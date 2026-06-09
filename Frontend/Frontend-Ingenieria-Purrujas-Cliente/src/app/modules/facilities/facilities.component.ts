@@ -57,7 +57,7 @@ export class FacilitiesComponent {
         return {
           title: service.title,
           description: service.description,
-          imageUrl: image ? `http://localhost:5232${image.src}` : '',
+          imageUrl: image ? `http://localhost:5234${image.src}` : '',
           imageAlt: image?.alt ?? service.title,
           animationClass: media.animationClass
         };

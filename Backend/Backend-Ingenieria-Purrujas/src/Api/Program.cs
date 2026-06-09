@@ -1,4 +1,5 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Application.Email;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
@@ -29,12 +30,12 @@ builder.Configuration.AddEnvironmentVariables();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ??
 [
-    "http://localhost:4200",
-    "https://localhost:4200",
-    "http://localhost:4201",
-    "https://localhost:4201",
-    "http://127.0.0.1:4200",
-    "http://127.0.0.1:4201"
+    "http://localhost:4203",
+    "https://localhost:4203",
+    "http://localhost:4204",
+    "https://localhost:4204",
+    "http://127.0.0.1:4203",
+    "http://127.0.0.1:4204"
 ];
 var allowedOriginsSet = new HashSet<string>(allowedOrigins, StringComparer.OrdinalIgnoreCase);
 var allowLocalDevelopmentOrigins = builder.Environment.IsDevelopment();
@@ -87,8 +88,10 @@ builder.Services.AddCors(options =>
 // Dependency Injection
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+builder.Services.AddScoped<IAdminAuditLogRepository, AdminAuditLogRepository>();
 builder.Services.AddScoped<IFacilitiesPageContentRepository, FacilitiesPageContentRepository>();
 // Repositorio del contenido editable de la pagina publica "Sobre Nosotros".
 builder.Services.AddScoped<IAboutUsPageContentRepository, AboutUsPageContentRepository>();

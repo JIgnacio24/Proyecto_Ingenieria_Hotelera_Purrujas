@@ -1,0 +1,5 @@
+*
+!Ingenieria_Purrujas_BD.sql
+!Dockerfile
+!docker-entrypoint.sh
+!sqlserver-healthcheck.sh

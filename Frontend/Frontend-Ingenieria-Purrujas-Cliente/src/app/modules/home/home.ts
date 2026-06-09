@@ -14,7 +14,7 @@ import {
   HomePageContent
 } from '../../services/home-content.service';
 
-const API_ASSET_BASE_URL = 'http://localhost:5232';
+const API_ASSET_BASE_URL = 'http://localhost:5234';
 const DEFAULT_HERO_IMAGE = '/images/foto_fondo.png';
 const HERO_OVERLAY = 'linear-gradient(160deg, rgba(26,58,42,0.82) 0%, rgba(45,106,79,0.65) 60%, rgba(82,183,136,0.3) 100%)';
 

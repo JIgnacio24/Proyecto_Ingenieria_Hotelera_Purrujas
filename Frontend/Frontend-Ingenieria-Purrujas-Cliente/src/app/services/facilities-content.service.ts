@@ -111,7 +111,7 @@ const DEFAULT_FACILITIES_PAGE_CONTENT: FacilitiesPageContent = {
 @Injectable({ providedIn: 'root' })
 export class FacilitiesContentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5232/api';
+  private readonly apiUrl = 'http://localhost:5234/api';
 
   getContent(): Observable<FacilitiesPageContent> {
     return this.http.get<FacilitiesPageContent>(`${this.apiUrl}/facilities-content`).pipe(

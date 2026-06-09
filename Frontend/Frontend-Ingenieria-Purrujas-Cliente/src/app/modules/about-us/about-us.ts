@@ -155,7 +155,7 @@ export class AboutUs implements OnInit, OnDestroy {
 
     this.galleryItems = images.map((image) => ({
       ...image,
-      src: `http://localhost:5232${image.src}`
+      src: `http://localhost:5234${image.src}`
     }));
 
     this.changeDetectorRef.detectChanges();

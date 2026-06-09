@@ -1,3 +1,6 @@
+using Backend_Ingenieria_Purrujas.Api.Extensions;
+using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -10,11 +13,13 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/admin/seasons")]
 public class SeasonsController : ControllerBase
 {
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly ISeasonRepository _seasonRepository;
 
-    public SeasonsController(ISeasonRepository seasonRepository)
+    public SeasonsController(ISeasonRepository seasonRepository, IAdminAuditLogService adminAuditLogService)
     {
         _seasonRepository = seasonRepository;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     // GET api/admin/seasons
@@ -53,6 +58,19 @@ public class SeasonsController : ControllerBase
             };
 
             var created = await _seasonRepository.CreateAsync(season, ct);
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Crear temporada",
+                AdminAuditDescriptionBuilder.Created(
+                    "Temporada",
+                    $"{created.Name} (ID {created.SeasonId})",
+                    [
+                        AdminAuditDescriptionBuilder.Value("porcentaje", created.PercentageChange),
+                        AdminAuditDescriptionBuilder.Value("fecha inicial", created.StartDate),
+                        AdminAuditDescriptionBuilder.Value("fecha final", created.EndDate)
+                    ]),
+                ct);
+
             return CreatedAtAction(nameof(GetById), new { id = created.SeasonId }, created);
         }
         catch (Exception ex) when (ex.Message.Contains("mayor o igual"))
@@ -75,6 +93,7 @@ public class SeasonsController : ControllerBase
 
         try
         {
+            var current = await _seasonRepository.GetByIdAsync(id, ct);
             var season = new Season
             {
                 SeasonId = id,
@@ -85,6 +104,19 @@ public class SeasonsController : ControllerBase
             };
 
             var updated = await _seasonRepository.UpdateAsync(season, ct);
+            if (current is not null && updated is not null)
+            {
+                await _adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Actualizar temporada",
+                    AdminAuditDescriptionBuilder.Updated(
+                        "Temporada",
+                        $"{current.Name} (ID {id})",
+                        current,
+                        updated),
+                    ct);
+            }
+
             return updated is null
                 ? NotFound(new { message = "Temporada no encontrada." })
                 : Ok(updated);
@@ -101,7 +133,19 @@ public class SeasonsController : ControllerBase
     {
         try
         {
-            await _seasonRepository.DeleteAsync(id, ct);
+            var current = await _seasonRepository.GetByIdAsync(id, ct);
+            var deleted = await _seasonRepository.DeleteAsync(id, ct);
+            if (deleted && current is not null)
+            {
+                await _adminAuditLogService.RecordForCurrentUserAsync(
+                    this,
+                    "Eliminar temporada",
+                    AdminAuditDescriptionBuilder.Deleted(
+                        "Temporada",
+                        $"{current.Name} (ID {id}), {current.StartDate:yyyy-MM-dd} a {current.EndDate:yyyy-MM-dd}, porcentaje {current.PercentageChange}"),
+                    ct);
+            }
+
             return NoContent();
         }
         catch (Exception ex)
