@@ -2,7 +2,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { AdminUser } from '../../core/auth.models';
@@ -23,7 +23,8 @@ import {
   RoomAvailabilityReportResponse,
   RoomAvailabilitySearchResult,
   RoomAvailabilityService,
-  RoomAvailabilitySummary
+  RoomAvailabilitySummary,
+  RoomTypeAvailabilityItem
 } from '../../core/room-availability.service';
 
 type DashboardMenuKey =
@@ -58,6 +59,14 @@ interface DashboardModuleCard {
   actionLabel?: string;
 }
 
+interface DashboardNavigationState {
+  adminFeedback?: {
+    tone: 'success' | 'error';
+    message: string;
+  };
+  [key: string]: unknown;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -67,6 +76,7 @@ interface DashboardModuleCard {
 })
 export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
   private readonly gettingThereContentService = inject(GettingThereContentService);
@@ -186,6 +196,15 @@ export class DashboardComponent implements AfterViewInit {
       actionLabel: 'Administrar tipos'
     },
     {
+      key: 'room-management',
+      title: 'Gestión de habitaciones',
+      status: 'Disponible',
+      description:
+        'Registra cada habitación física del hotel, asigna su tipo y cambia su estado operativo.',
+      link: '/panel/habitaciones',
+      actionLabel: 'Administrar habitaciones'
+    },
+    {
       key: 'seasons',
       title: 'Temporadas',
       status: 'Disponible',
@@ -214,6 +233,8 @@ export class DashboardComponent implements AfterViewInit {
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
+  readonly dashboardFeedback = signal('');
+  readonly dashboardFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly profile = signal<AdminUser | null>(this.authService.currentUser());
   readonly facilitiesLoading = signal(true);
   readonly facilitiesSaving = signal(false);
@@ -241,6 +262,7 @@ export class DashboardComponent implements AfterViewInit {
   availabilityEndDate = this.addDaysInputValue(1);
   availabilityRoomTypeId: number | null = null;
   constructor() {
+    this.consumeNavigationFeedback();
     void this.loadProfile();
     void this.loadFacilitiesContent();
     void this.loadGettingThereContent();
@@ -507,6 +529,42 @@ export class DashboardComponent implements AfterViewInit {
     }).format(value ?? 0);
   }
 
+  availabilityTypeItems(result: RoomAvailabilitySearchResult): RoomTypeAvailabilityItem[] {
+    return result.roomTypeAvailability.filter((item) => {
+      if (result.roomTypeId && item.roomTypeId === result.roomTypeId) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  availabilityEmptyMessage(result: RoomAvailabilitySearchResult): string {
+    const hasOtherAvailability = this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
+
+    if (result.roomTypeId && hasOtherAvailability) {
+      return 'No hay habitaciones disponibles de este tipo, pero existen habitaciones disponibles en otras categorías.';
+    }
+
+    if (result.roomTypeId) {
+      return `No hay habitaciones disponibles de ${result.roomTypeName} para el rango seleccionado.`;
+    }
+
+    return 'No hay habitaciones disponibles para esta consulta.';
+  }
+
+  availabilityDateSuggestionLabel(suggestion: RoomAvailabilitySearchResult['suggestedDateRanges'][number]): string {
+    return `${this.formatAvailabilityDate(suggestion.startDate)} - ${this.formatAvailabilityDate(suggestion.endDate)}`;
+  }
+
+  hasAvailableAlternatives(result: RoomAvailabilitySearchResult): boolean {
+    return this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
+  }
+
+  hasUnavailableTypeSummary(result: RoomAvailabilitySearchResult): boolean {
+    return this.availabilityTypeItems(result).length > 0;
+  }
+
   iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
     switch (icon) {
       case 'home':
@@ -557,6 +615,42 @@ export class DashboardComponent implements AfterViewInit {
     }
 
     return fallbackMessage;
+  }
+
+  private consumeNavigationFeedback(): void {
+    const state = this.currentNavigationState();
+    const feedback = state?.adminFeedback;
+
+    if (
+      !feedback ||
+      typeof feedback.message !== 'string' ||
+      (feedback.tone !== 'success' && feedback.tone !== 'error')
+    ) {
+      return;
+    }
+
+    this.dashboardFeedbackTone.set(feedback.tone);
+    this.dashboardFeedback.set(feedback.message);
+    this.clearNavigationFeedbackState();
+  }
+
+  private currentNavigationState(): DashboardNavigationState | null {
+    const state = this.router.getCurrentNavigation()?.extras.state
+      ?? this.document.defaultView?.history.state
+      ?? null;
+
+    return state as DashboardNavigationState | null;
+  }
+
+  private clearNavigationFeedbackState(): void {
+    const view = this.document.defaultView;
+
+    if (!view?.history.state) {
+      return;
+    }
+
+    const { adminFeedback, ...remainingState } = view.history.state as DashboardNavigationState;
+    view.history.replaceState(remainingState, this.document.title, view.location.href);
   }
 
   private applyFacilitiesContent(content: FacilitiesPageContent): void {

@@ -6,6 +6,13 @@ public sealed class RoomTypeOption
     public string Name { get; set; } = string.Empty;
 }
 
+public sealed class RoomTypeAvailabilityItem
+{
+    public int RoomTypeId { get; set; }
+    public string RoomTypeName { get; set; } = string.Empty;
+    public int AvailableRooms { get; set; }
+}
+
 public sealed class RoomStatusTodayItem
 {
     public int RoomId { get; set; }
@@ -41,6 +48,13 @@ public sealed class RoomAvailabilityItem
     public decimal TotalUsd { get; set; }
 }
 
+public sealed class RoomAvailabilityDateSuggestion
+{
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public int AvailableRooms { get; set; }
+}
+
 public sealed class RoomAvailabilitySearchResult
 {
     public DateOnly StartDate { get; set; }
@@ -49,4 +63,6 @@ public sealed class RoomAvailabilitySearchResult
     public string RoomTypeName { get; set; } = "Todos los tipos";
     public int AvailableRooms { get; set; }
     public IReadOnlyList<RoomAvailabilityItem> Rooms { get; set; } = [];
+    public IReadOnlyList<RoomTypeAvailabilityItem> RoomTypeAvailability { get; set; } = [];
+    public IReadOnlyList<RoomAvailabilityDateSuggestion> SuggestedDateRanges { get; set; } = [];
 }

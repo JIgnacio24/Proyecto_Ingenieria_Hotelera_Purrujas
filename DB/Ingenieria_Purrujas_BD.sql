@@ -60,7 +60,7 @@ GO
 
 CREATE TABLE Room (
     RoomId INT PRIMARY KEY IDENTITY,
-    RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+    RoomNumber NVARCHAR(50) NOT NULL,
     IsActive BIT NOT NULL DEFAULT 1,
     RoomTypeId INT NOT NULL,
     RoomStatusId INT NOT NULL,
@@ -876,6 +876,21 @@ BEGIN
             RoomStatusId = @RoomStatusId
         WHERE RoomId = @RoomId
           AND IsActive = 1;
+
+        SELECT
+            r.RoomId,
+            r.RoomNumber,
+            r.IsActive,
+            r.RoomTypeId,
+            rt.Name AS RoomTypeName,
+            r.RoomStatusId,
+            rs.Name AS RoomStatusName
+        FROM Room r
+        INNER JOIN RoomType rt ON r.RoomTypeId = rt.RoomTypeId
+        INNER JOIN RoomStatus rs ON r.RoomStatusId = rs.RoomStatusId
+        WHERE r.RoomId = @RoomId
+          AND r.IsActive = 1
+          AND rt.IsActive = 1;
 
         COMMIT;
     END TRY
@@ -2299,7 +2314,7 @@ IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
-        RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+        RoomNumber NVARCHAR(50) NOT NULL,
         IsActive BIT NOT NULL DEFAULT 1,
         RoomTypeId INT NOT NULL,
         RoomStatusId INT NOT NULL,
@@ -2353,11 +2368,11 @@ BEGIN
 END;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Habitacion Doble')
-    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Habitacion Doble', 95.00, 1);
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble')
+    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Habitación Doble', 95.00, 1);
 
-IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Suite Volcan')
-    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Suite Volcan', 135.00, 1);
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán')
+    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Suite Volcán', 135.00, 1);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Villa Familiar')
     INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Villa Familiar', 180.00, 1);
@@ -2386,8 +2401,8 @@ IF NOT EXISTS (SELECT 1 FROM dbo.ReservationStatus WHERE Name = N'Cancelada')
     INSERT INTO dbo.ReservationStatus (Name, Description, IsFinal) VALUES (N'Cancelada', N'Reserva cancelada.', 1);
 GO
 
-DECLARE @DoubleTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Habitacion Doble' ORDER BY RoomTypeId);
-DECLARE @SuiteTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Suite Volcan' ORDER BY RoomTypeId);
+DECLARE @DoubleTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble' ORDER BY RoomTypeId);
+DECLARE @SuiteTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán' ORDER BY RoomTypeId);
 DECLARE @VillaTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Villa Familiar' ORDER BY RoomTypeId);
 DECLARE @AvailableStatusId INT = (SELECT TOP 1 RoomStatusId FROM dbo.RoomStatus WHERE Name = N'Disponible' ORDER BY RoomStatusId);
 DECLARE @CleaningStatusId INT = (SELECT TOP 1 RoomStatusId FROM dbo.RoomStatus WHERE Name = N'Limpieza' ORDER BY RoomStatusId);
@@ -2628,13 +2643,40 @@ IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Room (
         RoomId INT IDENTITY(1,1) PRIMARY KEY,
-        RoomNumber NVARCHAR(50) NOT NULL UNIQUE,
+        RoomNumber NVARCHAR(50) NOT NULL,
         IsActive BIT NOT NULL DEFAULT 1,
         RoomTypeId INT NOT NULL,
         RoomStatusId INT NOT NULL,
         CONSTRAINT FK_Room_RoomType FOREIGN KEY (RoomTypeId) REFERENCES dbo.RoomType(RoomTypeId),
         CONSTRAINT FK_Room_RoomStatus FOREIGN KEY (RoomStatusId) REFERENCES dbo.RoomStatus(RoomStatusId)
     );
+END;
+GO
+
+IF OBJECT_ID(N'dbo.Room', N'U') IS NOT NULL
+BEGIN
+    DECLARE @DropRoomUniqueConstraintsSql NVARCHAR(MAX) = N'';
+
+    SELECT @DropRoomUniqueConstraintsSql = @DropRoomUniqueConstraintsSql +
+        N'ALTER TABLE dbo.Room DROP CONSTRAINT ' + QUOTENAME(kc.name) + N';'
+    FROM sys.key_constraints kc
+    WHERE kc.parent_object_id = OBJECT_ID(N'dbo.Room')
+      AND kc.type = N'UQ';
+
+    IF LEN(@DropRoomUniqueConstraintsSql) > 0
+        EXEC sp_executesql @DropRoomUniqueConstraintsSql;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.indexes
+        WHERE name = N'UX_Room_RoomNumber_Active'
+          AND object_id = OBJECT_ID(N'dbo.Room')
+    )
+    BEGIN
+        CREATE UNIQUE INDEX UX_Room_RoomNumber_Active
+            ON dbo.Room(RoomNumber)
+            WHERE IsActive = 1;
+    END
 END;
 GO
 
@@ -2682,11 +2724,11 @@ BEGIN
 END;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Habitacion Doble')
-    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Habitacion Doble', 95.00, 1);
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble')
+    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Habitación Doble', 95.00, 1);
 
-IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Suite Volcan')
-    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Suite Volcan', 135.00, 1);
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán')
+    INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Suite Volcán', 135.00, 1);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE Name = N'Villa Familiar')
     INSERT INTO dbo.RoomType (Name, BasePrice, IsActive) VALUES (N'Villa Familiar', 180.00, 1);
@@ -2715,8 +2757,8 @@ IF NOT EXISTS (SELECT 1 FROM dbo.ReservationStatus WHERE Name = N'Cancelada')
     INSERT INTO dbo.ReservationStatus (Name, Description, IsFinal) VALUES (N'Cancelada', N'Reserva cancelada.', 1);
 GO
 
-DECLARE @DoubleTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Habitacion Doble' ORDER BY RoomTypeId);
-DECLARE @SuiteTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Suite Volcan' ORDER BY RoomTypeId);
+DECLARE @DoubleTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble' ORDER BY RoomTypeId);
+DECLARE @SuiteTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán' ORDER BY RoomTypeId);
 DECLARE @VillaTypeId INT = (SELECT TOP 1 RoomTypeId FROM dbo.RoomType WHERE Name = N'Villa Familiar' ORDER BY RoomTypeId);
 DECLARE @AvailableStatusId INT = (SELECT TOP 1 RoomStatusId FROM dbo.RoomStatus WHERE Name = N'Disponible' ORDER BY RoomStatusId);
 DECLARE @CleaningStatusId INT = (SELECT TOP 1 RoomStatusId FROM dbo.RoomStatus WHERE Name = N'Limpieza' ORDER BY RoomStatusId);
@@ -2944,7 +2986,7 @@ SET Description = N'Habitación cómoda para dos personas con vista al jardín t
                   N'Incluye cama doble, baño privado con ducha de lluvia, aire acondicionado, ' +
                   N'TV de pantalla plana y conexión Wi-Fi de alta velocidad.',
     Capacity    = 2
-WHERE Name = N'Habitacion Doble'
+WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
   AND (Description IS NULL OR Description = N'');
 
 UPDATE dbo.RoomType
@@ -2952,7 +2994,7 @@ SET Description = N'Suite de lujo con vista privilegiada al Volcán Arenal. ' +
                   N'Cuenta con jacuzzi privado, sala de estar, cama king size, ' +
                   N'terraza panorámica, minibar y servicio de mayordomo incluido.',
     Capacity    = 3
-WHERE Name = N'Suite Volcan'
+WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
   AND (Description IS NULL OR Description = N'');
 
 UPDATE dbo.RoomType
@@ -2962,4 +3004,163 @@ SET Description = N'Amplia villa diseñada para familias o grupos. ' +
     Capacity    = 6
 WHERE Name = N'Villa Familiar'
   AND (Description IS NULL OR Description = N'');
+GO
+
+-- Limpieza idempotente de tipos de habitación duplicados por variaciones de acento.
+-- Conserva un único registro activo por tipo, reasigna referencias y normaliza el nombre visible.
+
+DECLARE @CanonicalRoomTypeId INT;
+
+SET @CanonicalRoomTypeId = (
+    SELECT TOP 1 RoomTypeId
+    FROM dbo.RoomType
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+    ORDER BY CASE WHEN Name = N'Habitación Doble' THEN 0 ELSE 1 END, RoomTypeId
+);
+
+IF @CanonicalRoomTypeId IS NOT NULL
+BEGIN
+    UPDATE dbo.Room
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+    );
+
+    UPDATE dbo.Promotion
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+    );
+
+    UPDATE dbo.RoomTypeFeature
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+    );
+
+    UPDATE dbo.RoomTypeImage
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+    );
+
+    UPDATE dbo.RoomType
+    SET Name = N'Habitación Doble',
+        IsActive = CASE WHEN RoomTypeId = @CanonicalRoomTypeId THEN 1 ELSE 0 END
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble';
+END
+
+SET @CanonicalRoomTypeId = (
+    SELECT TOP 1 RoomTypeId
+    FROM dbo.RoomType
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+    ORDER BY CASE WHEN Name = N'Suite Volcán' THEN 0 ELSE 1 END, RoomTypeId
+);
+
+IF @CanonicalRoomTypeId IS NOT NULL
+BEGIN
+    UPDATE dbo.Room
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+    );
+
+    UPDATE dbo.Promotion
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+    );
+
+    UPDATE dbo.RoomTypeFeature
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+    );
+
+    UPDATE dbo.RoomTypeImage
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+    );
+
+    UPDATE dbo.RoomType
+    SET Name = N'Suite Volcán',
+        IsActive = CASE WHEN RoomTypeId = @CanonicalRoomTypeId THEN 1 ELSE 0 END
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán';
+END
+
+SET @CanonicalRoomTypeId = (
+    SELECT TOP 1 RoomTypeId
+    FROM dbo.RoomType
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+    ORDER BY RoomTypeId
+);
+
+IF @CanonicalRoomTypeId IS NOT NULL
+BEGIN
+    UPDATE dbo.Room
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+    );
+
+    UPDATE dbo.Promotion
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+    );
+
+    UPDATE dbo.RoomTypeFeature
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+    );
+
+    UPDATE dbo.RoomTypeImage
+    SET RoomTypeId = @CanonicalRoomTypeId
+    WHERE RoomTypeId IN (
+        SELECT RoomTypeId
+        FROM dbo.RoomType
+        WHERE RoomTypeId <> @CanonicalRoomTypeId
+          AND Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+    );
+
+    UPDATE dbo.RoomType
+    SET Name = N'Villa Familiar',
+        IsActive = CASE WHEN RoomTypeId = @CanonicalRoomTypeId THEN 1 ELSE 0 END
+    WHERE Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar';
+END
 GO

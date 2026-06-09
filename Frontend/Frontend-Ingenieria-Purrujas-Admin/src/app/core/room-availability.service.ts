@@ -40,6 +40,18 @@ export interface RoomAvailabilityItem {
   totalUsd: number;
 }
 
+export interface RoomTypeAvailabilityItem {
+  roomTypeId: number;
+  roomTypeName: string;
+  availableRooms: number;
+}
+
+export interface RoomAvailabilityDateSuggestion {
+  startDate: string;
+  endDate: string;
+  availableRooms: number;
+}
+
 export interface RoomAvailabilitySearchResult {
   startDate: string;
   endDate: string;
@@ -47,6 +59,8 @@ export interface RoomAvailabilitySearchResult {
   roomTypeName: string;
   availableRooms: number;
   rooms: RoomAvailabilityItem[];
+  roomTypeAvailability: RoomTypeAvailabilityItem[];
+  suggestedDateRanges: RoomAvailabilityDateSuggestion[];
 }
 
 export interface RoomAvailabilityReportResponse {

@@ -53,7 +53,7 @@ export class RoomTypesComponent {
 
     try {
       const roomTypes = await firstValueFrom(this.roomTypesService.getAll());
-      this.roomTypes.set(roomTypes);
+      this.roomTypes.set(this.dedupeRoomTypes(roomTypes));
     } catch (error) {
       this.feedbackTone.set('error');
       this.feedback.set(this.resolveError(error, 'No fue posible cargar los tipos de habitación.'));
@@ -179,6 +179,18 @@ export class RoomTypesComponent {
       ? current.map(item => item.roomTypeId === roomType.roomTypeId ? roomType : item)
       : [...current, roomType];
     this.roomTypes.set(next.sort((a, b) => a.name.localeCompare(b.name)));
+  }
+
+  private dedupeRoomTypes(roomTypes: RoomTypeDetail[]): RoomTypeDetail[] {
+    const seen = new Set<string>();
+    return roomTypes.filter(roomType => {
+      const key = roomType.name.trim().toLowerCase();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
   private clearFeedback(): void {

@@ -73,6 +73,18 @@
     <p class="feedback">{{ errorMessage() }}</p>
   }
 
+  @if (dashboardFeedback()) {
+    <p
+      class="feedback"
+      [class.success-feedback]="dashboardFeedbackTone() === 'success'"
+      [class.error-feedback]="dashboardFeedbackTone() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >
+      {{ dashboardFeedback() }}
+    </p>
+  }
+
   <div class="dashboard-grid">
     <section id="dashboard-home" class="hero-card dashboard-section">
       <div class="hero-media" aria-hidden="true"></div>
@@ -189,6 +201,10 @@
           >
             {{ availabilityReportBusy() ? 'Generando PDF...' : 'Ver reporte PDF' }}
           </button>
+
+          <a class="secondary-button" routerLink="/panel/habitaciones">
+            Gestionar habitaciones
+          </a>
         </div>
       </div>
 
@@ -320,28 +336,68 @@
               <strong>{{ result.availableRooms }} disponibles</strong>
             </div>
 
-            <div class="availability-result-grid">
-              @for (room of result.rooms; track room.roomId) {
-                <article class="available-room-card">
-                  <span>Habitación {{ room.roomNumber }}</span>
-                  <strong>{{ room.roomTypeName }}</strong>
-                  <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
-                  <small>
-                    {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
-                    · {{ formatUsd(room.basePricePerNight) }} base/noche
-                  </small>
-                  @if (room.highSeasonNights > 0) {
+            @if (result.availableRooms > 0) {
+              <div class="availability-result-grid">
+                @for (room of result.rooms; track room.roomId) {
+                  <article class="available-room-card">
+                    <span>Habitación {{ room.roomNumber }}</span>
+                    <strong>{{ room.roomTypeName }}</strong>
+                    <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
                     <small>
-                      {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
-                      con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
+                      {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
+                      · {{ formatUsd(room.basePricePerNight) }} base/noche
                     </small>
+                    @if (room.highSeasonNights > 0) {
+                      <small>
+                        {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
+                        con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
+                      </small>
+                    }
+                    <small>{{ room.operationalStatus }}</small>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="empty-state">{{ availabilityEmptyMessage(result) }}</p>
+
+              @if (hasUnavailableTypeSummary(result)) {
+                <div class="section-head">
+                  <p>Disponibilidad por tipo</p>
+                  <span>Resumen del mismo rango consultado.</span>
+                </div>
+
+                <div class="availability-result-grid">
+                  @for (roomType of availabilityTypeItems(result); track roomType.roomTypeId) {
+                    <article class="available-room-card">
+                      <span>{{ roomType.roomTypeName }}</span>
+                      <strong>{{ roomType.availableRooms }}</strong>
+                      <small>
+                        {{ roomType.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}
+                      </small>
+                    </article>
                   }
-                  <small>{{ room.operationalStatus }}</small>
-                </article>
-              } @empty {
-                <p class="empty-state">No hay habitaciones disponibles para esa consulta.</p>
+                </div>
               }
-            </div>
+
+              @if (result.suggestedDateRanges.length > 0) {
+                <div class="section-head">
+                  <p>Fechas cercanas con disponibilidad</p>
+                  <span>Sugerencias calculadas con la misma lógica operativa.</span>
+                </div>
+
+                <div class="availability-result-grid">
+                  @for (suggestion of result.suggestedDateRanges; track suggestion.startDate + '-' + suggestion.endDate) {
+                    <article class="available-room-card">
+                      <strong>{{ availabilityDateSuggestionLabel(suggestion) }}</strong>
+                      <span>
+                        {{ suggestion.availableRooms }}
+                        {{ suggestion.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}
+                      </span>
+                    </article>
+                  }
+                </div>
+              }
+            }
           </div>
         }
       } @else {
@@ -641,14 +697,68 @@
       </form>
     </section>
 
-    <section id="dashboard-rooms" class="modules-card dashboard-section">
+    <section id="dashboard-rooms" class="availability-search rooms-hub dashboard-section">
       <div class="editor-header">
         <div class="section-head">
-          <p>Módulos del menú</p>
-          <span>Accesos rápidos a vistas adicionales del panel y módulos pendientes de ampliar.</span>
+          <p>Gestión de habitaciones</p>
+          <span>Acceso directo al listado, edición y disponibilidad del inventario del hotel.</span>
         </div>
 
+        <div class="editor-toolbar">
+          <a class="secondary-button" routerLink="/panel/tipos-habitacion">
+            Tipos de habitación
+          </a>
+          <a class="primary-button" routerLink="/panel/habitaciones">
+            Administrar habitaciones
+          </a>
+        </div>
       </div>
+
+      @if (roomAvailabilitySummary(); as summary) {
+        <div class="section-head">
+          <p>Resumen operativo</p>
+          <span>Usa esta vista como punto de entrada para revisar el estado actual y abrir la gestión completa.</span>
+        </div>
+
+        <h2>Estado actual del inventario</h2>
+
+        <div class="availability-metrics rooms-hub__stats">
+          <article>
+            <span>Total</span>
+            <strong>{{ summary.totalRooms }}</strong>
+          </article>
+          <article>
+            <span>Disponibles</span>
+            <strong>{{ summary.availableRooms }}</strong>
+          </article>
+          <article>
+            <span>Ocupadas</span>
+            <strong>{{ summary.occupiedRooms }}</strong>
+          </article>
+          <article>
+            <span>Fuera de servicio</span>
+            <strong>{{ summary.outOfServiceRooms }}</strong>
+          </article>
+        </div>
+
+        <div class="availability-actions rooms-hub__actions">
+          <a class="secondary-button" routerLink="/panel/reservas">Ir a reservas</a>
+          <a class="secondary-button" routerLink="/panel/tipos-habitacion">Tipos de habitación</a>
+          <a class="primary-button" routerLink="/panel/habitaciones">Abrir gestión</a>
+        </div>
+      } @else {
+        <div class="section-head">
+          <p>Resumen operativo</p>
+          <span>Activa el backend para ver el inventario y abrir la gestión de habitaciones.</span>
+        </div>
+
+        <h2>No hay datos de habitaciones aún</h2>
+
+        <div class="availability-actions rooms-hub__actions">
+          <a class="primary-button" routerLink="/panel/habitaciones">Abrir gestión</a>
+          <a class="secondary-button" routerLink="/panel/tipos-habitacion">Ver tipos</a>
+        </div>
+      }
 
       <div class="modules-grid">
         @for (module of moduleCards; track module.key) {
@@ -678,7 +788,6 @@
           }
         }
       </div>
-
     </section>
   </div>
 
