@@ -143,7 +143,7 @@
       </dl>
     </section>
 
-    <section id="dashboard-status" class="summary-card dashboard-section">
+        <section id="dashboard-status" class="summary-card dashboard-section">
       <div class="section-head">
         <p>Estado actual</p>
         <span>Resumen del entorno interno</span>
@@ -167,244 +167,13 @@
       </div>
     </section>
 
-    <section id="dashboard-availability" class="availability-card dashboard-section">
-      <div class="availability-header">
-        <div class="section-head">
-          <p>Disponibilidad de habitaciones</p>
-          <span>Estado operativo del día actual y consulta por fecha desde la base de datos.</span>
-        </div>
-
-        <div class="availability-actions">
-          <button
-            type="button"
-            class="secondary-button"
-            (click)="loadRoomAvailabilityToday()"
-            [disabled]="availabilityLoading() || availabilityReportBusy()"
-          >
-            {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
-          </button>
-
-          <button
-            type="button"
-            class="secondary-button"
-            (click)="downloadRoomAvailabilityReport()"
-            [disabled]="availabilityLoading() || availabilityReportBusy()"
-          >
-            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Descargar PDF' }}
-          </button>
-
-          <button
-            type="button"
-            class="primary-button"
-            (click)="openRoomAvailabilityReportPreview()"
-            [disabled]="availabilityLoading() || availabilityReportBusy()"
-          >
-            {{ availabilityReportBusy() ? 'Generando PDF...' : 'Ver reporte PDF' }}
-          </button>
-
-          <a class="secondary-button" routerLink="/panel/habitaciones">
-            Gestionar habitaciones
-          </a>
-        </div>
+    <!-- ── Métricas del hotel ─────────────────────────────────────────── -->
+    <section id="dashboard-metrics" class="metrics-card dashboard-section">
+      <div class="section-head">
+        <p>Métricas del hotel</p>
+        <span>Indicadores operativos y análisis de movimientos</span>
       </div>
-
-      @if (availabilityFeedback()) {
-        <p
-          class="form-feedback"
-          [class.success-feedback]="availabilityFeedbackTone() === 'success'"
-          [class.error-feedback]="availabilityFeedbackTone() === 'error'"
-        >
-          {{ availabilityFeedback() }}
-        </p>
-      }
-
-      @if (roomAvailabilitySummary(); as summary) {
-        <div class="availability-hero">
-          <div>
-            <span class="availability-date">{{ formatAvailabilityDate(summary.date) }}</span>
-            <h2>Estado del hotel hoy</h2>
-          </div>
-          <div class="availability-total">
-            <strong>{{ summary.availableRooms }}</strong>
-            <span>disponibles de {{ summary.totalRooms }}</span>
-          </div>
-        </div>
-
-        <div class="availability-metrics">
-          <article>
-            <span>Disponibles</span>
-            <strong>{{ summary.availableRooms }}</strong>
-          </article>
-          <article>
-            <span>Ocupadas</span>
-            <strong>{{ summary.occupiedRooms }}</strong>
-          </article>
-          <article>
-            <span>Fuera de servicio</span>
-            <strong>{{ summary.outOfServiceRooms }}</strong>
-          </article>
-        </div>
-
-        <div class="availability-table-wrap">
-          <table class="availability-table">
-            <thead>
-              <tr>
-                <th>Habitación</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Huésped actual</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (room of summary.rooms; track room.roomId) {
-                <tr>
-                  <td>{{ room.roomNumber }}</td>
-                  <td>{{ room.roomTypeName }}</td>
-                  <td>
-                    <span class="room-status" [ngClass]="statusClass(room.statusName)">
-                      {{ room.statusName }}
-                    </span>
-                  </td>
-                  <td>{{ room.currentGuest || 'Sin huésped' }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4">No hay habitaciones registradas.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <form class="availability-search" (ngSubmit)="searchRoomAvailability()">
-          <div class="section-head">
-            <p>Consultar disponibilidad</p>
-            <span>Filtra habitaciones disponibles por rango de fechas y tipo.</span>
-          </div>
-
-          <div class="availability-search-grid">
-            <label class="field">
-              <span>Fecha de llegada</span>
-              <input
-                type="date"
-                name="availabilityStartDate"
-                [(ngModel)]="availabilityStartDate"
-                [disabled]="availabilitySearching()"
-              />
-            </label>
-
-            <label class="field">
-              <span>Fecha de salida</span>
-              <input
-                type="date"
-                name="availabilityEndDate"
-                [(ngModel)]="availabilityEndDate"
-                [disabled]="availabilitySearching()"
-              />
-            </label>
-
-            <label class="field">
-              <span>Tipo de habitación</span>
-              <select
-                name="availabilityRoomTypeId"
-                [(ngModel)]="availabilityRoomTypeId"
-                [disabled]="availabilitySearching()"
-              >
-                <option [ngValue]="null">Todos los tipos</option>
-                @for (roomType of summary.roomTypes; track roomType.roomTypeId) {
-                  <option [ngValue]="roomType.roomTypeId">{{ roomType.name }}</option>
-                }
-              </select>
-            </label>
-
-            <button type="submit" class="primary-button" [disabled]="availabilitySearching()">
-              {{ availabilitySearching() ? 'Consultando...' : 'Consultar' }}
-            </button>
-          </div>
-        </form>
-
-        @if (availabilitySearchResult(); as result) {
-          <div class="availability-results">
-            <div class="results-head">
-              <div>
-                <p>Resultado</p>
-                <span>
-                  {{ formatAvailabilityDate(result.startDate) }} - {{ formatAvailabilityDate(result.endDate) }}
-                  · {{ result.roomTypeName }}
-                </span>
-              </div>
-              <strong>{{ result.availableRooms }} disponibles</strong>
-            </div>
-
-            @if (result.availableRooms > 0) {
-              <div class="availability-result-grid">
-                @for (room of result.rooms; track room.roomId) {
-                  <article class="available-room-card">
-                    <span>Habitación {{ room.roomNumber }}</span>
-                    <strong>{{ room.roomTypeName }}</strong>
-                    <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
-                    <small>
-                      {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
-                      · {{ formatUsd(room.basePricePerNight) }} base/noche
-                    </small>
-                    @if (room.highSeasonNights > 0) {
-                      <small>
-                        {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
-                        con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
-                      </small>
-                    }
-                    <small>{{ room.operationalStatus }}</small>
-                  </article>
-                }
-              </div>
-            } @else {
-              <p class="empty-state">{{ availabilityEmptyMessage(result) }}</p>
-
-              @if (hasUnavailableTypeSummary(result)) {
-                <div class="section-head">
-                  <p>Disponibilidad por tipo</p>
-                  <span>Resumen del mismo rango consultado.</span>
-                </div>
-
-                <div class="availability-result-grid">
-                  @for (roomType of availabilityTypeItems(result); track roomType.roomTypeId) {
-                    <article class="available-room-card">
-                      <span>{{ roomType.roomTypeName }}</span>
-                      <strong>{{ roomType.availableRooms }}</strong>
-                      <small>
-                        {{ roomType.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}
-                      </small>
-                    </article>
-                  }
-                </div>
-              }
-
-              @if (result.suggestedDateRanges.length > 0) {
-                <div class="section-head">
-                  <p>Fechas cercanas con disponibilidad</p>
-                  <span>Sugerencias calculadas con la misma lógica operativa.</span>
-                </div>
-
-                <div class="availability-result-grid">
-                  @for (suggestion of result.suggestedDateRanges; track suggestion.startDate + '-' + suggestion.endDate) {
-                    <article class="available-room-card">
-                      <strong>{{ availabilityDateSuggestionLabel(suggestion) }}</strong>
-                      <span>
-                        {{ suggestion.availableRooms }}
-                        {{ suggestion.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}
-                      </span>
-                    </article>
-                  }
-                </div>
-              }
-            }
-          </div>
-        }
-      } @else {
-        <p class="loading-state">
-          {{ availabilityLoading() ? 'Cargando disponibilidad de habitaciones...' : 'Sin datos de disponibilidad.' }}
-        </p>
-      }
+      <app-analytics [embedded]="true" />
     </section>
 
     <section id="dashboard-content" class="editor-card dashboard-section">
@@ -697,74 +466,16 @@
       </form>
     </section>
 
-    <section id="dashboard-rooms" class="availability-search rooms-hub dashboard-section">
-      <div class="editor-header">
-        <div class="section-head">
-          <p>Gestión de habitaciones</p>
-          <span>Acceso directo al listado, edición y disponibilidad del inventario del hotel.</span>
-        </div>
-
-        <div class="editor-toolbar">
-          <a class="secondary-button" routerLink="/panel/tipos-habitacion">
-            Tipos de habitación
-          </a>
-          <a class="primary-button" routerLink="/panel/habitaciones">
-            Administrar habitaciones
-          </a>
-        </div>
+    <section id="dashboard-rooms" class="editor-card dashboard-section">
+      <div class="section-head">
+        <p>Módulos del menú</p>
       </div>
 
-      @if (roomAvailabilitySummary(); as summary) {
-        <div class="section-head">
-          <p>Resumen operativo</p>
-          <span>Usa esta vista como punto de entrada para revisar el estado actual y abrir la gestión completa.</span>
-        </div>
-
-        <h2>Estado actual del inventario</h2>
-
-        <div class="availability-metrics rooms-hub__stats">
-          <article>
-            <span>Total</span>
-            <strong>{{ summary.totalRooms }}</strong>
-          </article>
-          <article>
-            <span>Disponibles</span>
-            <strong>{{ summary.availableRooms }}</strong>
-          </article>
-          <article>
-            <span>Ocupadas</span>
-            <strong>{{ summary.occupiedRooms }}</strong>
-          </article>
-          <article>
-            <span>Fuera de servicio</span>
-            <strong>{{ summary.outOfServiceRooms }}</strong>
-          </article>
-        </div>
-
-        <div class="availability-actions rooms-hub__actions">
-          <a class="secondary-button" routerLink="/panel/reservas">Ir a reservas</a>
-          <a class="secondary-button" routerLink="/panel/tipos-habitacion">Tipos de habitación</a>
-          <a class="primary-button" routerLink="/panel/habitaciones">Abrir gestión</a>
-        </div>
-      } @else {
-        <div class="section-head">
-          <p>Resumen operativo</p>
-          <span>Activa el backend para ver el inventario y abrir la gestión de habitaciones.</span>
-        </div>
-
-        <h2>No hay datos de habitaciones aún</h2>
-
-        <div class="availability-actions rooms-hub__actions">
-          <a class="primary-button" routerLink="/panel/habitaciones">Abrir gestión</a>
-          <a class="secondary-button" routerLink="/panel/tipos-habitacion">Ver tipos</a>
-        </div>
-      }
-
-      <div class="modules-grid">
-        @for (module of moduleCards; track module.key) {
-          @if (module.link) {
+      <div class="modules-group">
+        <p class="modules-group__label">Edición de contenido</p>
+        <div class="modules-grid">
+          @for (module of editingModuleCards; track module.key) {
             <a
-              [id]="moduleSectionId(module.key)"
               class="module-card module-card--link dashboard-section"
               [routerLink]="module.link"
             >
@@ -772,21 +483,42 @@
                 <h3>{{ module.title }}</h3>
                 <span class="module-status">{{ module.status }}</span>
               </div>
-
               <p>{{ module.description }}</p>
               <span class="module-action">{{ module.actionLabel }}</span>
             </a>
-          } @else {
-            <article [id]="moduleSectionId(module.key)" class="module-card dashboard-section">
-              <div class="module-card__head">
-                <h3>{{ module.title }}</h3>
-                <span class="module-status">{{ module.status }}</span>
-              </div>
-
-              <p>{{ module.description }}</p>
-            </article>
           }
-        }
+        </div>
+      </div>
+
+      <div class="modules-divider" aria-hidden="true"></div>
+
+      <div class="modules-group">
+        <p class="modules-group__label">Administración</p>
+        <div class="modules-grid">
+          @for (module of adminModuleCards; track module.key) {
+            @if (module.link) {
+              <a
+                class="module-card module-card--link dashboard-section"
+                [routerLink]="module.link"
+              >
+                <div class="module-card__head">
+                  <h3>{{ module.title }}</h3>
+                  <span class="module-status">{{ module.status }}</span>
+                </div>
+                <p>{{ module.description }}</p>
+                <span class="module-action">{{ module.actionLabel }}</span>
+              </a>
+            } @else {
+              <article class="module-card dashboard-section">
+                <div class="module-card__head">
+                  <h3>{{ module.title }}</h3>
+                  <span class="module-status">{{ module.status }}</span>
+                </div>
+                <p>{{ module.description }}</p>
+              </article>
+            }
+          }
+        </div>
       </div>
     </section>
   </div>

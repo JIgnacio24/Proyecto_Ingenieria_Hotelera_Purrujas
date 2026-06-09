@@ -1,0 +1,300 @@
+<div class="analytics-page" [class.analytics-page--embedded]="embedded()">
+
+  @if (!embedded()) {
+    <!-- HEADER — solo en página completa -->
+    <header class="page-header">
+      <div class="header-left">
+        <a routerLink="/panel" class="back-link">← Panel</a>
+        <h1 class="page-title">Métricas del Hotel</h1>
+      </div>
+      <div class="header-right">
+        <p class="page-subtitle">Indicadores operativos y análisis de movimientos del hotel.</p>
+        <button type="button" class="refresh-btn" (click)="load()" [disabled]="loading()">
+          @if (loading()) { Cargando... } @else { Actualizar }
+        </button>
+      </div>
+    </header>
+  } @else {
+    <!-- Modo embebido: solo botón de actualizar -->
+    <div class="embedded-actions">
+      <button type="button" class="refresh-btn" (click)="load()" [disabled]="loading()">
+        {{ loading() ? 'Cargando...' : 'Actualizar' }}
+      </button>
+    </div>
+  }
+
+  <!-- ERROR -->
+  @if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+  }
+
+  <!-- SKELETON -->
+  @if (loading()) {
+    <div class="skeleton-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-kpi"></div>
+      }
+    </div>
+    <div class="skeleton-grid skeleton-grid--charts">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-chart"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error() && metrics()) {
+
+    <!-- KPI CARDS -->
+    <section class="kpi-row" aria-label="Indicadores principales">
+
+      <div class="kpi-card kpi-card--green">
+        <p class="kpi-label">Reservas este mes</p>
+        <p class="kpi-value">{{ metrics()!.kpi.reservationsThisMonth }}</p>
+        <p class="kpi-sub">{{ metrics()!.kpi.confirmedThisMonth }} confirmadas</p>
+      </div>
+
+      <div class="kpi-card kpi-card--blue">
+        <p class="kpi-label">Ingresos del mes</p>
+        <p class="kpi-value">{{ formatUsd(metrics()!.kpi.revenueThisMonthUsd) }}</p>
+        <p class="kpi-sub">Solo reservas confirmadas</p>
+      </div>
+
+      <div class="kpi-card kpi-card--amber">
+        <p class="kpi-label">Habitaciones disponibles</p>
+        <p class="kpi-value">{{ metrics()!.kpi.availableRooms }} / {{ metrics()!.kpi.totalRooms }}</p>
+        <p class="kpi-sub">{{ metrics()!.kpi.occupiedRooms }} ocupadas hoy</p>
+      </div>
+
+      <div class="kpi-card kpi-card--teal">
+        <p class="kpi-label">Tasa de ocupación</p>
+        <p class="kpi-value">{{ occupancyRate() }}%</p>
+        <p class="kpi-sub">Basado en estado actual</p>
+      </div>
+
+    </section>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="charts-grid">
+
+      <!-- Reservaciones por mes -->
+      <div class="chart-card">
+        <h2 class="chart-title">Reservaciones por mes</h2>
+        <p class="chart-subtitle">Últimos 6 meses — todas las reservas activas</p>
+
+        @if (reservationBars().length > 0) {
+          <div class="chart-wrapper">
+            <svg
+              [attr.viewBox]="'0 -20 ' + svgWidth(reservationBars().length) + ' ' + (svgHeight() + 36)"
+              class="bar-svg"
+              role="img"
+              aria-label="Gráfico de barras: reservaciones por mes"
+            >
+              @for (bar of reservationBars(); track bar.label) {
+                <g>
+                  <rect
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.y"
+                    [attr.width]="bar.width"
+                    [attr.height]="bar.height"
+                    rx="4"
+                    class="bar bar--green"
+                  />
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="bar.y - 5"
+                    class="bar-value"
+                    text-anchor="middle"
+                  >{{ bar.formattedValue }}</text>
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="svgHeight() + 16"
+                    class="bar-label"
+                    text-anchor="middle"
+                  >{{ bar.label }}</text>
+                </g>
+              }
+            </svg>
+          </div>
+        } @else {
+          <p class="empty-chart">Sin datos disponibles.</p>
+        }
+      </div>
+
+      <!-- Estado de reservaciones (donut) -->
+      <div class="chart-card">
+        <h2 class="chart-title">Estado de reservaciones</h2>
+        <p class="chart-subtitle">Distribución actual de reservas activas</p>
+
+        @if (statusSegments().length > 0) {
+          <div class="donut-wrapper">
+            <svg viewBox="0 0 100 100" class="donut-svg" role="img" aria-label="Gráfico de distribución de estados">
+              <!-- Fondo del donut -->
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="18" />
+              @for (seg of statusSegments(); track seg.label) {
+                <circle
+                  cx="50" cy="50" r="40"
+                  fill="none"
+                  [attr.stroke]="seg.color"
+                  stroke-width="18"
+                  [attr.stroke-dasharray]="seg.strokeDasharray"
+                  [attr.transform]="'rotate(' + seg.rotation + ' 50 50)'"
+                />
+              }
+              <!-- Texto central -->
+              <text x="50" y="47" class="donut-center-label" text-anchor="middle">Total</text>
+              <text x="50" y="58" class="donut-center-value" text-anchor="middle">{{ totalReservations() }}</text>
+            </svg>
+            <ul class="donut-legend">
+              @for (seg of statusSegments(); track seg.label) {
+                <li class="legend-item">
+                  <span class="legend-dot" [style.background]="seg.color"></span>
+                  <span class="legend-label">{{ seg.label }}</span>
+                  <span class="legend-count">{{ seg.count }} ({{ seg.percentage }}%)</span>
+                </li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <p class="empty-chart">Sin datos disponibles.</p>
+        }
+      </div>
+
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="charts-grid">
+
+      <!-- Ingresos por mes -->
+      <div class="chart-card">
+        <h2 class="chart-title">Ingresos confirmados por mes (USD)</h2>
+        <p class="chart-subtitle">Últimos 6 meses — solo reservas confirmadas</p>
+
+        @if (revenueBars().length > 0) {
+          <div class="chart-wrapper">
+            <svg
+              [attr.viewBox]="'0 -20 ' + svgWidth(revenueBars().length) + ' ' + (svgHeight() + 36)"
+              class="bar-svg"
+              role="img"
+              aria-label="Gráfico de barras: ingresos por mes"
+            >
+              @for (bar of revenueBars(); track bar.label) {
+                <g>
+                  <rect
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.y"
+                    [attr.width]="bar.width"
+                    [attr.height]="bar.height"
+                    rx="4"
+                    class="bar bar--blue"
+                  />
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="bar.y - 5"
+                    class="bar-value"
+                    text-anchor="middle"
+                  >{{ bar.formattedValue }}</text>
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="svgHeight() + 16"
+                    class="bar-label"
+                    text-anchor="middle"
+                  >{{ bar.label }}</text>
+                </g>
+              }
+            </svg>
+          </div>
+        } @else {
+          <p class="empty-chart">Sin datos disponibles.</p>
+        }
+      </div>
+
+      <!-- Estado de habitaciones (donut) -->
+      <div class="chart-card">
+        <h2 class="chart-title">Estado de habitaciones</h2>
+        <p class="chart-subtitle">Distribución actual de habitaciones activas</p>
+
+        @if (roomStatusSegments().length > 0) {
+          <div class="donut-wrapper">
+            <svg viewBox="0 0 100 100" class="donut-svg" role="img" aria-label="Gráfico de estado de habitaciones">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="18" />
+              @for (seg of roomStatusSegments(); track seg.label) {
+                <circle
+                  cx="50" cy="50" r="40"
+                  fill="none"
+                  [attr.stroke]="seg.color"
+                  stroke-width="18"
+                  [attr.stroke-dasharray]="seg.strokeDasharray"
+                  [attr.transform]="'rotate(' + seg.rotation + ' 50 50)'"
+                />
+              }
+              <text x="50" y="47" class="donut-center-label" text-anchor="middle">Total</text>
+              <text x="50" y="58" class="donut-center-value" text-anchor="middle">
+                {{ metrics()!.roomStatus.total }}
+              </text>
+            </svg>
+            <ul class="donut-legend">
+              @for (seg of roomStatusSegments(); track seg.label) {
+                <li class="legend-item">
+                  <span class="legend-dot" [style.background]="seg.color"></span>
+                  <span class="legend-label">{{ seg.label }}</span>
+                  <span class="legend-count">{{ seg.count }} ({{ seg.percentage }}%)</span>
+                </li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <p class="empty-chart">Sin datos disponibles.</p>
+        }
+      </div>
+
+    </div>
+
+    <!-- CHARTS ROW 3: Tipos de habitación -->
+    <div class="charts-grid charts-grid--full">
+      <div class="chart-card">
+        <h2 class="chart-title">Reservaciones por tipo de habitación</h2>
+        <p class="chart-subtitle">Top 5 tipos de habitación según número de reservas históricas</p>
+
+        @if (roomTypeBars().length > 0) {
+          <div class="chart-wrapper chart-wrapper--centered">
+            <svg
+              [attr.viewBox]="'0 -20 ' + svgWidth(roomTypeBars().length) + ' ' + (svgHeight() + 48)"
+              class="bar-svg bar-svg--wide"
+              role="img"
+              aria-label="Gráfico de barras: reservaciones por tipo de habitación"
+            >
+              @for (bar of roomTypeBars(); track bar.label) {
+                <g>
+                  <rect
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.y"
+                    [attr.width]="bar.width"
+                    [attr.height]="bar.height"
+                    rx="4"
+                    class="bar bar--teal"
+                  />
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="bar.y - 5"
+                    class="bar-value"
+                    text-anchor="middle"
+                  >{{ bar.formattedValue }}</text>
+                  <text
+                    [attr.x]="bar.x + bar.width / 2"
+                    [attr.y]="svgHeight() + 16"
+                    class="bar-label bar-label--wrap"
+                    text-anchor="middle"
+                  >{{ bar.label }}</text>
+                </g>
+              }
+            </svg>
+          </div>
+        } @else {
+          <p class="empty-chart">Sin datos disponibles.</p>
+        }
+      </div>
+    </div>
+
+  }
+
+</div>

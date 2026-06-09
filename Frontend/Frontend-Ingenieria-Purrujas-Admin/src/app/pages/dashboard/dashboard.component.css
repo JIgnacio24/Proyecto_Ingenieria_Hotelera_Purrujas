@@ -578,6 +578,26 @@ button:disabled {
   gap: 1.2rem;
 }
 
+.modules-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.modules-group__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6c8475;
+}
+
+.modules-divider {
+  height: 1px;
+  background: rgba(26, 58, 42, 0.1);
+  margin: 1rem 0;
+}
+
 .modules-grid {
   display: grid;
   gap: 1rem;
@@ -871,6 +891,18 @@ button:disabled {
   background: rgba(194, 89, 72, 0.12);
   border-color: rgba(194, 89, 72, 0.22);
   color: #7a1c1c;
+}
+
+.metrics-card {
+  grid-column: 1 / -1;
+  padding: 1.2rem;
+  border-radius: 24px;
+  border: 1px solid rgba(26,58,42,0.08);
+  box-shadow: 0 16px 28px rgba(26,58,42,0.07);
+  background: rgba(255,255,255,0.74);
+  backdrop-filter: blur(14px);
+  display: grid;
+  gap: 1.15rem;
 }
 
 @media (max-width: 1200px) {
