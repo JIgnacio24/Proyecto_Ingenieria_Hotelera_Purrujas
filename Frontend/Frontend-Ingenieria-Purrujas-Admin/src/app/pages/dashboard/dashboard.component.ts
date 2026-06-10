@@ -19,28 +19,14 @@ import {
   GettingThereContentService,
   GettingTherePageContent
 } from '../../core/getting-there-content.service';
-import {
-  RoomAvailabilityReportResponse,
-  RoomAvailabilitySearchResult,
-  RoomAvailabilityService,
-  RoomAvailabilitySummary,
-  RoomTypeAvailabilityItem
-} from '../../core/room-availability.service';
+import { AnalyticsComponent } from '../analytics/analytics.component';
 
 type DashboardMenuKey =
   | 'home'
   | 'pages'
   | 'getting-there'
-  | 'home-editor'
-  | 'about-us'
-  | 'reservations'
   | 'rooms'
-  | 'seasons'
-  | 'promotions'
-  | 'audit'
-  | 'status'
-  | 'availability'
-  | 'ads';
+  | 'analytics';
 
 interface DashboardMenuItem {
   key: DashboardMenuKey;
@@ -58,6 +44,7 @@ interface DashboardModuleCard {
   description: string;
   link?: string;
   actionLabel?: string;
+  group: 'editing' | 'admin';
 }
 
 interface DashboardNavigationState {
@@ -71,7 +58,7 @@ interface DashboardNavigationState {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AnalyticsComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -81,8 +68,6 @@ export class DashboardComponent implements AfterViewInit {
   private readonly authService = inject(AuthService);
   private readonly facilitiesContentService = inject(FacilitiesContentService);
   private readonly gettingThereContentService = inject(GettingThereContentService);
-  private readonly roomAvailabilityService = inject(RoomAvailabilityService);
-
   readonly menuItems: readonly DashboardMenuItem[] = [
     {
       key: 'home',
@@ -92,18 +77,11 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-home'
     },
     {
-      key: 'status',
-      label: 'Ver estado del hotel hoy',
-      compactLabel: 'Estado',
-      icon: 'status',
-      targetId: 'dashboard-status'
-    },
-    {
-      key: 'availability',
-      label: 'Disponibilidad de habitaciones',
-      compactLabel: 'Disponibilidad',
-      icon: 'availability',
-      targetId: 'dashboard-availability'
+      key: 'analytics',
+      label: 'Métricas del hotel',
+      compactLabel: 'Métricas',
+      icon: 'analytics',
+      targetId: 'dashboard-metrics'
     },
     {
       key: 'pages',
@@ -120,49 +98,11 @@ export class DashboardComponent implements AfterViewInit {
       targetId: 'dashboard-getting-there'
     },
     {
-      key: 'home-editor',
-      label: 'Editar inicio',
-      compactLabel: 'Inicio',
-      icon: 'home-editor',
-      // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
-      targetId: 'dashboard-home-editor'
-    },
-    {
-      key: 'about-us',
-      label: 'Editar Sobre nosotros',
-      compactLabel: 'Sobre nosotros',
-      icon: 'about-us',
-      // Acceso lateral a la tarjeta del dashboard; la tarjeta mantiene el enlace al editor completo.
-      targetId: 'dashboard-about-us'
-    },
-    {
-      key: 'reservations',
-      label: 'Listado de reservaciones',
-      compactLabel: 'Reservas',
-      icon: 'reservations',
-      targetId: 'dashboard-reservations'
-    },
-    {
       key: 'rooms',
-      label: 'Administrar habitaciones',
-      compactLabel: 'Habitaciones',
+      label: 'Módulos del menú',
+      compactLabel: 'Módulos',
       icon: 'rooms',
       targetId: 'dashboard-rooms'
-    },
-    {
-      key: 'audit',
-      label: 'Bitacoras de uso',
-      compactLabel: 'Bitacoras',
-      icon: 'audit',
-      targetId: 'dashboard-audit',
-      route: '/panel/bitacoras'
-    },
-    {
-      key: 'ads',
-      label: 'Publicidad',
-      compactLabel: 'Publicidad',
-      icon: 'ads',
-      targetId: 'dashboard-ads'
     }
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
@@ -172,64 +112,64 @@ export class DashboardComponent implements AfterViewInit {
       key: 'home-editor',
       title: 'Editar inicio',
       status: 'Editable',
-      description:
-        'Abre la vista editable del inicio para cambiar la imagen de fondo y los textos principales.',
+      description: 'Abre la vista editable del inicio para cambiar la imagen de fondo y los textos principales.',
       link: '/panel/home',
-      actionLabel: 'Abrir editor'
+      actionLabel: 'Abrir editor',
+      group: 'editing'
     },
     {
       key: 'about-us',
       title: 'Editar Sobre nosotros',
       status: 'Editable',
-      description:
-        'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
+      description: 'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
       link: '/panel/sobre-nosotros',
-      actionLabel: 'Abrir editor'
+      actionLabel: 'Abrir editor',
+      group: 'editing'
     },
     {
       key: 'reservations',
       title: 'Administración de Reservaciones',
       status: 'Disponible',
-      description:
-        'Ver y gestionar todas las reservas en línea. Actualiza, elimina y visualiza reservaciones.',
+      description: 'Ver y gestionar todas las reservas en línea. Actualiza, elimina y visualiza reservaciones.',
       link: '/panel/reservas',
-      actionLabel: 'Ver reservaciones'
+      actionLabel: 'Ver reservaciones',
+      group: 'admin'
     },
     {
       key: 'rooms',
-      title: 'Listado de tipos de habitación',
+      title: 'Tipos de habitación',
       status: 'Disponible',
-      description:
-        'Administra los tipos de habitación, sus nombres y tarifas base desde una vista dedicada.',
+      description: 'Administra los tipos de habitación, sus nombres y tarifas base desde una vista dedicada.',
       link: '/panel/tipos-habitacion',
-      actionLabel: 'Administrar tipos'
+      actionLabel: 'Administrar tipos',
+      group: 'admin'
     },
     {
       key: 'room-management',
       title: 'Gestión de habitaciones',
       status: 'Disponible',
-      description:
-        'Registra cada habitación física del hotel, asigna su tipo y cambia su estado operativo.',
+      description: 'Registra cada habitación física del hotel, asigna su tipo y cambia su estado operativo.',
       link: '/panel/habitaciones',
-      actionLabel: 'Administrar habitaciones'
+      actionLabel: 'Administrar habitaciones',
+      group: 'admin'
     },
     {
       key: 'seasons',
       title: 'Temporadas',
       status: 'Disponible',
-      description:
-        'Gestiona los periodos de precio diferenciado: crea, edita y elimina temporadas altas y bajas.',
+      description: 'Gestiona los periodos de precio diferenciado: crea, edita y elimina temporadas altas y bajas.',
       link: '/panel/temporadas',
-      actionLabel: 'Administrar temporadas'
+      actionLabel: 'Administrar temporadas',
+      group: 'admin'
     },
     {
       key: 'promotions',
       title: 'Ofertas especiales',
       status: 'Disponible',
-      description:
-        'Crea, edita y elimina descuentos y promociones especiales por tipo de habitación.',
+      description: 'Crea, edita y elimina descuentos y promociones especiales por tipo de habitación.',
       link: '/panel/ofertas',
-      actionLabel: 'Administrar ofertas'
+      actionLabel: 'Administrar ofertas',
+      group: 'admin'
     },
     {
       key: 'audit',
@@ -244,10 +184,18 @@ export class DashboardComponent implements AfterViewInit {
       key: 'ads',
       title: 'Publicidad',
       status: 'Interfaz pendiente',
-      description:
-        'El menú ya apunta a esta sección. Falta construir aquí el CRUD para administrar la publicidad del sitio.'
+      description: 'Módulo en construcción. Aquí se administrará la publicidad visible en el sitio del cliente.',
+      group: 'admin'
     }
   ];
+
+  get editingModuleCards(): readonly DashboardModuleCard[] {
+    return this.moduleCards.filter((m) => m.group === 'editing');
+  }
+
+  get adminModuleCards(): readonly DashboardModuleCard[] {
+    return this.moduleCards.filter((m) => m.group === 'admin');
+  }
 
   readonly loading = signal(true);
   readonly errorMessage = signal('');
@@ -263,28 +211,16 @@ export class DashboardComponent implements AfterViewInit {
   readonly gettingThereFeedback = signal('');
   readonly gettingThereFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
-  readonly availabilityLoading = signal(true);
-  readonly availabilitySearching = signal(false);
-  readonly availabilityReportBusy = signal(false);
-  readonly availabilityFeedback = signal('');
-  readonly availabilityFeedbackTone = signal<'success' | 'error' | ''>('');
-  readonly roomAvailabilitySummary = signal<RoomAvailabilitySummary | null>(null);
-  readonly availabilitySearchResult = signal<RoomAvailabilitySearchResult | null>(null);
-
   facilitiesContent: FacilitiesPageContent = createDefaultFacilitiesPageContent();
   primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
   secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
   gettingThereContent: GettingTherePageContent = createDefaultGettingTherePageContent();
   gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
-  availabilityStartDate = this.todayInputValue();
-  availabilityEndDate = this.addDaysInputValue(1);
-  availabilityRoomTypeId: number | null = null;
   constructor() {
     this.consumeNavigationFeedback();
     void this.loadProfile();
     void this.loadFacilitiesContent();
     void this.loadGettingThereContent();
-    void this.loadRoomAvailabilityToday();
   }
 
   ngAfterViewInit(): void {
@@ -408,65 +344,6 @@ export class DashboardComponent implements AfterViewInit {
     }
   }
 
-  async loadRoomAvailabilityToday(): Promise<void> {
-    this.availabilityLoading.set(true);
-    this.clearAvailabilityFeedback();
-
-    try {
-      const summary = await firstValueFrom(this.roomAvailabilityService.getToday());
-      this.roomAvailabilitySummary.set(summary);
-    } catch (error) {
-      this.availabilityFeedbackTone.set('error');
-      this.availabilityFeedback.set(
-        this.resolveError(error, 'No fue posible cargar el estado de habitaciones de hoy.')
-      );
-
-      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-        this.authService.logout();
-      }
-    } finally {
-      this.availabilityLoading.set(false);
-    }
-  }
-
-  async searchRoomAvailability(): Promise<void> {
-    this.availabilitySearching.set(true);
-    this.clearAvailabilityFeedback();
-
-    try {
-      const result = await firstValueFrom(
-        this.roomAvailabilityService.search(
-          this.availabilityStartDate,
-          this.availabilityEndDate,
-          this.availabilityRoomTypeId
-        )
-      );
-
-      this.availabilitySearchResult.set(result);
-      this.availabilityFeedbackTone.set('success');
-      this.availabilityFeedback.set('Consulta de disponibilidad actualizada.');
-    } catch (error) {
-      this.availabilityFeedbackTone.set('error');
-      this.availabilityFeedback.set(
-        this.resolveError(error, 'No fue posible consultar disponibilidad para esas fechas.')
-      );
-
-      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-        this.authService.logout();
-      }
-    } finally {
-      this.availabilitySearching.set(false);
-    }
-  }
-
-  async openRoomAvailabilityReportPreview(): Promise<void> {
-    await this.handleRoomAvailabilityReport('preview');
-  }
-
-  async downloadRoomAvailabilityReport(): Promise<void> {
-    await this.handleRoomAvailabilityReport('download');
-  }
-
   setActiveMenuItem(menuKey: DashboardMenuKey): void {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
@@ -485,14 +362,6 @@ export class DashboardComponent implements AfterViewInit {
   }
 
   moduleSectionId(menuKey: DashboardModuleCard['key']): string {
-    if (menuKey === 'home-editor') {
-      return 'dashboard-home-editor';
-    }
-
-    if (menuKey === 'about-us') {
-      return 'dashboard-about-us';
-    }
-
     return this.menuItems.find((item) => item.key === menuKey)?.targetId ?? '';
   }
 
@@ -512,101 +381,18 @@ export class DashboardComponent implements AfterViewInit {
     }).format(date);
   }
 
-  formatAvailabilityDate(value: string | null | undefined): string {
-    if (!value) {
-      return 'Sin fecha';
-    }
-
-    const date = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return new Intl.DateTimeFormat('es-CR', { dateStyle: 'full' }).format(date);
-  }
-
-  statusClass(statusName: string): string {
-    const normalized = statusName.trim().toLowerCase();
-
-    if (normalized === 'disponible') {
-      return 'status-available';
-    }
-
-    if (normalized === 'ocupada') {
-      return 'status-occupied';
-    }
-
-    return 'status-blocked';
-  }
-
-  formatUsd(value: number | null | undefined): string {
-    return new Intl.NumberFormat('es-CR', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2
-    }).format(value ?? 0);
-  }
-
-  availabilityTypeItems(result: RoomAvailabilitySearchResult): RoomTypeAvailabilityItem[] {
-    return result.roomTypeAvailability.filter((item) => {
-      if (result.roomTypeId && item.roomTypeId === result.roomTypeId) {
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  availabilityEmptyMessage(result: RoomAvailabilitySearchResult): string {
-    const hasOtherAvailability = this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
-
-    if (result.roomTypeId && hasOtherAvailability) {
-      return 'No hay habitaciones disponibles de este tipo, pero existen habitaciones disponibles en otras categorías.';
-    }
-
-    if (result.roomTypeId) {
-      return `No hay habitaciones disponibles de ${result.roomTypeName} para el rango seleccionado.`;
-    }
-
-    return 'No hay habitaciones disponibles para esta consulta.';
-  }
-
-  availabilityDateSuggestionLabel(suggestion: RoomAvailabilitySearchResult['suggestedDateRanges'][number]): string {
-    return `${this.formatAvailabilityDate(suggestion.startDate)} - ${this.formatAvailabilityDate(suggestion.endDate)}`;
-  }
-
-  hasAvailableAlternatives(result: RoomAvailabilitySearchResult): boolean {
-    return this.availabilityTypeItems(result).some((item) => item.availableRooms > 0);
-  }
-
-  hasUnavailableTypeSummary(result: RoomAvailabilitySearchResult): boolean {
-    return this.availabilityTypeItems(result).length > 0;
-  }
-
   iconPath(icon: (typeof this.menuItems)[number]['icon']): string {
     switch (icon) {
       case 'home':
         return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z';
+      case 'analytics':
+        return 'M18 20V10M12 20V4M6 20v-6M3 20h18';
       case 'pages':
         return 'M6 4h9l5 5v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m8 1.5V10h4.5M8 13h8M8 16h8M8 19h5';
       case 'getting-there':
         return 'M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11m0-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6';
-      case 'about-us':
-        return 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4m-7 9a7 7 0 0 1 14 0M4 4h16v16H4z';
-      case 'home-editor':
-        return 'M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1zM8 13h8M8 16h5';
-      case 'reservations':
-        return 'M7 3v3M17 3v3M5 8h14M6 5h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m2 7h3v3H8zm5 0h3v3h-3z';
       case 'rooms':
-        return 'M5 20V7.5A1.5 1.5 0 0 1 6.5 6h11A1.5 1.5 0 0 1 19 7.5V20M3 20h18M8 10h8M8 14h5';
-      case 'status':
-        return 'M12 4a8 8 0 1 0 8 8h-8zM12 4a8 8 0 0 1 8 8M12 8v4l2.5 2.5';
-      case 'availability':
-        return 'M4 12h5l2 5 3-10 2 5h4';
-      case 'audit':
-        return 'M5 5h14M5 12h8M5 19h6M16 15v3l2 1';
-      case 'ads':
-        return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
+        return 'M4 6h16M4 12h16M4 18h16M8 6v12M16 6v12';
       default:
         return '';
     }
@@ -719,97 +505,6 @@ export class DashboardComponent implements AfterViewInit {
   private clearGettingThereFeedback(): void {
     this.gettingThereFeedback.set('');
     this.gettingThereFeedbackTone.set('');
-  }
-
-  private clearAvailabilityFeedback(): void {
-    this.availabilityFeedback.set('');
-    this.availabilityFeedbackTone.set('');
-  }
-
-  private async handleRoomAvailabilityReport(mode: 'preview' | 'download'): Promise<void> {
-    this.availabilityReportBusy.set(true);
-    this.clearAvailabilityFeedback();
-
-    try {
-      const report = await firstValueFrom(this.roomAvailabilityService.getTodayReport());
-      const file = new File([report.blob], report.fileName, { type: 'application/pdf' });
-
-      if (mode === 'preview') {
-        const previewOpened = this.openPdfPreview(file, report);
-        this.availabilityFeedbackTone.set('success');
-        this.availabilityFeedback.set(
-          previewOpened
-            ? 'El reporte PDF se generó con el estado actual de las habitaciones y se abrió en una nueva pestaña.'
-            : 'El navegador bloqueó la vista previa. El reporte PDF se descargó automáticamente.'
-        );
-      } else {
-        this.downloadPdfFile(file, report.fileName);
-        this.availabilityFeedbackTone.set('success');
-        this.availabilityFeedback.set('El reporte PDF se descargó correctamente.');
-      }
-    } catch (error) {
-      this.availabilityFeedbackTone.set('error');
-      this.availabilityFeedback.set(
-        this.resolveError(error, 'No fue posible generar el reporte PDF del estado de habitaciones.')
-      );
-
-      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-        this.authService.logout();
-      }
-    } finally {
-      this.availabilityReportBusy.set(false);
-    }
-  }
-
-  private openPdfPreview(file: File, report: RoomAvailabilityReportResponse): boolean {
-    if (typeof window === 'undefined' || typeof URL === 'undefined') {
-      this.downloadPdfFile(file, report.fileName);
-      return false;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    const previewWindow = window.open(objectUrl, '_blank', 'noopener');
-
-    if (!previewWindow) {
-      this.downloadPdfFile(file, report.fileName);
-      return false;
-    }
-
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-    return true;
-  }
-
-  private downloadPdfFile(file: File, fileName: string): void {
-    if (typeof URL === 'undefined') {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    const anchor = this.document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = fileName;
-    anchor.rel = 'noopener';
-    anchor.click();
-
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
-  }
-
-  private todayInputValue(): string {
-    return this.dateInputValue(new Date());
-  }
-
-  private addDaysInputValue(days: number): string {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return this.dateInputValue(date);
-  }
-
-  private dateInputValue(date: Date): string {
-    return [
-      date.getFullYear(),
-      `${date.getMonth() + 1}`.padStart(2, '0'),
-      `${date.getDate()}`.padStart(2, '0')
-    ].join('-');
   }
 
   private syncActiveMenuItem(): void {

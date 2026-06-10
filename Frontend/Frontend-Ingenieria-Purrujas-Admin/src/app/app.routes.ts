@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { AuthShellComponent } from './pages/auth-shell/auth-shell.component';
 import { AboutUsEditorComponent } from './pages/about-us-editor/about-us-editor.component';
+import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ReservationsComponent } from './pages/reservations/reservations.component';
 import { HomeEditorComponent } from './pages/home-editor/home-editor.component';
@@ -22,6 +23,6 @@ export const routes: Routes = [
   { path: 'panel/habitaciones', component: RoomsComponent, canActivate: [authGuard] },
   { path: 'panel/temporadas', component: SeasonsComponent, canActivate: [authGuard] },
   { path: 'panel/ofertas', component: PromotionsComponent, canActivate: [authGuard] },
-  { path: 'panel/bitacoras', component: AuditLogsComponent, canActivate: [authGuard] },
+  { path: 'panel/metricas', component: AnalyticsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'ingreso' }
 ];
