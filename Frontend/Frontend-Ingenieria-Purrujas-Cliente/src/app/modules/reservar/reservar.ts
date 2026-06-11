@@ -77,6 +77,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
   promoDescuento = 0;
   /** Nombre de la promo aplicada */
   promoNombre = '';
+  /** ID de la promoción activa (null = sin promo) */
+  promoId: number | null = null;
 
   nochesTotales = 0;
   nochesAlta = 0;
@@ -210,7 +212,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
       lastName: values.lastName.trim(),
       email: values.email.trim(),
       phone: values.phone?.trim() || undefined,
-      creditCard: values.creditCard.trim()
+      creditCard: values.creditCard.trim(),
+      promotionId: this.promoId ?? undefined
     };
 
     forkJoin([
@@ -348,10 +351,12 @@ export class ReservarComponent implements OnInit, OnDestroy {
     if (candidatas.length === 0) {
       this.promoDescuento = 0;
       this.promoNombre = '';
+      this.promoId = null;
     } else {
       const mejor = candidatas.reduce((best, p) => p.discount > best.discount ? p : best);
       this.promoDescuento = mejor.discount;
       this.promoNombre = mejor.name;
+      this.promoId = mejor.promotionId;
     }
 
     this.cdr.detectChanges();
@@ -391,6 +396,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
     this.availabilityError = '';
     this.promoDescuento = 0;
     this.promoNombre = '';
+    this.promoId = null;
   }
 
   private formatDate(d: Date): string {

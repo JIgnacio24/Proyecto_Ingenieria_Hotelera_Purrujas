@@ -578,3 +578,15 @@
   .reservations-table th,
   .reservations-table td { padding: 0.6rem 0.6rem; }
 }
+
+.discount-line {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1a6b3c;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+}
+
+.current-info-value--discount { color: #1a6b3c; }
+
+.current-info-item--full { grid-column: 1 / -1; }

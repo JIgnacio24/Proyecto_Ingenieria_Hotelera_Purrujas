@@ -37,6 +37,18 @@
           <span class="detail-label">Noches</span>
           <span class="detail-value">{{ confirmedReservation.nightsTotal }}</span>
         </div>
+        <div class="detail-row" *ngIf="confirmedReservation.discountUsd > 0">
+          <span class="detail-label">Precio original</span>
+          <span class="detail-value" style="text-decoration: line-through; color: var(--color-text-muted, #888)">
+            ${{ (confirmedReservation.totalUsd + confirmedReservation.discountUsd) | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="confirmedReservation.discountUsd > 0">
+          <span class="detail-label">Descuento</span>
+          <span class="detail-value" style="color: var(--color-success, #2e7d32)">
+            − ${{ confirmedReservation.discountUsd | number:'1.2-2' }}
+          </span>
+        </div>
         <div class="detail-row total-row">
           <span class="detail-label">Total estimado</span>
           <span class="detail-value total-value">${{ confirmedReservation.totalUsd | number:'1.2-2' }}</span>

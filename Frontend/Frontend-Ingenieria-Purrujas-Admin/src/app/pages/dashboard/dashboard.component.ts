@@ -178,7 +178,8 @@ export class DashboardComponent implements AfterViewInit {
       description:
         'Consulta quien realizo cada accion administrativa, la fecha y hora, la accion concreta y su resumen.',
       link: '/panel/bitacoras',
-      actionLabel: 'Ver bitacoras'
+      actionLabel: 'Ver bitacoras',
+      group: 'admin'
     },
     {
       key: 'ads',

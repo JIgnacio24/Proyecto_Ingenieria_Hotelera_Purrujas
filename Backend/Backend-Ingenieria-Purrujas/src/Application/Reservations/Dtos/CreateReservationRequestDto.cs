@@ -34,4 +34,6 @@ public record CreateReservationRequestDto
     [Required]
     [RegularExpression(@"^\d{13,19}$", ErrorMessage = "El número de tarjeta debe tener entre 13 y 19 dígitos.")]
     public string CreditCard { get; init; } = string.Empty;
+
+    public int? PromotionId { get; init; }
 }

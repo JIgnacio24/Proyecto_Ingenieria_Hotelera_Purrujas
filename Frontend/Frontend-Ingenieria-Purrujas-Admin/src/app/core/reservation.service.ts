@@ -17,6 +17,8 @@ export interface AdminReservationResponse {
   nightsLow: number;
   totalUsd: number;
   totalCrc: number;
+  discountUsd: number;
+  discountCrc: number;
   currency: string;
   status: string;
   createdAt: string;
