@@ -25,12 +25,20 @@
     <div class="pub-list">
       @for (pub of publicidades; track pub.advertisingId) {
         <div class="pub-card animate-up">
-          <div class="pub-icon">
-            <span class="material-icons">storefront</span>
-          </div>
+          @if (pub.imageUrl) {
+            <div class="pub-image">
+              <img [src]="pub.imageUrl" [alt]="pub.title" loading="lazy" />
+            </div>
+          } @else {
+            <div class="pub-icon">
+              <span class="material-icons">storefront</span>
+            </div>
+          }
           <div class="pub-body">
-            <span class="pub-label">Oferta {{ pub.advertisingId }}</span>
-            <h3>{{ pub.name }}</h3>
+            <h3>{{ pub.title }}</h3>
+            @if (pub.description) {
+              <p class="pub-description">{{ pub.description }}</p>
+            }
           </div>
           <a [href]="pub.link" target="_blank" rel="noopener noreferrer" class="pub-cta">
             Ver oferta <span class="material-icons">open_in_new</span>

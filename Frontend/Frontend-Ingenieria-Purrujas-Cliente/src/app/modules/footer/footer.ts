@@ -49,7 +49,7 @@ export class FooterComponent implements OnInit, AfterViewInit {
       const pubItems: CarouselItem[] = publicidades.map(pub => ({
         id: `pub-${pub.advertisingId}`,
         type: 'publicidad',
-        name: pub.name,
+        name: pub.title,
         link: pub.link
       }));
 

@@ -184,8 +184,10 @@ export class DashboardComponent implements AfterViewInit {
     {
       key: 'ads',
       title: 'Publicidad',
-      status: 'Interfaz pendiente',
-      description: 'Módulo en construcción. Aquí se administrará la publicidad visible en el sitio del cliente.',
+      status: 'Disponible',
+      description: 'Crea, edita y elimina los anuncios publicitarios visibles en el sitio del cliente.',
+      link: '/panel/publicidad',
+      actionLabel: 'Administrar publicidad',
       group: 'admin'
     }
   ];
