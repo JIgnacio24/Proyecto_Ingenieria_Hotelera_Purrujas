@@ -18,9 +18,9 @@ export interface RoomTypeDetail {
   name: string;
   basePrice: number;
   isActive: boolean;
-  description: string;
-  capacity: number;
-  images: RoomTypeImage[];
+  description?: string | null;
+  capacity?: number;
+  images?: RoomTypeImage[];
 }
 
 export interface RoomTypePayload {
@@ -37,7 +37,10 @@ export class RoomTypesService {
 
   getAll(): Observable<RoomTypeDetail[]> {
     return this.http.get<RoomTypeDetail[]>(`${this.apiBaseUrl}/admin/room-types`).pipe(
-      map((roomTypes) => this.dedupeRoomTypes(roomTypes))
+      map((roomTypes) => {
+        const valid = roomTypes.filter(rt => rt.name?.trim().length > 0);
+        return this.dedupeRoomTypes(valid);
+      })
     );
   }
 

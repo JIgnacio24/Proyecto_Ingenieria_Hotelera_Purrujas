@@ -9,13 +9,14 @@ import { delay } from 'rxjs/operators';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
 import { PublicidadService, Promocion } from '../../services/publicidad.service';
+import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 
-type RoomId = 'doble' | 'suite' | 'villa';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 interface RoomOption {
-  id: RoomId;
+  roomTypeId: number;
+  id: string;
   nombre: string;
   descripcion: string;
   capacidad: string;
@@ -23,11 +24,29 @@ interface RoomOption {
   icon: string;
 }
 
-/** Mapea el id de habitación al roomTypeId del backend */
-const ROOM_TYPE_ID: Record<RoomId, number> = {
-  doble: 1,
-  suite: 2,
-  villa: 3
+const ROOM_ICONS = ['🛏️', '🌋', '🏡', '🏨'];
+
+function formatCapacity(capacity: number): string {
+  if (capacity <= 0) return '';
+  if (capacity === 1) return '1 persona';
+  if (capacity <= 2) return `${capacity} personas`;
+  return `Hasta ${capacity} personas`;
+}
+
+function mapRoomType(rt: PublicRoomType, index: number): RoomOption {
+  return {
+    roomTypeId: rt.roomTypeId,
+    id: rt.name,
+    nombre: rt.name,
+    descripcion: rt.description ?? '',
+    capacidad: formatCapacity(rt.capacity),
+    precioBaja: rt.basePrice,
+    icon: ROOM_ICONS[index] ?? '🛏️'
+  };
+}
+
+const EMPTY_ROOM: RoomOption = {
+  roomTypeId: 0, id: '', nombre: '', descripcion: '', capacidad: '', precioBaja: 0, icon: '🛏️'
 };
 
 @Component({
@@ -40,34 +59,11 @@ const ROOM_TYPE_ID: Record<RoomId, number> = {
 export class ReservarComponent implements OnInit, OnDestroy {
   readonly minStartDate = this.formatDate(new Date());
 
-  readonly habitaciones: RoomOption[] = [
-    {
-      id: 'doble',
-      nombre: 'Habitación Doble',
-      descripcion: 'Cama queen, balcón al bosque y café de cortesía.',
-      capacidad: '2 personas',
-      precioBaja: 95,
-      icon: '🛏️'
-    },
-    {
-      id: 'suite',
-      nombre: 'Suite Volcán',
-      descripcion: 'Jacuzzi, terraza panorámica y cóctel de bienvenida.',
-      capacidad: 'Hasta 4 personas',
-      precioBaja: 135,
-      icon: '🌋'
-    },
-    {
-      id: 'villa',
-      nombre: 'Villa Familiar',
-      descripcion: 'Hasta 5 huéspedes, cocina equipada y chimenea.',
-      capacidad: 'Hasta 7 personas',
-      precioBaja: 180,
-      icon: '🏡'
-    }
-  ];
+  habitaciones: RoomOption[] = [];
+  habitacionesLoading = true;
+  habitacionesError = '';
 
-  selectedRoom: RoomOption = this.habitaciones[0];
+  selectedRoom: RoomOption = EMPTY_ROOM;
   currency: Currency = 'USD';
   currencySymbol = '$';
   fechaInicio = '';
@@ -108,6 +104,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
     public currencyService: CurrencyService,
     private reservationService: ReservationService,
     private publicidadService: PublicidadService,
+    private roomTypesService: RoomTypesService,
     private cdr: ChangeDetectorRef
   ) {
     this.guestForm = this.fb.group({
@@ -156,22 +153,41 @@ export class ReservarComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.publicidadService.getPromociones().subscribe(promos => {
         this.promociones = promos;
-        // Re-detectar si ya hay fechas (ej: llegó desde el botón de promo)
         if (this.fechaInicio && this.fechaFin) this.detectPromo();
       })
     );
 
-    // Pre-cargar datos cuando se llega desde el botón "Aprovechar oferta"
+    // Pre-cargar parámetros de URL (fechas y habitación)
     const params = this.route.snapshot.queryParamMap;
     if (params.has('inicio')) this.fechaInicio = params.get('inicio')!;
     if (params.has('fin'))    this.fechaFin    = params.get('fin')!;
-    if (params.has('habitacion')) {
-      const room = this.habitaciones.find(h => h.id === params.get('habitacion'));
-      if (room) this.selectedRoom = room;
-    }
-    if (this.fechaInicio && this.fechaFin) {
-      this.refreshQuoteAndAvailability();
-    }
+
+    // Cargar tipos de habitación desde la API
+    this.subs.add(
+      this.roomTypesService.getAll().subscribe({
+        next: (tipos) => {
+          this.habitaciones = tipos.map(mapRoomType);
+          this.habitacionesLoading = false;
+
+          // Pre-seleccionar habitación por query param ?habitacion=<roomTypeId>
+          const habitacionParam = params.get('habitacion');
+          const porId = habitacionParam
+            ? this.habitaciones.find(h => h.roomTypeId === +habitacionParam)
+            : null;
+          this.selectedRoom = porId ?? this.habitaciones[0] ?? EMPTY_ROOM;
+
+          if (this.selectedRoom.roomTypeId > 0 && this.fechaInicio && this.fechaFin) {
+            this.refreshQuoteAndAvailability();
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.habitacionesLoading = false;
+          this.habitacionesError = 'No fue posible cargar los tipos de habitación. Por favor recargue la página.';
+          this.cdr.detectChanges();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -179,6 +195,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   selectRoom(room: RoomOption): void {
+    if (!room.roomTypeId) return;
     this.selectedRoom = room;
     this.resetQuoteAndAvailability();
     this.refreshQuoteAndAvailability();
@@ -194,7 +211,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   submitReservation(): void {
-    if (!this.canSubmit) return;
+    if (!this.canSubmit || !this.selectedRoom.roomTypeId) return;
 
     this.guestForm.markAllAsTouched();
     if (this.guestForm.invalid) return;
@@ -263,7 +280,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   // ── Privados ──────────────────────────────────────────────────────────────
 
   private refreshQuoteAndAvailability(): void {
-    if (!this.fechaInicio || !this.fechaFin) return;
+    if (!this.fechaInicio || !this.fechaFin || !this.selectedRoom.roomTypeId) return;
 
     const inicio = new Date(this.fechaInicio + 'T00:00:00');
     const fin = new Date(this.fechaFin + 'T00:00:00');
@@ -274,6 +291,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   private calculateQuote(): void {
+    if (!this.selectedRoom.roomTypeId) return;
     this.quoteError = '';
     const payload = {
       roomTypeKey: this.selectedRoom.id,
@@ -295,7 +313,6 @@ export class ReservarComponent implements OnInit, OnDestroy {
           this.totalUsd = r.total;
           this.totalCrc = r.total * 500;
           this.updateDisplayTotal();
-          // Detectar promo aplicable una vez que tenemos el precio base
           this.detectPromo();
         },
         error: (err) => {
@@ -306,6 +323,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   private checkAvailability(): void {
+    if (!this.selectedRoom.roomTypeId) return;
     this.availabilityStatus = 'checking';
     this.availabilityError = '';
     forkJoin([
@@ -338,7 +356,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const roomTypeId = ROOM_TYPE_ID[this.selectedRoom.id];
+    const roomTypeId = this.selectedRoom.roomTypeId;
     const inicio = new Date(this.fechaInicio + 'T00:00:00');
     const fin    = new Date(this.fechaFin    + 'T00:00:00');
 

@@ -79,6 +79,7 @@
       <!-- Room type selection -->
       <div class="form-field">
         <label class="field-label">Tipo de habitación</label>
+        <p class="field-error" role="alert" *ngIf="habitacionesError">{{ habitacionesError }}</p>
         <div class="room-cards" role="group" aria-label="Tipo de habitación">
           <button
             *ngFor="let room of habitaciones"
