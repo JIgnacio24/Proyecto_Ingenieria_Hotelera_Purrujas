@@ -1,4 +1,3 @@
-d
 USE Ingenieria_Purrujas_BD;
 GO
 
