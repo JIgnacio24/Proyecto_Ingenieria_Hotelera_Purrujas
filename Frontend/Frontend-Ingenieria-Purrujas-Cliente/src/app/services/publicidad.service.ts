@@ -40,10 +40,9 @@ export class PublicidadService {
   }
 
   private mockPromociones: Promocion[] = [
-    { promotionId: 1, name: 'Escapada Romántica',  link: 'http://localhost:4204/about-us#reservas', discount: 25, startDate: '2026-04-01', endDate: '2026-05-31', roomTypeId: 2 },
-    { promotionId: 2, name: 'Semana Ecológica',    link: 'http://localhost:4204/about-us#reservas', discount: 20, startDate: '2026-04-15', endDate: '2026-06-30', roomTypeId: 1 },
-    { promotionId: 3, name: 'Aventura Familiar',   link: 'http://localhost:4204/about-us#reservas', discount: 30, startDate: '2026-05-01', endDate: '2026-07-15', roomTypeId: 3 },
-    { promotionId: 4, name: 'Retiro de Bienestar', link: 'http://localhost:4204/about-us#reservas', discount: 15, startDate: '2026-06-01', endDate: '2026-08-31', roomTypeId: 2 }
+    { promotionId: 1, name: 'Semana Ecológica',    link: 'http://localhost:4204/about-us#reservas', discount: 20, startDate: '2026-07-01', endDate: '2026-08-31', roomTypeId: 1 },
+    { promotionId: 2, name: 'Aventura Familiar',   link: 'http://localhost:4204/about-us#reservas', discount: 30, startDate: '2026-07-01', endDate: '2026-09-15', roomTypeId: 3 },
+    { promotionId: 3, name: 'Retiro de Bienestar', link: 'http://localhost:4204/about-us#reservas', discount: 15, startDate: '2026-08-01', endDate: '2026-10-31', roomTypeId: 2 }
   ];
 
   private mockPublicidades: Publicidad[] = [
