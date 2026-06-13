@@ -12,6 +12,7 @@ public class ReservationService(
     IRoomRepository roomRepository,
     ICustomerRepository customerRepository,
     IQuoteService quoteService,
+    IPromotionRepository promotionRepository,
     IEmailService emailService,
     ILogger<ReservationService> logger
 ) : IReservationService
@@ -74,16 +75,32 @@ public class ReservationService(
         };
 
         var seasonAmount = quote.Total - (quote.BasePricePerNight * quote.NightsTotal);
+        var discountAmount = 0m;
+
+        if (request.PromotionId.HasValue)
+        {
+            var promotion = await promotionRepository.GetByIdAsync(request.PromotionId.Value, cancellationToken);
+            var roomTypeId = RoomTypeIdFromKey(request.RoomTypeKey);
+            if (promotion is not null
+                && promotion.IsActive
+                && (roomTypeId is null || promotion.RoomTypeId == roomTypeId)
+                && promotion.StartDate <= request.EndDate
+                && promotion.EndDate >= request.StartDate)
+            {
+                discountAmount = decimal.Round(quote.Total * promotion.Discount / 100m, 2);
+            }
+        }
+
         var bill = new Bill
         {
             BasePrice    = quote.BasePricePerNight * quote.NightsTotal,
-            Discount     = 0m,
+            Discount     = discountAmount,
             SeasonAmount = seasonAmount
         };
 
         var reservationId = await reservationRepository.CreateAsync(reservation, bill, cancellationToken);
 
-        var totalUsd = quote.Total;
+        var totalUsd = quote.Total - discountAmount;
         var totalCrc = totalUsd * UsdToCrcRate;
 
         var dto = new ReservationResponseDto
@@ -101,6 +118,8 @@ public class ReservationService(
             NightsLow        = quote.NightsLow,
             TotalUsd         = totalUsd,
             TotalCrc         = totalCrc,
+            DiscountUsd      = discountAmount,
+            DiscountCrc      = discountAmount * UsdToCrcRate,
             Currency         = currency,
             Status           = "Pendiente",
             CreatedAt        = DateTime.UtcNow
@@ -183,6 +202,21 @@ public class ReservationService(
             cancellationToken,
             allowPastDates: true);
 
+        var discountAmount = 0m;
+        if (request.PromotionId.HasValue)
+        {
+            var promotion = await promotionRepository.GetByIdAsync(request.PromotionId.Value, cancellationToken);
+            var roomTypeId = RoomTypeIdFromKey(roomTypeKey);
+            if (promotion is not null
+                && promotion.IsActive
+                && (roomTypeId is null || promotion.RoomTypeId == roomTypeId)
+                && promotion.StartDate <= request.EndDate
+                && promotion.EndDate >= request.StartDate)
+            {
+                discountAmount = decimal.Round(quote.Total * promotion.Discount / 100m, 2);
+            }
+        }
+
         await reservationRepository.UpdateAsync(
             id,
             current.ReservationDate,
@@ -195,7 +229,7 @@ public class ReservationService(
 
         var basePrice = quote.BasePricePerNight * quote.NightsTotal;
         var seasonAmount = quote.Total - basePrice;
-        await reservationRepository.UpdateBillAsync(id, basePrice, seasonAmount, cancellationToken);
+        await reservationRepository.UpdateBillAsync(id, basePrice, discountAmount, seasonAmount, cancellationToken);
 
         var updated = await reservationRepository.GetByIdAsync(id, cancellationToken);
         return MapToDto(updated!);
@@ -241,9 +275,20 @@ public class ReservationService(
             NightsLow        = nights,
             TotalUsd         = totalUsd,
             TotalCrc         = totalUsd * 500m,
+            DiscountUsd      = d.Discount,
+            DiscountCrc      = d.Discount * 500m,
             Currency         = "USD",
             Status           = d.ReservationStatusName,
             CreatedAt        = d.ReservationDate
         };
     }
+
+    // Mapeo estático de roomTypeKey → RoomTypeId (coincide con la tabla RoomType sembrada)
+    private static int? RoomTypeIdFromKey(string key) => key.ToLowerInvariant() switch
+    {
+        "doble" => 1,
+        "suite" => 2,
+        "villa" => 3,
+        _       => null
+    };
 }

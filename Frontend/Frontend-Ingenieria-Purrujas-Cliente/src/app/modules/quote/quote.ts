@@ -2,14 +2,21 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Currency, CurrencyService } from '../../shared/currency.service';
+import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 
-type RoomId = 'doble' | 'suite' | 'villa';
+function formatCapacity(capacity: number): string {
+  if (capacity <= 0) return '';
+  if (capacity === 1) return '1 persona';
+  if (capacity <= 2) return `${capacity} personas`;
+  return `Hasta ${capacity} personas`;
+}
 
 interface Room {
-  id: RoomId;
+  roomTypeId: number;
+  id: string;
   nombre: string;
   descripcion: string;
   capacidad: string;
@@ -17,44 +24,22 @@ interface Room {
   multiplicadorAlta: number;
 }
 
+const EMPTY_ROOM: Room = {
+  roomTypeId: 0, id: '', nombre: '', descripcion: '', capacidad: '', precioBaja: 0, multiplicadorAlta: 1.25
+};
+
 @Component({
   selector: 'app-quote',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './quote.html',
   styleUrl: './quote.css'
 })
 export class QuoteComponent implements OnInit, OnDestroy {
   readonly minStartDate = this.formatDateForInput(new Date());
 
-  habitaciones: Room[] = [
-    {
-      id: 'doble',
-      nombre: 'Habitación Doble',
-      descripcion: 'Cama queen, balcón al bosque y café de cortesía.',
-      capacidad: '2 personas',
-      precioBaja: 95,
-      multiplicadorAlta: 1.25
-    },
-    {
-      id: 'suite',
-      nombre: 'Suite Volcán',
-      descripcion: 'Jacuzzi, terraza panorámica y cóctel de bienvenida.',
-      capacidad: 'Hasta 4 personas',
-      precioBaja: 135,
-      multiplicadorAlta: 1.25
-    },
-    {
-      id: 'villa',
-      nombre: 'Villa Familiar',
-      descripcion: 'Hasta 5 huéspedes, cocina equipada y chimenea.',
-      capacidad: 'Hasta 7 personas',
-      precioBaja: 180,
-      multiplicadorAlta: 1.25
-    }
-  ];
-
-  habitacionSeleccionada: Room = this.habitaciones[0];
+  habitaciones: Room[] = [];
+  habitacionSeleccionada: Room = EMPTY_ROOM;
   fechaInicio = '';
   fechaFin = '';
 
@@ -63,6 +48,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
   nochesBaja = 0;
   total = 0;
   mensajeError = '';
+  habitacionesError = '';
   currency: Currency = 'USD';
   currencySymbol = '$';
 
@@ -71,7 +57,8 @@ export class QuoteComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
-    public currencyService: CurrencyService
+    public currencyService: CurrencyService,
+    private roomTypesService: RoomTypesService
   ) {}
 
   get minEndDate(): string {
@@ -79,13 +66,31 @@ export class QuoteComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const roomParam = this.route.snapshot.queryParamMap.get('habitacion') as RoomId | null;
-    if (roomParam) {
-      const encontrada = this.habitaciones.find((habitacion) => habitacion.id === roomParam);
-      if (encontrada) {
-        this.habitacionSeleccionada = encontrada;
-      }
-    }
+    this.subs.add(
+      this.roomTypesService.getAll().subscribe({
+        next: (tipos) => {
+          this.habitacionesError = '';
+          this.habitaciones = tipos.map((rt: PublicRoomType) => ({
+            roomTypeId: rt.roomTypeId,
+            id: rt.name,
+            nombre: rt.name,
+            descripcion: rt.description ?? '',
+            capacidad: formatCapacity(rt.capacity),
+            precioBaja: rt.basePrice,
+            multiplicadorAlta: 1.25
+          }));
+
+          const roomParam = this.route.snapshot.queryParamMap.get('habitacion');
+          const porId = roomParam ? this.habitaciones.find(h => h.roomTypeId === +roomParam) : null;
+          const porNombre = roomParam ? this.habitaciones.find(h => h.id === roomParam) : null;
+          this.habitacionSeleccionada = porId ?? porNombre ?? this.habitaciones[0] ?? EMPTY_ROOM;
+          this.calcular();
+        },
+        error: () => {
+          this.habitacionesError = 'No fue posible cargar los tipos de habitación. Por favor recargue la página.';
+        }
+      })
+    );
 
     this.subs.add(
       this.currencyService.currencyChanges$.subscribe((curr) => {

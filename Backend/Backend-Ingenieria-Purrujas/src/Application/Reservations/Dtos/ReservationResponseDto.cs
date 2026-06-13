@@ -15,6 +15,8 @@ public record ReservationResponseDto
     public int NightsLow { get; init; }
     public decimal TotalUsd { get; init; }
     public decimal TotalCrc { get; init; }
+    public decimal DiscountUsd { get; init; }
+    public decimal DiscountCrc { get; init; }
     public string Currency { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }

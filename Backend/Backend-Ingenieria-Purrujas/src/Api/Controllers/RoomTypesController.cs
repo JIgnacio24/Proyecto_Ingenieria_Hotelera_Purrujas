@@ -48,7 +48,7 @@ public class RoomTypesController : ControllerBase
         try
         {
             var created = await _roomTypeRepository.CreateAsync(
-                new RoomType { Name = request.Name, BasePrice = request.BasePrice },
+                new RoomType { Name = request.Name, BasePrice = request.BasePrice, Description = request.Description, Capacity = request.Capacity },
                 cancellationToken);
 
             await _adminAuditLogService.RecordForCurrentUserAsync(
@@ -75,7 +75,7 @@ public class RoomTypesController : ControllerBase
         {
             var current = await _roomTypeRepository.GetByIdAsync(id, cancellationToken);
             var updated = await _roomTypeRepository.UpdateAsync(
-                new RoomType { RoomTypeId = id, Name = request.Name, BasePrice = request.BasePrice },
+                new RoomType { RoomTypeId = id, Name = request.Name, BasePrice = request.BasePrice, Description = request.Description, Capacity = request.Capacity },
                 cancellationToken);
 
             if (current is not null && updated is not null)
@@ -122,4 +122,4 @@ public class RoomTypesController : ControllerBase
     }
 }
 
-public sealed record RoomTypeRequest(string Name, decimal BasePrice);
+public sealed record RoomTypeRequest(string Name, decimal BasePrice, string? Description = null, int Capacity = 2);

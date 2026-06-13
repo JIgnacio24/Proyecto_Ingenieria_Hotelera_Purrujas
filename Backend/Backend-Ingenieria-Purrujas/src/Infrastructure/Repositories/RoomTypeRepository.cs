@@ -13,9 +13,9 @@ public class RoomTypeRepository : IRoomTypeRepository
     private readonly string _connectionString;
     private static readonly Dictionary<string, RoomType> FallbackRoomTypes = new()
     {
-        { "doble", new RoomType { RoomTypeId = 1, Name = "Habitación Doble", BasePrice = 95 } },
-        { "suite", new RoomType { RoomTypeId = 2, Name = "Suite Volcán", BasePrice = 135 } },
-        { "villa", new RoomType { RoomTypeId = 3, Name = "Villa Familiar", BasePrice = 180 } }
+        { "doble", new RoomType { RoomTypeId = 1, Name = "Habitación Doble", BasePrice = 95,  Capacity = 2 } },
+        { "suite", new RoomType { RoomTypeId = 2, Name = "Suite Volcán",     BasePrice = 135, Capacity = 3 } },
+        { "villa", new RoomType { RoomTypeId = 3, Name = "Villa Familiar",   BasePrice = 180, Capacity = 6 } }
     };
 
     public RoomTypeRepository(IConfiguration configuration)
@@ -25,26 +25,39 @@ public class RoomTypeRepository : IRoomTypeRepository
 
     public async Task<IReadOnlyList<RoomType>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        await using var conn = CreateConnection();
-        await conn.OpenAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(_connectionString))
+            return FallbackRoomTypes.Values.ToList();
 
-        const string sql = """
-            SELECT RoomTypeId, Name, BasePrice, IsActive
-            FROM RoomType
-            WHERE IsActive = 1
-            ORDER BY Name ASC;
-        """;
-
-        await using var cmd = new SqlCommand(sql, conn);
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        var roomTypes = new List<RoomType>();
-
-        while (await reader.ReadAsync(cancellationToken))
+        try
         {
-            roomTypes.Add(MapRoomType(reader));
-        }
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(cancellationToken);
 
-        return DeduplicateRoomTypes(roomTypes);
+            const string sql = """
+                SELECT RoomTypeId, Name, BasePrice, IsActive, Description, Capacity
+                FROM RoomType
+                WHERE IsActive = 1
+                  AND LEN(LTRIM(RTRIM(Name))) > 0
+                  AND BasePrice > 0
+                ORDER BY Name ASC;
+            """;
+
+            await using var cmd = new SqlCommand(sql, conn);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            var roomTypes = new List<RoomType>();
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                roomTypes.Add(MapRoomType(reader));
+            }
+
+            var result = DeduplicateRoomTypes(roomTypes);
+            return result.Count > 0 ? result : FallbackRoomTypes.Values.ToList();
+        }
+        catch
+        {
+            return FallbackRoomTypes.Values.ToList();
+        }
     }
 
     public async Task<RoomType?> GetByIdAsync(int roomTypeId, CancellationToken cancellationToken = default)
@@ -53,10 +66,12 @@ public class RoomTypeRepository : IRoomTypeRepository
         await conn.OpenAsync(cancellationToken);
 
         const string sql = """
-            SELECT RoomTypeId, Name, BasePrice, IsActive
+            SELECT RoomTypeId, Name, BasePrice, IsActive, Description, Capacity
             FROM RoomType
             WHERE RoomTypeId = @RoomTypeId
-              AND IsActive = 1;
+              AND IsActive = 1
+              AND LEN(LTRIM(RTRIM(Name))) > 0
+              AND BasePrice > 0;
         """;
 
         await using var cmd = new SqlCommand(sql, conn);
@@ -79,7 +94,7 @@ public class RoomTypeRepository : IRoomTypeRepository
             await conn.OpenAsync(cancellationToken);
 
             const string sql = """
-                SELECT TOP 1 RoomTypeId, Name, BasePrice, IsActive
+                SELECT TOP 1 RoomTypeId, Name, BasePrice, IsActive, Description, Capacity
                 FROM RoomType
                 WHERE IsActive = 1
                   AND (
@@ -119,13 +134,15 @@ public class RoomTypeRepository : IRoomTypeRepository
         await EnsureNameIsAvailableAsync(conn, normalizedName, null, cancellationToken);
 
         const string sql = """
-            INSERT INTO RoomType (Name, BasePrice, IsActive)
-            OUTPUT INSERTED.RoomTypeId, INSERTED.Name, INSERTED.BasePrice, INSERTED.IsActive
-            VALUES (@Name, @BasePrice, 1);
+            INSERT INTO RoomType (Name, BasePrice, IsActive, Description, Capacity)
+            OUTPUT INSERTED.RoomTypeId, INSERTED.Name, INSERTED.BasePrice, INSERTED.IsActive, INSERTED.Description, INSERTED.Capacity
+            VALUES (@Name, @BasePrice, 1, @Description, @Capacity);
         """;
 
         await using var cmd = new SqlCommand(sql, conn);
         AddRoomTypeParameters(cmd, normalizedName, roomType.BasePrice);
+        cmd.Parameters.Add("@Description", SqlDbType.NVarChar, -1).Value = (object?)roomType.Description ?? DBNull.Value;
+        cmd.Parameters.Add("@Capacity", SqlDbType.Int).Value = roomType.Capacity;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
@@ -149,8 +166,10 @@ public class RoomTypeRepository : IRoomTypeRepository
         const string sql = """
             UPDATE RoomType
             SET Name = @Name,
-                BasePrice = @BasePrice
-            OUTPUT INSERTED.RoomTypeId, INSERTED.Name, INSERTED.BasePrice, INSERTED.IsActive
+                BasePrice = @BasePrice,
+                Description = @Description,
+                Capacity = @Capacity
+            OUTPUT INSERTED.RoomTypeId, INSERTED.Name, INSERTED.BasePrice, INSERTED.IsActive, INSERTED.Description, INSERTED.Capacity
             WHERE RoomTypeId = @RoomTypeId
               AND IsActive = 1;
         """;
@@ -158,6 +177,8 @@ public class RoomTypeRepository : IRoomTypeRepository
         await using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.Add("@RoomTypeId", SqlDbType.Int).Value = roomType.RoomTypeId;
         AddRoomTypeParameters(cmd, normalizedName, roomType.BasePrice);
+        cmd.Parameters.Add("@Description", SqlDbType.NVarChar, -1).Value = (object?)roomType.Description ?? DBNull.Value;
+        cmd.Parameters.Add("@Capacity", SqlDbType.Int).Value = roomType.Capacity;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         return await reader.ReadAsync(cancellationToken) ? MapRoomType(reader) : null;
@@ -203,10 +224,12 @@ public class RoomTypeRepository : IRoomTypeRepository
     {
         return new RoomType
         {
-            RoomTypeId = reader.GetInt32(0),
-            Name = reader.GetString(1),
-            BasePrice = reader.GetDecimal(2),
-            IsActive = reader.GetBoolean(3)
+            RoomTypeId  = reader.GetInt32(0),
+            Name        = reader.GetString(1),
+            BasePrice   = reader.GetDecimal(2),
+            IsActive    = reader.GetBoolean(3),
+            Description = reader.IsDBNull(4) ? null : reader.GetString(4),
+            Capacity    = reader.GetInt32(5)
         };
     }
 

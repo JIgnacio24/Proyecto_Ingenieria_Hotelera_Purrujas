@@ -1,4 +1,5 @@
-using Backend_Ingenieria_Purrujas.Domain;
+using Backend_Ingenieria_Purrujas.Domain.Entities;
+using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend_Ingenieria_Purrujas.Api.Controllers;
@@ -7,57 +8,24 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 [Route("api/[controller]")]
 public class AdvertisingController : ControllerBase
 {
-    private static readonly List<Advertising> _advertising =
-    [
-        new Advertising
-        {
-            AdvertisingId = 1,
-            Name = "Descuento en Tours al Volcán Irazú",
-            Link = "https://www.costaricaadventuretours.com"
-        },
-        new Advertising
-        {
-            AdvertisingId = 2,
-            Name = "Spa Las Piedras — Tratamientos Termales",
-            Link = "https://www.spalaspiedras.com"
-        },
-        new Advertising
-        {
-            AdvertisingId = 3,
-            Name = "Restaurante La Catarata — Gastronomía Típica",
-            Link = "https://www.restaurantelacatarata.com"
-        },
-        new Advertising
-        {
-            AdvertisingId = 4,
-            Name = "Birdwatching Turrialba — Avistamiento de Aves",
-            Link = "https://www.turrialbabirding.com"
-        },
-        new Advertising
-        {
-            AdvertisingId = 5,
-            Name = "Rafting Río Reventazón — Aventura Extrema",
-            Link = "https://www.riostropicales.com"
-        },
-        new Advertising
-        {
-            AdvertisingId = 6,
-            Name = "Artesanías Cartago — Arte Local",
-            Link = "https://www.artesanias-cartago.com"
-        }
-    ];
+    private readonly IAdvertisingRepository _advertisingRepository;
 
-    [HttpGet]
-    public ActionResult<IEnumerable<Advertising>> GetAll()
+    public AdvertisingController(IAdvertisingRepository advertisingRepository)
     {
-        return Ok(_advertising);
+        _advertisingRepository = advertisingRepository;
     }
 
-    [HttpGet("{id}")]
-    public ActionResult<Advertising> GetById(int id)
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<Advertising>>> GetAll(CancellationToken ct)
     {
-        var ad = _advertising.FirstOrDefault(a => a.AdvertisingId == id);
-        if (ad is null) return NotFound();
-        return Ok(ad);
+        var items = await _advertisingRepository.GetAllAsync(ct);
+        return Ok(items);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<Advertising>> GetById(int id, CancellationToken ct)
+    {
+        var item = await _advertisingRepository.GetByIdAsync(id, ct);
+        return item is null ? NotFound() : Ok(item);
     }
 }

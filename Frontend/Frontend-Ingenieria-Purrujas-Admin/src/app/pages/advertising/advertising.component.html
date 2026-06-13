@@ -1,0 +1,238 @@
+<section class="sp-shell">
+  <div class="sp-veil" aria-hidden="true"></div>
+
+  <!-- Barra superior -->
+  <header class="sp-topbar">
+    <div>
+      <p class="eyebrow">Hotel Las Purrujas</p>
+      <h1>Publicidad</h1>
+      <p class="sp-topbar-sub">Administra los anuncios publicitarios visibles en el sitio del cliente.</p>
+    </div>
+    <a routerLink="/panel" class="back-link" aria-label="Volver al panel">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Volver al panel
+    </a>
+  </header>
+
+  <!-- Feedback -->
+  @if (feedback()) {
+    <div
+      class="sp-feedback"
+      [class.sp-feedback--success]="feedbackTone() === 'success'"
+      [class.sp-feedback--error]="feedbackTone() === 'error'"
+      role="alert"
+      aria-live="polite"
+    >{{ feedback() }}</div>
+  }
+
+  <!-- Formulario -->
+  <section class="sp-card sp-form-card" aria-label="Formulario de publicidad">
+    <div class="section-head">
+      <p>{{ editingId ? 'Editar publicidad' : 'Nueva publicidad' }}</p>
+      <span>{{ editingId ? 'Modificá los datos del anuncio.' : 'Completá los campos para crear un nuevo anuncio.' }}</span>
+    </div>
+
+    <form class="sp-form" (ngSubmit)="save()">
+      <div class="sp-form__grid">
+
+        <label class="sp-field sp-field--wide">
+          <span class="sp-field__label">Título</span>
+          <input
+            type="text"
+            [(ngModel)]="form.title"
+            name="title"
+            maxlength="255"
+            required
+            placeholder="Ej.: Descuento en Tours al Volcán Irazú"
+            class="sp-field__input"
+            [disabled]="saving()"
+          />
+        </label>
+
+        <label class="sp-field sp-field--wide">
+          <span class="sp-field__label">Descripción</span>
+          <textarea
+            [(ngModel)]="form.description"
+            name="description"
+            maxlength="1000"
+            required
+            rows="4"
+            placeholder="Describe brevemente el anuncio..."
+            class="sp-field__input sp-field__textarea"
+            [disabled]="saving()"
+          ></textarea>
+        </label>
+
+        <label class="sp-field sp-field--wide">
+          <span class="sp-field__label">
+            URL de imagen
+            <em class="sp-field__optional">(opcional)</em>
+          </span>
+          <input
+            type="url"
+            [(ngModel)]="form.imageUrl"
+            name="imageUrl"
+            maxlength="500"
+            placeholder="https://ejemplo.com/imagen.jpg"
+            class="sp-field__input"
+            [disabled]="saving()"
+          />
+        </label>
+
+        <label class="sp-field sp-field--wide">
+          <span class="sp-field__label">URL de destino</span>
+          <input
+            type="url"
+            [(ngModel)]="form.link"
+            name="link"
+            maxlength="500"
+            required
+            placeholder="https://ejemplo.com/oferta"
+            class="sp-field__input"
+            [class.sp-field__input--invalid]="form.link && !isValidUrl(form.link)"
+            [disabled]="saving()"
+          />
+          @if (form.link && !isValidUrl(form.link)) {
+            <span class="sp-field__hint sp-field__hint--error">
+              Ingresá una URL válida (debe comenzar con http:// o https://).
+            </span>
+          }
+        </label>
+
+        <label class="sp-field sp-field--checkbox">
+          <input
+            type="checkbox"
+            [(ngModel)]="form.isActive"
+            name="isActive"
+            class="sp-checkbox"
+            [disabled]="saving()"
+          />
+          <span class="sp-field__label sp-field__label--inline">Anuncio activo</span>
+        </label>
+
+      </div>
+
+      <div class="sp-form__actions">
+        @if (editingId) {
+          <button type="button" class="btn-secondary" (click)="reset()" [disabled]="saving()">
+            Cancelar
+          </button>
+        }
+        <button type="submit" class="btn-primary" [disabled]="saving() || !isFormValid()">
+          {{ saving() ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Crear anuncio' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Listado -->
+  <section class="sp-card" aria-label="Lista de publicidades">
+    <div class="list-head">
+      <div class="section-head" style="margin-bottom:0">
+        <p>Anuncios registrados</p>
+        <span>{{ ads().length }} anuncio{{ ads().length !== 1 ? 's' : '' }}</span>
+      </div>
+      <button
+        type="button"
+        class="btn-secondary btn-sm"
+        (click)="load()"
+        [disabled]="loading() || saving()"
+      >
+        {{ loading() ? 'Cargando...' : 'Recargar' }}
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="skeleton-list" aria-label="Cargando">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="skeleton-row"></div>
+        }
+      </div>
+    } @else if (ads().length === 0) {
+      <p class="empty-state">No hay anuncios publicitarios registrados aún.</p>
+    } @else {
+      <div class="sp-table-wrap">
+        <table class="sp-table" aria-label="Publicidades registradas">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Título</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Creado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ad of ads(); track ad.advertisingId) {
+              <tr>
+                <td class="td-id">{{ ad.advertisingId }}</td>
+                <td class="td-name">{{ ad.title }}</td>
+                <td class="td-desc">{{ truncate(ad.description) }}</td>
+                <td>
+                  @if (ad.isActive) {
+                    <span class="status-badge status-badge--active">Activo</span>
+                  } @else {
+                    <span class="status-badge status-badge--inactive">Inactivo</span>
+                  }
+                </td>
+                <td class="td-date">{{ formatDate(ad.createdAt) }}</td>
+                <td>
+                  <div class="row-actions">
+                    <button
+                      type="button"
+                      class="btn-secondary btn-sm"
+                      (click)="startEdit(ad)"
+                      [disabled]="saving()"
+                    >Editar</button>
+                    <button
+                      type="button"
+                      class="btn-danger btn-sm"
+                      (click)="requestDelete(ad)"
+                      [disabled]="saving()"
+                    >Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- Modal eliminación -->
+  @if (pendingDeletion(); as ad) {
+    <div class="modal-backdrop" role="presentation" (click)="cancelDelete()">
+      <section
+        class="confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="del-ad-title"
+        (click)="$event.stopPropagation()"
+      >
+        <span class="modal-kicker">Confirmar eliminación</span>
+        <h2 id="del-ad-title">Eliminar anuncio</h2>
+        <p>¿Deseas eliminar el anuncio <strong>{{ ad.title }}</strong>? Esta acción no se puede deshacer.</p>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cancelDelete()"
+            [disabled]="saving()"
+          >Cancelar</button>
+          <button
+            type="button"
+            class="btn-danger-confirm"
+            (click)="confirmDelete()"
+            [disabled]="saving()"
+          >
+            {{ saving() ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</section>

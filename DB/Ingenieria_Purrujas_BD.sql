@@ -3254,3 +3254,321 @@ BEGIN
     WHERE Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar';
 END
 GO
+
+-- 1. Agregar columna Description si no existe
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'RoomType'
+      AND COLUMN_NAME = 'Description'
+)
+    ALTER TABLE dbo.RoomType
+    ADD Description NVARCHAR(MAX) NULL;
+GO
+
+-- 2. Agregar columna Capacity si no existe
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'RoomType'
+      AND COLUMN_NAME = 'Capacity'
+)
+    ALTER TABLE dbo.RoomType
+    ADD Capacity INT NOT NULL
+    CONSTRAINT DF_RoomType_Capacity DEFAULT 2;
+GO
+
+-- 3. Corregir filas con Capacity NULL o 0 (pueden existir si la columna
+--    fue agregada con DEFAULT pero las filas no recibieron backfill correcto)
+UPDATE dbo.RoomType
+SET Capacity = 2
+WHERE (Capacity IS NULL OR Capacity = 0)
+  AND IsActive = 1;
+GO
+
+-- 1. Desactivar registros con nombre vacío o precio cero
+UPDATE dbo.RoomType
+SET IsActive = 0
+WHERE IsActive = 1
+  AND (LEN(LTRIM(RTRIM(Name))) = 0 OR BasePrice <= 0);
+GO
+
+-- 2. Corregir Capacity = 0 para los tipos base
+--    La condición no depende de Description para ser robusta
+--    contra el fallo del patch 2026-05-26 (que usaba AND Description IS NULL).
+UPDATE dbo.RoomType
+SET Capacity = 2
+WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'
+  AND IsActive = 1
+  AND (Capacity IS NULL OR Capacity = 0);
+
+UPDATE dbo.RoomType
+SET Capacity = 3
+WHERE Name COLLATE Latin1_General_100_CI_AI = N'Suite Volcán'
+  AND IsActive = 1
+  AND (Capacity IS NULL OR Capacity = 0);
+
+UPDATE dbo.RoomType
+SET Capacity = 6
+WHERE Name COLLATE Latin1_General_100_CI_AI = N'Villa Familiar'
+  AND IsActive = 1
+  AND (Capacity IS NULL OR Capacity = 0);
+GO
+
+-- 3. Agregar CHECK CONSTRAINT para prevenir nombres vacíos futuros (idempotente)
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_NAME = 'CK_RoomType_Name_NotEmpty'
+      AND TABLE_NAME = 'RoomType'
+)
+    ALTER TABLE dbo.RoomType
+    ADD CONSTRAINT CK_RoomType_Name_NotEmpty
+    CHECK (LEN(LTRIM(RTRIM(Name))) > 0);
+GO
+
+
+-- =========================================================
+-- 1. CAMBIOS DE ESQUEMA — ALTER TABLE Advertising
+-- =========================================================
+
+-- Renombrar Name -> Title
+IF EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'Name'
+)
+    EXEC sp_rename 'dbo.Advertising.Name', 'Title', 'COLUMN';
+GO
+
+-- Agregar Description
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'Description'
+)
+    ALTER TABLE dbo.Advertising
+    ADD Description NVARCHAR(1000) NULL;
+GO
+
+-- Agregar ImageUrl
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'ImageUrl'
+)
+    ALTER TABLE dbo.Advertising
+    ADD ImageUrl NVARCHAR(500) NULL;
+GO
+
+-- Agregar IsActive
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'IsActive'
+)
+    ALTER TABLE dbo.Advertising
+    ADD IsActive BIT NOT NULL
+    CONSTRAINT DF_Advertising_IsActive DEFAULT 1;
+GO
+
+-- Agregar CreatedAt
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'CreatedAt'
+)
+    ALTER TABLE dbo.Advertising
+    ADD CreatedAt DATETIME2 NOT NULL
+    CONSTRAINT DF_Advertising_CreatedAt DEFAULT GETUTCDATE();
+GO
+
+-- Agregar UpdatedAt
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Advertising' AND COLUMN_NAME = 'UpdatedAt'
+)
+    ALTER TABLE dbo.Advertising
+    ADD UpdatedAt DATETIME2 NULL;
+GO
+
+-- Backfill filas existentes
+UPDATE dbo.Advertising
+SET IsActive  = 1,
+    CreatedAt = GETUTCDATE()
+WHERE IsActive IS NULL OR CreatedAt IS NULL;
+GO
+
+-- =========================================================
+-- 2. STORED PROCEDURES
+-- =========================================================
+
+-- ── usp_Advertising_GetAll ────────────────────────────────
+CREATE OR ALTER PROCEDURE usp_Advertising_GetAll
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AdvertisingId,
+        Title,
+        Description,
+        ImageUrl,
+        Link,
+        IsActive,
+        CreatedAt,
+        UpdatedAt
+    FROM dbo.Advertising
+    WHERE IsActive = 1
+    ORDER BY AdvertisingId DESC;
+END;
+GO
+
+-- ── usp_Advertising_GetAll_Admin (incluye inactivos) ─────
+CREATE OR ALTER PROCEDURE usp_Advertising_GetAll_Admin
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AdvertisingId,
+        Title,
+        Description,
+        ImageUrl,
+        Link,
+        IsActive,
+        CreatedAt,
+        UpdatedAt
+    FROM dbo.Advertising
+    ORDER BY AdvertisingId DESC;
+END;
+GO
+
+-- ── usp_Advertising_GetById ───────────────────────────────
+CREATE OR ALTER PROCEDURE usp_Advertising_GetById
+    @AdvertisingId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        AdvertisingId,
+        Title,
+        Description,
+        ImageUrl,
+        Link,
+        IsActive,
+        CreatedAt,
+        UpdatedAt
+    FROM dbo.Advertising
+    WHERE AdvertisingId = @AdvertisingId;
+END;
+GO
+
+-- ── usp_Advertising_Create ────────────────────────────────
+CREATE OR ALTER PROCEDURE usp_Advertising_Create
+    @Title       NVARCHAR(255),
+    @Description NVARCHAR(1000),
+    @ImageUrl    NVARCHAR(500),
+    @Link        NVARCHAR(500),
+    @IsActive    BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        IF LEN(LTRIM(RTRIM(@Title))) = 0
+            THROW 50030, N'El título del anuncio no puede estar vacío.', 1;
+
+        IF LEN(LTRIM(RTRIM(@Link))) = 0
+            THROW 50031, N'El enlace de destino del anuncio no puede estar vacío.', 1;
+
+        INSERT INTO dbo.Advertising (Title, Description, ImageUrl, Link, IsActive, CreatedAt)
+        VALUES (
+            LTRIM(RTRIM(@Title)),
+            NULLIF(LTRIM(RTRIM(@Description)), ''),
+            NULLIF(LTRIM(RTRIM(@ImageUrl)), ''),
+            LTRIM(RTRIM(@Link)),
+            @IsActive,
+            GETUTCDATE()
+        );
+
+        SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewAdvertisingId;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- ── usp_Advertising_Update ────────────────────────────────
+CREATE OR ALTER PROCEDURE usp_Advertising_Update
+    @AdvertisingId INT,
+    @Title         NVARCHAR(255),
+    @Description   NVARCHAR(1000),
+    @ImageUrl      NVARCHAR(500),
+    @Link          NVARCHAR(500),
+    @IsActive      BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM dbo.Advertising
+            WHERE AdvertisingId = @AdvertisingId
+        )
+            THROW 50032, N'Anuncio no encontrado.', 1;
+
+        IF LEN(LTRIM(RTRIM(@Title))) = 0
+            THROW 50030, N'El título del anuncio no puede estar vacío.', 1;
+
+        IF LEN(LTRIM(RTRIM(@Link))) = 0
+            THROW 50031, N'El enlace de destino del anuncio no puede estar vacío.', 1;
+
+        UPDATE dbo.Advertising
+        SET Title       = LTRIM(RTRIM(@Title)),
+            Description = NULLIF(LTRIM(RTRIM(@Description)), ''),
+            ImageUrl    = NULLIF(LTRIM(RTRIM(@ImageUrl)), ''),
+            Link        = LTRIM(RTRIM(@Link)),
+            IsActive    = @IsActive,
+            UpdatedAt   = GETUTCDATE()
+        WHERE AdvertisingId = @AdvertisingId;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- ── usp_Advertising_Delete (soft delete) ─────────────────
+CREATE OR ALTER PROCEDURE usp_Advertising_Delete
+    @AdvertisingId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        UPDATE dbo.Advertising
+        SET IsActive  = 0,
+            UpdatedAt = GETUTCDATE()
+        WHERE AdvertisingId = @AdvertisingId;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO
