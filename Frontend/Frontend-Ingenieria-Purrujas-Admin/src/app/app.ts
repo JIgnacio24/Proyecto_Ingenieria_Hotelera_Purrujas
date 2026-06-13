@@ -27,6 +27,7 @@ export class App {
     ['/panel/temporadas', 'seasons'],
     ['/panel/ofertas', 'promotions'],
     ['/panel/bitacoras', 'audit-logs'],
+    ['/panel/metricas', 'analytics'],
     ['/panel/publicidad', 'advertising']
   ]);
 

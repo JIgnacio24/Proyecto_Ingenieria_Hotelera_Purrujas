@@ -63,14 +63,4 @@ for _ in {1..30}; do
     sleep 2
 done
 
-PATCHES_DIR="/docker-entrypoint-initdb.d/patches"
-if [ -d "$PATCHES_DIR" ]; then
-    echo "Aplicando patches desde ${PATCHES_DIR}..."
-    for patch in $(ls "$PATCHES_DIR"/*.sql 2>/dev/null | sort); do
-        echo "  -> Aplicando patch: $(basename "$patch")"
-        sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$SQLSERVER_PASSWORD" -b -i "$patch"
-    done
-    echo "Patches aplicados."
-fi
-
 wait "$server_pid"

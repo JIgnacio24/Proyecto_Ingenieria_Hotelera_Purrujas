@@ -1976,11 +1976,13 @@ VALUES
     (2, 729.00, N'Tarjeta', N'2026-04-11T10:45:00', 1, 1);
 GO
 
---Patches
+-- =========================================
+-- ACTUALIZACIONES INTEGRADAS
+-- =========================================
 USE Ingenieria_Purrujas_BD;
 GO
 
--- Non-destructive patch for Facilities content persistence.
+-- Persistencia no destructiva del contenido de Facilidades.
 
 CREATE OR ALTER PROCEDURE usp_FacilitiesPageContent_Get
 AS
@@ -2557,7 +2559,7 @@ BEGIN
 END;
 GO
 
--- Patch: 2026-05-07-reservation-online
+-- Reservaciones en linea y disponibilidad
 -- Agrega stored procedures para disponibilidad de habitaciones y búsqueda de clientes por email
 
 -- =============================================
@@ -2916,7 +2918,7 @@ GO
 ----------------------------------------------
 -- four rooms per type
 ----------------------------------------------
--- Patch: 4 habitaciones por tipo de habitación
+-- Habitaciones adicionales por tipo de habitacion
 -- Agrega las habitaciones faltantes para llegar a 4 por tipo
 -- Doble (RoomTypeId=1): agrega 103, 104
 -- Suite Volcán (RoomTypeId=2): agrega 203, 204
@@ -3034,7 +3036,7 @@ EXEC usp_GettingTherePageContent_Upsert
     @DescriptionJson = @GettingThereContentJson;
 GO
 
--- Patch: 2026-05-26 — Detalles de tipo de habitación
+-- Detalles de tipo de habitacion
 -- Agrega Description y Capacity a la tabla RoomType.
 -- Crea la tabla RoomTypeImage para imágenes asociadas por tipo.
 -- Inserta datos de ejemplo para los tres tipos existentes.
@@ -3295,7 +3297,7 @@ GO
 
 -- 2. Corregir Capacity = 0 para los tipos base
 --    La condición no depende de Description para ser robusta
---    contra el fallo del patch 2026-05-26 (que usaba AND Description IS NULL).
+--    aunque una version anterior condicionara el cambio a Description IS NULL.
 UPDATE dbo.RoomType
 SET Capacity = 2
 WHERE Name COLLATE Latin1_General_100_CI_AI = N'Habitación Doble'

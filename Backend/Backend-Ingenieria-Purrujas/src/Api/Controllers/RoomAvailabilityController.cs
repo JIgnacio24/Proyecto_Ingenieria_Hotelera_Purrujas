@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using Backend_Ingenieria_Purrujas.Api.Extensions;
 using Backend_Ingenieria_Purrujas.Api.Services;
+using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -15,16 +17,19 @@ public class RoomAvailabilityController : ControllerBase
     private const string SystemName = "Hotel Las Purrujas";
     private readonly IRoomAvailabilityRepository _roomAvailabilityRepository;
     private readonly IAdminUserRepository _adminUserRepository;
+    private readonly IAdminAuditLogService _adminAuditLogService;
     private readonly RoomAvailabilityPdfService _roomAvailabilityPdfService;
 
     public RoomAvailabilityController(
         IRoomAvailabilityRepository roomAvailabilityRepository,
         IAdminUserRepository adminUserRepository,
-        RoomAvailabilityPdfService roomAvailabilityPdfService)
+        RoomAvailabilityPdfService roomAvailabilityPdfService,
+        IAdminAuditLogService adminAuditLogService)
     {
         _roomAvailabilityRepository = roomAvailabilityRepository;
         _adminUserRepository = adminUserRepository;
         _roomAvailabilityPdfService = roomAvailabilityPdfService;
+        _adminAuditLogService = adminAuditLogService;
     }
 
     [HttpGet("today")]
@@ -56,6 +61,12 @@ public class RoomAvailabilityController : ControllerBase
             var today = DateOnly.FromDateTime(generatedAt);
             var summary = await _roomAvailabilityRepository.GetTodayAsync(today, cancellationToken);
             var report = _roomAvailabilityPdfService.Generate(summary, adminUser, generatedAt, SystemName);
+
+            await _adminAuditLogService.RecordForCurrentUserAsync(
+                this,
+                "Generar reporte PDF de habitaciones",
+                $"Genero el reporte PDF de estado de habitaciones para {today:yyyy-MM-dd}. Disponibles: {summary.AvailableRooms}; ocupadas: {summary.OccupiedRooms}; fuera de servicio: {summary.OutOfServiceRooms}.",
+                cancellationToken);
 
             Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0";
             Response.Headers.Pragma = "no-cache";

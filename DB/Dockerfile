@@ -3,7 +3,6 @@ FROM mcr.microsoft.com/mssql/server:2022-latest
 USER root
 
 COPY Ingenieria_Purrujas_BD.sql /docker-entrypoint-initdb.d/Ingenieria_Purrujas_BD.sql
-COPY Patches/ /docker-entrypoint-initdb.d/patches/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY sqlserver-healthcheck.sh /usr/local/bin/sqlserver-healthcheck.sh
 

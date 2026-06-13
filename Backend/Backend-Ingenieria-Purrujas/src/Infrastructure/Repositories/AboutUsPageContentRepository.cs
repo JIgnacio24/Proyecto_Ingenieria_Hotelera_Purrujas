@@ -91,7 +91,7 @@ public sealed class AboutUsPageContentRepository : IAboutUsPageContentRepository
         catch (SqlException ex) when (ex.Message.Contains(UpsertContentProcedureName, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                $"La base de datos no tiene el procedimiento {UpsertContentProcedureName}. Ejecuta DB/DB-Ingenieria-Purrujas.sql o DB/Patches/2026-05-06-about-us-content.sql.",
+                $"La base de datos no tiene el procedimiento {UpsertContentProcedureName}. Ejecuta DB/Ingenieria_Purrujas_BD.sql.",
                 ex);
         }
         catch (Exception ex)
