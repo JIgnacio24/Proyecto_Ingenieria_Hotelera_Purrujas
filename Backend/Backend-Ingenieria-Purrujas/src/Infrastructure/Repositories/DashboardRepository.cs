@@ -272,7 +272,7 @@ public class DashboardRepository : IDashboardRepository
         SqlConnection conn, CancellationToken ct)
     {
         const string sql = """
-            SELECT TOP 5
+            SELECT
                 rt.Name                AS RoomTypeName,
                 COUNT(r.ReservationId) AS ReservationCount
             FROM RoomType rt
@@ -280,7 +280,7 @@ public class DashboardRepository : IDashboardRepository
             LEFT JOIN Reservation r ON r.RoomId      = rm.RoomId     AND r.IsActive  = 1
             WHERE rt.IsActive = 1
             GROUP BY rt.RoomTypeId, rt.Name
-            ORDER BY ReservationCount DESC
+            ORDER BY ReservationCount DESC, rt.Name ASC
             """;
 
         await using var cmd    = new SqlCommand(sql, conn);

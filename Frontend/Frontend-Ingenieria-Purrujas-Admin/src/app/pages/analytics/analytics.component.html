@@ -253,12 +253,12 @@
     <div class="charts-grid charts-grid--full">
       <div class="chart-card">
         <h2 class="chart-title">Reservaciones por tipo de habitación</h2>
-        <p class="chart-subtitle">Top 5 tipos de habitación según número de reservas históricas</p>
+        <p class="chart-subtitle">Todos los tipos de habitación según número de reservas históricas</p>
 
         @if (roomTypeBars().length > 0) {
           <div class="chart-wrapper chart-wrapper--centered">
             <svg
-              [attr.viewBox]="'0 -20 ' + svgWidth(roomTypeBars().length) + ' ' + (svgHeight() + 48)"
+              [attr.viewBox]="'0 -20 ' + svgWidth(roomTypeBars().length) + ' ' + (svgHeight() + 64)"
               class="bar-svg bar-svg--wide"
               role="img"
               aria-label="Gráfico de barras: reservaciones por tipo de habitación"
@@ -284,7 +284,14 @@
                     [attr.y]="svgHeight() + 16"
                     class="bar-label bar-label--wrap"
                     text-anchor="middle"
-                  >{{ bar.label }}</text>
+                  >
+                    @for (line of splitLabel(bar.label); track $index) {
+                      <tspan
+                        [attr.x]="bar.x + bar.width / 2"
+                        [attr.dy]="$index === 0 ? 0 : '1.2em'"
+                      >{{ line }}</tspan>
+                    }
+                  </text>
                 </g>
               }
             </svg>
