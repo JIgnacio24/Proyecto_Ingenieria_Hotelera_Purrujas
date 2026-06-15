@@ -143,29 +143,6 @@
       </dl>
     </section>
 
-        <section id="dashboard-status" class="summary-card dashboard-section">
-      <div class="section-head">
-        <p>Estado actual</p>
-        <span>Resumen del entorno interno</span>
-      </div>
-
-      <div class="summary-stack">
-        <article class="summary-item">
-          <span>Rol</span>
-          <strong>{{ profile()?.role || 'Sin asignar' }}</strong>
-        </article>
-
-        <article class="summary-item">
-          <span>Estado</span>
-          <strong>{{ loading() ? 'Sincronizando' : 'Activo' }}</strong>
-        </article>
-
-        <article class="summary-item">
-          <span>Último acceso</span>
-          <strong>{{ formatDate(profile()?.lastLoginAt) }}</strong>
-        </article>
-      </div>
-    </section>
 
     <!-- ── Métricas del hotel ─────────────────────────────────────────── -->
     <section id="dashboard-metrics" class="metrics-card dashboard-section">

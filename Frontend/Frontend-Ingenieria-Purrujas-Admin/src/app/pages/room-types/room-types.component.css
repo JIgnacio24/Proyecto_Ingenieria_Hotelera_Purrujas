@@ -311,6 +311,9 @@
   border-radius: 20px;
   padding: 1.4rem 1.6rem;
   backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .type-cards {
@@ -437,7 +440,6 @@
   border-radius: 20px;
   padding: 1.4rem 1.6rem;
   backdrop-filter: blur(12px);
-  min-height: 240px;
 }
 
 /* Placeholder — sin selección */
@@ -676,7 +678,7 @@
 @media (min-width: 760px) {
   .rt-body {
     grid-template-columns: 320px 1fr;
-    align-items: start;
+    align-items: stretch;
   }
 
   .type-cards {
@@ -684,7 +686,7 @@
   }
 
   .type-detail {
-    min-height: 400px;
+    min-height: 0;
   }
 }
 
