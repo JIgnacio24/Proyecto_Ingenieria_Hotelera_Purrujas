@@ -1,36 +1,35 @@
+using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 
-/// <summary>
-/// Endpoint público (sin autenticación) para que el sitio cliente
-/// muestre las promociones en la página de publicidad.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class PromotionsController : ControllerBase
+public class PromotionsController(IPromotionRepository promotionRepository) : ControllerBase
 {
-    private static readonly List<PublicPromotion> _promotions =
-    [
-        new(1, "Escapada Romántica",  "http://localhost:4200/about-us#reservas", 25,
-            new DateTime(2026, 4, 1),  new DateTime(2026, 5, 31),  2),
-        new(2, "Semana Ecológica",    "http://localhost:4200/about-us#reservas", 20,
-            new DateTime(2026, 4, 15), new DateTime(2026, 6, 30),  1),
-        new(3, "Aventura Familiar",   "http://localhost:4200/about-us#reservas", 30,
-            new DateTime(2026, 5, 1),  new DateTime(2026, 7, 15),  3),
-        new(4, "Retiro de Bienestar", "http://localhost:4200/about-us#reservas", 15,
-            new DateTime(2026, 6, 1),  new DateTime(2026, 8, 31),  2),
-    ];
-
     [HttpGet]
-    public ActionResult<IEnumerable<PublicPromotion>> GetAll() => Ok(_promotions);
-
-    [HttpGet("{id}")]
-    public ActionResult<PublicPromotion> GetById(int id)
+    public async Task<ActionResult<IEnumerable<PublicPromotion>>> GetAll(CancellationToken cancellationToken)
     {
-        var p = _promotions.FirstOrDefault(x => x.PromotionId == id);
-        return p is null ? NotFound() : Ok(p);
+        var promotions = await promotionRepository.GetAllAsync(cancellationToken);
+        return Ok(promotions.Select(MapPromotion));
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PublicPromotion>> GetById(int id, CancellationToken cancellationToken)
+    {
+        var promotion = await promotionRepository.GetByIdAsync(id, cancellationToken);
+        return promotion is null ? NotFound() : Ok(MapPromotion(promotion));
+    }
+
+    private static PublicPromotion MapPromotion(Promotion promotion) => new(
+        promotion.PromotionId,
+        promotion.Name,
+        "http://localhost:4200/reservar",
+        promotion.Discount,
+        promotion.StartDate,
+        promotion.EndDate,
+        promotion.RoomTypeId);
 }
 
 public sealed record PublicPromotion(
@@ -38,6 +37,6 @@ public sealed record PublicPromotion(
     string Name,
     string Link,
     int Discount,
-    DateTime StartDate,
-    DateTime EndDate,
+    DateOnly StartDate,
+    DateOnly EndDate,
     int RoomTypeId);

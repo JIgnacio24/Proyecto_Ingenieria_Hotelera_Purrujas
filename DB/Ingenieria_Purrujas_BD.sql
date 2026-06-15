@@ -99,6 +99,8 @@ CREATE TABLE Bill (
     BasePrice DECIMAL(10,2) NOT NULL,
     Discount DECIMAL(10,2) NOT NULL DEFAULT 0,
     SeasonAmount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    Currency CHAR(3) NOT NULL DEFAULT 'USD',
+    CONSTRAINT CK_Bill_Currency CHECK (Currency IN ('USD', 'CRC')),
     CONSTRAINT FKReservationBill FOREIGN KEY (ReservationId) REFERENCES Reservation(ReservationId)
 );
 GO
@@ -1874,10 +1876,10 @@ VALUES
     (N'2026-04-11T10:30:00', N'2026-04-01T15:00:00', N'2026-04-04T12:00:00', 2, 5, 2, 1);
 GO
 
-INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount)
+INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount, Currency)
 VALUES
-    (1, 285.00, 0.00, 71.25),
-    (2, 540.00, 0.00, 189.00);
+    (1, 285.00, 0.00, 71.25, 'USD'),
+    (2, 540.00, 0.00, 189.00, 'USD');
 GO
 
 INSERT INTO Payment (ReservationId, Amount, PaymentMethod, PaymentDate, IsPaid, IsActive)

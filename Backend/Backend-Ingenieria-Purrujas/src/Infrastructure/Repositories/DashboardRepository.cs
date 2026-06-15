@@ -62,7 +62,10 @@ public class DashboardRepository : IDashboardRepository
                    AND rs.Name = 'Confirmada'
                    AND CAST(r.ReservationDate AS DATE) >= @MonthStart)           AS ConfirmedThisMonth,
 
-                (SELECT ISNULL(SUM(b.BasePrice + b.SeasonAmount - b.Discount), 0)
+                (SELECT ISNULL(SUM(CASE WHEN ISNULL(b.Currency, 'USD') = 'CRC'
+                     THEN (b.BasePrice + b.SeasonAmount - b.Discount) / 500.0
+                     ELSE b.BasePrice + b.SeasonAmount - b.Discount
+                 END), 0)
                  FROM Reservation r
                  INNER JOIN ReservationStatus rs
                      ON rs.ReservationStatusId = r.ReservationStatusId
@@ -172,7 +175,10 @@ public class DashboardRepository : IDashboardRepository
                 YEAR(m.MonthStart)  AS Year,
                 MONTH(m.MonthStart) AS Month,
                 ISNULL((
-                    SELECT SUM(b.BasePrice + b.SeasonAmount - b.Discount)
+                    SELECT SUM(CASE WHEN ISNULL(b.Currency, 'USD') = 'CRC'
+                        THEN (b.BasePrice + b.SeasonAmount - b.Discount) / 500.0
+                        ELSE b.BasePrice + b.SeasonAmount - b.Discount
+                    END)
                     FROM Reservation r
                     INNER JOIN ReservationStatus rs
                         ON rs.ReservationStatusId = r.ReservationStatusId

@@ -7,6 +7,10 @@ public record QuoteResponseDto(
     int NightsLow,
     decimal BasePricePerNight,
     decimal HighSeasonMultiplier,
+    decimal Subtotal,
+    decimal DiscountAmount,
     decimal Total,
-    string Currency
+    string Currency,
+    int PromotionDiscount,
+    string? PromotionName
 );

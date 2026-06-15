@@ -1,0 +1,171 @@
+<section class="admin-getting-there-shell">
+  <header class="admin-toolbar">
+    <div>
+      <p class="admin-eyebrow">Contenido del sitio</p>
+      <h1>Editar cómo llegar</h1>
+      <span>Actualiza el texto, las coordenadas y las indicaciones visibles para los huéspedes.</span>
+    </div>
+
+    <div class="admin-actions">
+      <a class="secondary-button" routerLink="/panel">Volver al panel</a>
+      <button type="button" class="secondary-button" (click)="discard()" [disabled]="saving() || !hasChanges()">
+        Descartar
+      </button>
+      <button type="button" class="primary-button" (click)="save()" [disabled]="saving() || loading()">
+        {{ saving() ? 'Guardando...' : 'Aceptar' }}
+      </button>
+    </div>
+  </header>
+
+  @if (feedback()) {
+    <p
+      class="admin-feedback"
+      [class.success-feedback]="feedbackTone() === 'success'"
+      [class.error-feedback]="feedbackTone() === 'error'"
+    >
+      {{ feedback() }}
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="loading-state">Cargando contenido de Cómo llegar...</p>
+  } @else {
+    <main class="getting-there-layout">
+      <section class="route-preview">
+        <div class="route-preview__card">
+          <div class="route-preview__map" aria-hidden="true">
+            <div class="route-preview__path"></div>
+            <div class="route-preview__pin">📍</div>
+            <div class="route-preview__badge">{{ gettingThereContent.mapButtonLabel }}</div>
+          </div>
+
+          <div class="route-preview__content">
+            <p class="route-preview__eyebrow">{{ gettingThereContent.sectionTag }}</p>
+            <h2>{{ gettingThereContent.sectionTitle }}</h2>
+            <p class="route-preview__summary">{{ gettingThereContent.sectionSubtext }}</p>
+          </div>
+        </div>
+
+        <div class="route-preview__stack">
+          <article class="route-preview__info">
+            <span>{{ gettingThereContent.coordinatesTitle }}</span>
+            <strong>{{ gettingThereContent.coordinatesDescription }}</strong>
+          </article>
+
+          <article class="route-preview__info">
+            <span>Indicaciones actuales</span>
+            <ul>
+              @for (direction of directionsItemsText.split('\n'); track direction) {
+                @if (direction.trim()) {
+                  <li>{{ direction }}</li>
+                }
+              }
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <form id="getting-there-editor-panel" class="editor-panel" (ngSubmit)="save()">
+        <div class="panel-head">
+          <p>Editor de sección</p>
+          <span>Estos campos actualizan la sección Cómo llegar del sitio del cliente.</span>
+        </div>
+
+        @if (panelError()) {
+          <p class="form-feedback error-feedback">{{ panelError() }}</p>
+        }
+
+        <label class="field">
+          <span>Etiqueta de sección</span>
+          <input
+            type="text"
+            name="sectionTag"
+            [(ngModel)]="gettingThereContent.sectionTag"
+            (ngModelChange)="markChanged()"
+          />
+          @if (fieldErrors()['sectionTag']) {
+            <small class="field-error">{{ fieldErrors()['sectionTag'] }}</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Título de sección</span>
+          <input
+            type="text"
+            name="sectionTitle"
+            [(ngModel)]="gettingThereContent.sectionTitle"
+            (ngModelChange)="markChanged()"
+          />
+          @if (fieldErrors()['sectionTitle']) {
+            <small class="field-error">{{ fieldErrors()['sectionTitle'] }}</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Texto introductorio</span>
+          <textarea
+            rows="3"
+            name="sectionSubtext"
+            [(ngModel)]="gettingThereContent.sectionSubtext"
+            (ngModelChange)="markChanged()"
+          ></textarea>
+          @if (fieldErrors()['sectionSubtext']) {
+            <small class="field-error">{{ fieldErrors()['sectionSubtext'] }}</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Título de coordenadas</span>
+          <input
+            type="text"
+            name="coordinatesTitle"
+            [(ngModel)]="gettingThereContent.coordinatesTitle"
+            (ngModelChange)="markChanged()"
+          />
+          @if (fieldErrors()['coordinatesTitle']) {
+            <small class="field-error">{{ fieldErrors()['coordinatesTitle'] }}</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Descripción de coordenadas</span>
+          <textarea
+            rows="3"
+            name="coordinatesDescription"
+            [(ngModel)]="gettingThereContent.coordinatesDescription"
+            (ngModelChange)="markChanged()"
+          ></textarea>
+          @if (fieldErrors()['coordinatesDescription']) {
+            <small class="field-error">{{ fieldErrors()['coordinatesDescription'] }}</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Texto del botón del mapa</span>
+          <input
+            type="text"
+            name="mapButtonLabel"
+            [(ngModel)]="gettingThereContent.mapButtonLabel"
+            (ngModelChange)="markChanged()"
+          />
+          @if (fieldErrors()['mapButtonLabel']) {
+            <small class="field-error">{{ fieldErrors()['mapButtonLabel'] }}</small>
+          }
+        </label>
+
+        <label class="field field-full">
+          <span>Indicaciones de llegada</span>
+          <textarea
+            rows="6"
+            name="directionsItemsText"
+            [(ngModel)]="directionsItemsText"
+            (ngModelChange)="markChanged()"
+          ></textarea>
+          @if (fieldErrors()['directionsItemsText']) {
+            <small class="field-error">{{ fieldErrors()['directionsItemsText'] }}</small>
+          }
+        </label>
+      </form>
+    </main>
+  }
+</section>

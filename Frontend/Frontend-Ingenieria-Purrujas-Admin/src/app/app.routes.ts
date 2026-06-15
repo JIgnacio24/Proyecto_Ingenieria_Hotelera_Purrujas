@@ -4,6 +4,7 @@ import { AuthShellComponent } from './pages/auth-shell/auth-shell.component';
 import { AboutUsEditorComponent } from './pages/about-us-editor/about-us-editor.component';
 import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { GettingThereEditorComponent } from './pages/getting-there-editor/getting-there-editor.component';
 import { ReservationsComponent } from './pages/reservations/reservations.component';
 import { HomeEditorComponent } from './pages/home-editor/home-editor.component';
 import { RoomsComponent } from './pages/rooms/rooms.component';
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'panel', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'panel/home', component: HomeEditorComponent, canActivate: [authGuard] },
   { path: 'panel/sobre-nosotros', component: AboutUsEditorComponent, canActivate: [authGuard] },
+  { path: 'panel/como-llegar', component: GettingThereEditorComponent, canActivate: [authGuard] },
   { path: 'panel/reservas', component: ReservationsComponent, canActivate: [authGuard] },
   { path: 'panel/tipos-habitacion', component: RoomTypesComponent, canActivate: [authGuard] },
   { path: 'panel/habitaciones', component: RoomsComponent, canActivate: [authGuard] },

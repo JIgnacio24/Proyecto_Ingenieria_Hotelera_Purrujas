@@ -12,13 +12,16 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
 {
     private readonly string _connectionString;
     private readonly ISeasonRepository _seasonRepository;
+    private readonly IPromotionRepository _promotionRepository;
 
     public RoomAvailabilityRepository(
         IConfiguration configuration,
-        ISeasonRepository seasonRepository)
+        ISeasonRepository seasonRepository,
+        IPromotionRepository promotionRepository)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
         _seasonRepository = seasonRepository;
+        _promotionRepository = promotionRepository;
     }
 
     public async Task<RoomAvailabilitySummary> GetTodayAsync(
@@ -62,6 +65,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
+        var promotions = await _promotionRepository.GetAllAsync(cancellationToken);
 
         var rooms = await ReadAvailableRoomsAsync(
             connection,
@@ -70,6 +74,7 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
             roomTypeId,
             excludeReservationId,
             seasons,
+            promotions,
             cancellationToken);
 
         var roomTypeName = "Todos los tipos";
@@ -107,12 +112,14 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         int? roomTypeId,
         int? excludeReservationId,
         IReadOnlyCollection<Season> seasons,
+        IReadOnlyCollection<Promotion> promotions,
         CancellationToken cancellationToken)
     {
         const string query = """
             SELECT
                 r.RoomId,
                 r.RoomNumber,
+                r.RoomTypeId,
                 rt.Name AS RoomTypeName,
                 rs.Name AS OperationalStatus,
                 rt.BasePrice
@@ -153,17 +160,23 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
             {
                 RoomId = reader.GetInt32(0),
                 RoomNumber = reader.GetString(1),
-                RoomTypeName = reader.GetString(2),
-                OperationalStatus = reader.GetString(3),
-                BasePricePerNight = reader.GetDecimal(4)
+                RoomTypeId = reader.GetInt32(2),
+                RoomTypeName = reader.GetString(3),
+                OperationalStatus = reader.GetString(4),
+                BasePricePerNight = reader.GetDecimal(5)
             };
 
             var quoteBreakdown = BuildQuoteBreakdown(startDate, endDate, room.BasePricePerNight, seasons);
+            var promotion = ResolvePromotion(room.RoomTypeId, startDate, endDate, promotions);
+            var discount = promotion is null
+                ? 0m
+                : decimal.Round(quoteBreakdown.TotalUsd * promotion.Discount / 100m, 2);
+
             room.NightsTotal = quoteBreakdown.TotalNights;
             room.HighSeasonNights = quoteBreakdown.HighSeasonNights;
             room.LowSeasonNights = quoteBreakdown.LowSeasonNights;
             room.HighestSeasonMultiplier = quoteBreakdown.HighestMultiplier;
-            room.TotalUsd = decimal.Round(quoteBreakdown.TotalUsd, 2);
+            room.TotalUsd = decimal.Round(quoteBreakdown.TotalUsd - discount, 2);
 
             rooms.Add(room);
         }
@@ -551,6 +564,23 @@ public sealed class RoomAvailabilityRepository : IRoomAvailabilityRepository
         return matchedSeason is null
             ? 1m
             : 1m + (matchedSeason.PercentageChange / 100m);
+    }
+
+    private static Promotion? ResolvePromotion(
+        int roomTypeId,
+        DateOnly startDate,
+        DateOnly endDate,
+        IReadOnlyCollection<Promotion> promotions)
+    {
+        return promotions
+            .Where(promotion =>
+                promotion.IsActive
+                && promotion.RoomTypeId == roomTypeId
+                && promotion.StartDate < endDate
+                && promotion.EndDate >= startDate)
+            .OrderByDescending(promotion => promotion.Discount)
+            .ThenBy(promotion => promotion.PromotionId)
+            .FirstOrDefault();
     }
 
     private sealed record QuoteBreakdown(

@@ -7,6 +7,7 @@ public class QuoteService : IQuoteService
 {
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
+    private readonly IPromotionRepository _promotionRepository;
     private const decimal UsdToCrcRate = 500m;
     private static readonly HashSet<string> SupportedCurrencies = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -14,10 +15,14 @@ public class QuoteService : IQuoteService
         "CRC"
     };
 
-    public QuoteService(IRoomTypeRepository roomTypeRepository, ISeasonRepository seasonRepository)
+    public QuoteService(
+        IRoomTypeRepository roomTypeRepository,
+        ISeasonRepository seasonRepository,
+        IPromotionRepository promotionRepository)
     {
         _roomTypeRepository = roomTypeRepository;
         _seasonRepository = seasonRepository;
+        _promotionRepository = promotionRepository;
     }
 
     public async Task<QuoteResponseDto> CalculateAsync(
@@ -34,10 +39,18 @@ public class QuoteService : IQuoteService
 
         var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
+        var promotions = await _promotionRepository.GetAllAsync(cancellationToken);
+        var promotion = ResolvePromotion(request.StartDate, request.EndDate, roomType.RoomTypeId, promotions);
+        var discountUsd = promotion is null
+            ? 0m
+            : decimal.Round(quoteBreakdown.TotalUsd * promotion.Discount / 100m, 2);
+        var totalUsd = quoteBreakdown.TotalUsd - discountUsd;
 
-        var (total, basePerNight) = currency == "CRC"
-            ? ConvertToCrc(quoteBreakdown.TotalUsd, roomType.BasePrice)
-            : (quoteBreakdown.TotalUsd, roomType.BasePrice);
+        var conversionRate = currency == "CRC" ? UsdToCrcRate : 1m;
+        var subtotal = quoteBreakdown.TotalUsd * conversionRate;
+        var discountAmount = discountUsd * conversionRate;
+        var total = totalUsd * conversionRate;
+        var basePerNight = roomType.BasePrice * conversionRate;
 
         return new QuoteResponseDto(
             RoomTypeKey: roomTypeKey,
@@ -46,14 +59,30 @@ public class QuoteService : IQuoteService
             NightsLow: quoteBreakdown.LowSeasonNights,
             BasePricePerNight: decimal.Round(basePerNight, 2),
             HighSeasonMultiplier: quoteBreakdown.HighestMultiplier,
+            Subtotal: decimal.Round(subtotal, 2),
+            DiscountAmount: decimal.Round(discountAmount, 2),
             Total: decimal.Round(total, 2),
-            Currency: currency
+            Currency: currency,
+            PromotionDiscount: promotion?.Discount ?? 0,
+            PromotionName: promotion?.Name
         );
     }
 
-    private static (decimal total, decimal basePerNight) ConvertToCrc(decimal totalUsd, decimal baseUsd)
+    private static Promotion? ResolvePromotion(
+        DateOnly start,
+        DateOnly end,
+        int roomTypeId,
+        IReadOnlyCollection<Promotion> promotions)
     {
-        return (totalUsd * UsdToCrcRate, baseUsd * UsdToCrcRate);
+        return promotions
+            .Where(promotion =>
+                promotion.IsActive &&
+                promotion.RoomTypeId == roomTypeId &&
+                promotion.StartDate < end &&
+                promotion.EndDate >= start)
+            .OrderByDescending(promotion => promotion.Discount)
+            .ThenBy(promotion => promotion.PromotionId)
+            .FirstOrDefault();
     }
 
     private static string NormalizeCurrency(string requested)
