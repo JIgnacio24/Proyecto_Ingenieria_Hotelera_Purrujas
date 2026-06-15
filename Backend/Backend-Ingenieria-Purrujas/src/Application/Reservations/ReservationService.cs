@@ -46,12 +46,10 @@ public class ReservationService(
         if (request.EndDate <= request.StartDate)
             throw new ArgumentException("La fecha de salida debe ser posterior a la fecha de entrada.");
 
-        var currency = request.Currency.ToUpperInvariant() is "USD" or "CRC"
-            ? request.Currency.ToUpperInvariant()
-            : "USD";
+        var currency = NormalizeRequestedCurrency(request.Currency);
 
         var quote = await quoteService.CalculateAsync(
-            new QuoteRequestDto(request.RoomTypeKey, request.StartDate, request.EndDate, "USD"),
+            new QuoteRequestDto(request.RoomTypeKey, request.StartDate, request.EndDate, currency),
             cancellationToken);
 
         var customer = await customerRepository.GetByEmailAsync(request.Email, cancellationToken)
@@ -74,23 +72,8 @@ public class ReservationService(
             IsActive            = true
         };
 
-        var seasonAmount = quote.Total - (quote.BasePricePerNight * quote.NightsTotal);
-        var discountAmount = 0m;
-
-        if (request.PromotionId.HasValue)
-        {
-            var promotion = await promotionRepository.GetByIdAsync(request.PromotionId.Value, cancellationToken);
-            var roomTypeId = RoomTypeIdFromKey(request.RoomTypeKey);
-            if (promotion is not null
-                && promotion.IsActive
-                && (roomTypeId is null || promotion.RoomTypeId == roomTypeId)
-                && promotion.StartDate <= request.EndDate
-                && promotion.EndDate >= request.StartDate)
-            {
-                discountAmount = decimal.Round(quote.Total * promotion.Discount / 100m, 2);
-            }
-        }
-
+        var basePrice = quote.BasePricePerNight * quote.NightsTotal;
+        var seasonAmount = quote.Subtotal - basePrice;
         var bill = new Bill
         {
             BasePrice    = quote.BasePricePerNight * quote.NightsTotal,
@@ -198,7 +181,7 @@ public class ReservationService(
             ?? throw new ArgumentException("La habitación seleccionada no fue encontrada.");
 
         var quote = await quoteService.CalculateAsync(
-            new QuoteRequestDto(roomTypeKey, request.StartDate, request.EndDate, "USD"),
+            new QuoteRequestDto(roomTypeKey, request.StartDate, request.EndDate, current.Currency),
             cancellationToken,
             allowPastDates: true);
 
@@ -228,8 +211,9 @@ public class ReservationService(
             cancellationToken);
 
         var basePrice = quote.BasePricePerNight * quote.NightsTotal;
-        var seasonAmount = quote.Total - basePrice;
-        await reservationRepository.UpdateBillAsync(id, basePrice, discountAmount, seasonAmount, cancellationToken);
+        var seasonAmount = quote.Subtotal - basePrice;
+        await reservationRepository.UpdateBillAsync(
+            id, basePrice, seasonAmount, quote.DiscountAmount, cancellationToken);
 
         var updated = await reservationRepository.GetByIdAsync(id, cancellationToken);
         return MapToDto(updated!);
@@ -259,7 +243,10 @@ public class ReservationService(
     private static ReservationResponseDto MapToDto(ReservationDetail d)
     {
         var nights = d.EndDate.DayNumber - d.StartDate.DayNumber;
-        var totalUsd = d.BasePrice + d.SeasonAmount - d.Discount;
+        var currency = NormalizeCurrencyOrDefault(d.Currency);
+        var storedTotal = d.BasePrice + d.SeasonAmount - d.Discount;
+        var (totalUsd, totalCrc) = ResolveTotals(storedTotal, currency);
+
         return new ReservationResponseDto
         {
             ReservationId    = d.ReservationId,
@@ -283,12 +270,23 @@ public class ReservationService(
         };
     }
 
-    // Mapeo estático de roomTypeKey → RoomTypeId (coincide con la tabla RoomType sembrada)
-    private static int? RoomTypeIdFromKey(string key) => key.ToLowerInvariant() switch
+    private static (decimal totalUsd, decimal totalCrc) ResolveTotals(decimal total, string currency)
     {
-        "doble" => 1,
-        "suite" => 2,
-        "villa" => 3,
-        _       => null
-    };
+        return currency == "CRC"
+            ? (decimal.Round(total / UsdToCrcRate, 2), decimal.Round(total, 2))
+            : (decimal.Round(total, 2), decimal.Round(total * UsdToCrcRate, 2));
+    }
+
+    private static string NormalizeCurrencyOrDefault(string? currency)
+    {
+        return currency?.Trim().ToUpperInvariant() is "CRC" ? "CRC" : "USD";
+    }
+
+    private static string NormalizeRequestedCurrency(string? currency)
+    {
+        var normalized = currency?.Trim().ToUpperInvariant();
+        return normalized is "USD" or "CRC"
+            ? normalized
+            : throw new ArgumentException("La moneda seleccionada no es válida.");
+    }
 }

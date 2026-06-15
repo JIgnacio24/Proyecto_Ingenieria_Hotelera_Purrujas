@@ -24,31 +24,6 @@ interface RoomOption {
   icon: string;
 }
 
-const ROOM_ICONS = ['🛏️', '🌋', '🏡', '🏨'];
-
-function formatCapacity(capacity: number): string {
-  if (capacity <= 0) return '';
-  if (capacity === 1) return '1 persona';
-  if (capacity <= 2) return `${capacity} personas`;
-  return `Hasta ${capacity} personas`;
-}
-
-function mapRoomType(rt: PublicRoomType, index: number): RoomOption {
-  return {
-    roomTypeId: rt.roomTypeId,
-    id: rt.name,
-    nombre: rt.name,
-    descripcion: rt.description ?? '',
-    capacidad: formatCapacity(rt.capacity),
-    precioBaja: rt.basePrice,
-    icon: ROOM_ICONS[index] ?? '🛏️'
-  };
-}
-
-const EMPTY_ROOM: RoomOption = {
-  roomTypeId: 0, id: '', nombre: '', descripcion: '', capacidad: '', precioBaja: 0, icon: '🛏️'
-};
-
 @Component({
   selector: 'app-reservar',
   standalone: true,
@@ -80,6 +55,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
   nochesAlta = 0;
   nochesBaja = 0;
   total = 0;
+  finalTotal = 0;
+  discountAmount = 0;
   totalUsd = 0;
   totalCrc = 0;
   quoteError = '';
@@ -95,8 +72,6 @@ export class ReservarComponent implements OnInit, OnDestroy {
   guestForm: FormGroup;
 
   private subs = new Subscription();
-  private promociones: Promocion[] = [];
-
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -131,13 +106,27 @@ export class ReservarComponent implements OnInit, OnDestroy {
 
   /** Precio final después de aplicar el descuento promocional */
   get totalConDescuento(): number {
-    if (this.promoDescuento <= 0 || this.total <= 0) return this.total;
-    return Math.round(this.total * (1 - this.promoDescuento / 100) * 100) / 100;
+    return this.finalTotal;
   }
 
   /** Ahorro absoluto en la moneda seleccionada */
   get promoAhorro(): number {
-    return Math.round((this.total - this.totalConDescuento) * 100) / 100;
+    return this.discountAmount;
+  }
+
+  confirmedReservationSymbol(): string {
+    return this.currencyService.symbol(this.confirmedReservationCurrency());
+  }
+
+  confirmedReservationTotal(): number {
+    if (!this.confirmedReservation) return 0;
+    return this.confirmedReservationCurrency() === 'CRC'
+      ? this.confirmedReservation.totalCrc
+      : this.confirmedReservation.totalUsd;
+  }
+
+  price(amountUsd: number): number {
+    return this.currencyService.convertFromUsd(amountUsd, this.currency);
   }
 
   ngOnInit(): void {
@@ -145,15 +134,11 @@ export class ReservarComponent implements OnInit, OnDestroy {
       this.currencyService.currencyChanges$.subscribe((curr) => {
         this.currency = curr;
         this.currencySymbol = this.currencyService.symbol(curr);
-        this.updateDisplayTotal();
-      })
-    );
-
-    // Cargar catálogo de promociones para detección automática
-    this.subs.add(
-      this.publicidadService.getPromociones().subscribe(promos => {
-        this.promociones = promos;
-        if (this.fechaInicio && this.fechaFin) this.detectPromo();
+        if (this.fechaInicio && this.fechaFin && this.nochesTotales > 0) {
+          this.calculateQuote();
+        } else {
+          this.updateDisplayTotal();
+        }
       })
     );
 
@@ -297,23 +282,45 @@ export class ReservarComponent implements OnInit, OnDestroy {
       roomTypeKey: this.selectedRoom.id,
       startDate: this.fechaInicio,
       endDate: this.fechaFin,
-      currency: 'USD'
+      currency: this.currency
     };
 
     this.http
-      .post<{ nightsTotal: number; nightsHigh: number; nightsLow: number; basePricePerNight: number; total: number }>(
+      .post<{
+        nightsTotal: number;
+        nightsHigh: number;
+        nightsLow: number;
+        basePricePerNight: number;
+        subtotal: number;
+        discountAmount: number;
+        total: number;
+        currency: Currency;
+        promotionDiscount: number;
+        promotionName?: string;
+      }>(
         '/api/quote/calculate',
         payload
       )
       .subscribe({
         next: (r) => {
+          if (r.currency !== this.currency) return;
+
           this.nochesTotales = r.nightsTotal;
           this.nochesAlta = r.nightsHigh;
           this.nochesBaja = r.nightsLow;
-          this.totalUsd = r.total;
-          this.totalCrc = r.total * 500;
-          this.updateDisplayTotal();
-          this.detectPromo();
+          this.total = r.subtotal;
+          this.finalTotal = r.total;
+          this.discountAmount = r.discountAmount;
+          this.promoDescuento = r.promotionDiscount;
+          this.promoNombre = r.promotionName || '';
+          if (r.currency === 'CRC') {
+            this.totalCrc = r.total;
+            this.totalUsd = r.total / 500;
+          } else {
+            this.totalUsd = r.total;
+            this.totalCrc = r.total * 500;
+          }
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.resetQuoteAndAvailability();
@@ -381,7 +388,12 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   private updateDisplayTotal(): void {
-    this.total = this.currency === 'CRC' ? this.totalCrc : this.totalUsd;
+    this.finalTotal = this.currency === 'CRC' ? this.totalCrc : this.totalUsd;
+  }
+
+  private confirmedReservationCurrency(): Currency {
+    const currency = this.confirmedReservation?.currency;
+    return this.currencyService.isValidCurrency(currency) ? currency : 'USD';
   }
 
   private adjustEndDate(): void {
@@ -406,6 +418,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
     this.nochesAlta = 0;
     this.nochesBaja = 0;
     this.total = 0;
+    this.finalTotal = 0;
+    this.discountAmount = 0;
     this.totalUsd = 0;
     this.totalCrc = 0;
     this.quoteError = '';

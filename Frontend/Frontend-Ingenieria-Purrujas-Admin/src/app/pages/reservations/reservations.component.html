@@ -73,7 +73,7 @@
             <th scope="col">Entrada</th>
             <th scope="col">Salida</th>
             <th scope="col">Noches</th>
-            <th scope="col">Total (USD)</th>
+            <th scope="col">Total</th>
             <th scope="col">Estado</th>
             <th scope="col" [hidden]="statusFilter() === 'Eliminadas'">Cambiar estado</th>
             <th scope="col" [hidden]="statusFilter() === 'Eliminadas'">Acciones</th>
@@ -95,10 +95,8 @@
               <td>{{ formatDate(r.endDate) }}</td>
               <td class="center">{{ r.nightsTotal }}</td>
               <td class="amount">
-                ${{ r.totalUsd | number:'1.2-2' }}
-                @if (r.discountUsd > 0) {
-                  <div class="discount-line">−${{ r.discountUsd | number:'1.2-2' }} off</div>
-                }
+                {{ currencySymbol(r.currency) }}{{ reservationTotal(r) | number:'1.2-2' }}
+                <span class="room-number">{{ r.currency }}</span>
               </td>
               <td>
                 <span [class]="statusClass(r.status)">{{ r.status }}</span>
@@ -195,7 +193,10 @@
           </div>
           <div class="current-info-item">
             <span class="current-info-label">Total actual</span>
-            <span class="current-info-value">${{ editingReservation()!.totalUsd | number:'1.2-2' }}</span>
+            <span class="current-info-value">
+              {{ currencySymbol(editingReservation()!.currency) }}{{ reservationTotal(editingReservation()!) | number:'1.2-2' }}
+              {{ editingReservation()!.currency }}
+            </span>
           </div>
           @if (editingReservation()!.discountUsd > 0) {
             <div class="current-info-item current-info-item--full">
@@ -272,7 +273,10 @@
               </div>
               <div class="summary-item">
                 <span class="summary-label">Total estimado</span>
-                <span class="summary-value summary-value--price">${{ selectedRoom.totalUsd | number:'1.2-2' }}</span>
+                <span class="summary-value summary-value--price">
+                  {{ currencySymbol(editingReservation()!.currency) }}{{ selectedRoomTotal() | number:'1.2-2' }}
+                  {{ editingReservation()!.currency }}
+                </span>
               </div>
             </div>
           }

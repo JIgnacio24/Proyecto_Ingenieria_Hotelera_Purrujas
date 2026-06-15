@@ -7,4 +7,5 @@ public class Bill
     public decimal BasePrice { get; set; }
     public decimal Discount { get; set; }
     public decimal SeasonAmount { get; set; }
+    public string Currency { get; set; } = "USD";
 }

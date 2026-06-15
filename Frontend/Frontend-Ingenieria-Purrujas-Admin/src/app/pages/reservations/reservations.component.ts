@@ -296,6 +296,21 @@ onDatesChange(): void {
     return new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
   }
 
+  currencySymbol(currency: string): string {
+    return currency === 'CRC' ? '₡' : '$';
+  }
+
+  reservationTotal(reservation: AdminReservationResponse): number {
+    return reservation.currency === 'CRC' ? reservation.totalCrc : reservation.totalUsd;
+  }
+
+  selectedRoomTotal(): number {
+    const room = this.selectedRoom;
+    const reservation = this.editingReservation();
+    if (!room || !reservation) return 0;
+    return reservation.currency === 'CRC' ? room.totalUsd * 500 : room.totalUsd;
+  }
+
   statusClass(status: string): string {
     switch (status) {
       case 'Pendiente':  return 'status-badge status-badge--pending';
