@@ -271,6 +271,15 @@ CREATE TABLE ForecastSnapshots (
 );
 GO
 
+CREATE TABLE OccupancyHistory (
+    Id                  INT IDENTITY(1,1) PRIMARY KEY,
+    Year                INT NOT NULL,
+    Month               INT NOT NULL CHECK (Month BETWEEN 1 AND 12),
+    OccupancyPercentage DECIMAL(5,2) NOT NULL,
+    CONSTRAINT UQ_OccupancyHistory_YearMonth UNIQUE (Year, Month)
+);
+GO
+
 -- =========================================
 -- ADMIN USER
 -- =========================================

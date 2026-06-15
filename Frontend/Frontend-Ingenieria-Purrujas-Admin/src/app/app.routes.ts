@@ -27,5 +27,13 @@ export const routes: Routes = [
   { path: 'panel/bitacoras', component: AuditLogsComponent, canActivate: [authGuard] },
   { path: 'panel/metricas', component: AnalyticsComponent, canActivate: [authGuard] },
   { path: 'panel/publicidad', component: AdvertisingComponent, canActivate: [authGuard] },
+  {
+    path: 'panel/predicciones',
+    loadComponent: () =>
+      import('./pages/occupancy-forecast/occupancy-forecast.component').then(
+        (m) => m.OccupancyForecastComponent
+      ),
+    canActivate: [authGuard]
+  },
   { path: '**', redirectTo: 'ingreso' }
 ];

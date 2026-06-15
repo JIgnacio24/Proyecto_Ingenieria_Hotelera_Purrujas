@@ -41,13 +41,31 @@
 }
 
 .back-link {
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: #2d6a4f;
   text-decoration: none;
-  display: inline-block;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(45, 106, 79, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  transition: background 0.18s, color 0.18s;
 }
-
-.back-link:hover { text-decoration: underline; }
+.back-link svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.back-link:hover {
+  background: rgba(45, 106, 79, 0.08);
+  color: #1b4332;
+}
 
 .page-title {
   font-size: 1.6rem;

@@ -32,7 +32,8 @@ type DashboardMenuKey =
   | 'status'
   | 'availability'
   | 'ads'
-  | 'analytics';
+  | 'analytics'
+  | 'predictions';
 
 interface DashboardMenuItem {
   key: DashboardMenuKey;
@@ -124,6 +125,14 @@ export class DashboardComponent implements AfterViewInit {
       compactLabel: 'Publicidad',
       icon: 'ads',
       targetId: 'dashboard-ads'
+    },
+    {
+      key: 'predictions',
+      label: 'Predicciones de ocupación',
+      compactLabel: 'Predicciones',
+      icon: 'predictions',
+      targetId: 'dashboard-predictions',
+      route: '/panel/predicciones'
     }
   ];
   readonly activeMenuItem = signal<DashboardMenuKey>('home');
@@ -209,6 +218,15 @@ export class DashboardComponent implements AfterViewInit {
       description: 'Crea, edita y elimina los anuncios publicitarios visibles en el sitio del cliente.',
       link: '/panel/publicidad',
       actionLabel: 'Administrar publicidad',
+      group: 'admin'
+    },
+    {
+      key: 'predictions',
+      title: 'Predicciones',
+      status: 'Disponible',
+      description: 'Visualiza la proyección de ocupación de los próximos 6 meses generada por el modelo ML.NET.',
+      link: '/panel/predicciones',
+      actionLabel: 'Ver predicciones',
       group: 'admin'
     }
   ];
@@ -425,7 +443,8 @@ export class DashboardComponent implements AfterViewInit {
         return 'M5 5h14M5 12h8M5 19h6M16 15v3l2 1';
       case 'ads':
         return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
-        return 'M4 6h16M4 12h16M4 18h16M8 6v12M16 6v12';
+      case 'predictions':
+        return 'M3 17l4-4 4 3 4-6 4-3M3 21h18';
       default:
         return '';
     }
