@@ -1,4 +1,7 @@
-﻿IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
+﻿SET QUOTED_IDENTIFIER ON;
+GO
+
+IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
 BEGIN
     ALTER DATABASE Ingenieria_Purrujas_BD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE Ingenieria_Purrujas_BD;
@@ -39,8 +42,6 @@ CREATE TABLE AdminUser (
     LastLoginAt DATETIME2 NULL
 );
 GO
-
-select* from AdminUser
 
 CREATE TABLE RoomType (
     RoomTypeId INT PRIMARY KEY IDENTITY,
@@ -125,7 +126,6 @@ CREATE TABLE Season (
     IsActive BIT NOT NULL DEFAULT 1
 );
 GO
-select * from season
 CREATE TABLE Promotion (
     PromotionId INT PRIMARY KEY IDENTITY,
     Name NVARCHAR(255) NOT NULL,
