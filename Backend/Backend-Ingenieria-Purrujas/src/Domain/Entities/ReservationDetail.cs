@@ -16,6 +16,7 @@ public class ReservationDetail
     public decimal BasePrice { get; set; }
     public decimal Discount { get; set; }
     public decimal SeasonAmount { get; set; }
+    public string Currency { get; set; } = "USD";
     public int ReservationStatusId { get; set; }
     public string ReservationStatusName { get; set; } = string.Empty;
 }

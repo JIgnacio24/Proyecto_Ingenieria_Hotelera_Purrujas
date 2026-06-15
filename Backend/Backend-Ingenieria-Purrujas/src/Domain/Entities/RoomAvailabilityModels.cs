@@ -38,6 +38,7 @@ public sealed class RoomAvailabilityItem
 {
     public int RoomId { get; set; }
     public string RoomNumber { get; set; } = string.Empty;
+    public int RoomTypeId { get; set; }
     public string RoomTypeName { get; set; } = string.Empty;
     public string OperationalStatus { get; set; } = string.Empty;
     public decimal BasePricePerNight { get; set; }

@@ -101,7 +101,8 @@ export class DashboardComponent implements AfterViewInit {
       label: 'Editar cómo llegar',
       compactLabel: 'Cómo llegar',
       icon: 'getting-there',
-      targetId: 'dashboard-getting-there'
+      targetId: 'dashboard-getting-there',
+      route: '/panel/como-llegar'
     },
     {
       key: 'rooms',
@@ -144,6 +145,15 @@ export class DashboardComponent implements AfterViewInit {
       status: 'Editable',
       description: 'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
       link: '/panel/sobre-nosotros',
+      actionLabel: 'Abrir editor',
+      group: 'editing'
+    },
+    {
+      key: 'getting-there-editor',
+      title: 'Editar cómo llegar',
+      status: 'Editable',
+      description: 'Abre el editor de Cómo llegar para actualizar el encabezado, las coordenadas y las indicaciones.',
+      link: '/panel/como-llegar',
       actionLabel: 'Abrir editor',
       group: 'editing'
     },
@@ -232,6 +242,7 @@ export class DashboardComponent implements AfterViewInit {
   readonly facilitiesFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly gettingThereLoading = signal(true);
   readonly gettingThereSaving = signal(false);
+  readonly gettingThereModalOpen = signal(false);
   readonly gettingThereFeedback = signal('');
   readonly gettingThereFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
@@ -240,6 +251,7 @@ export class DashboardComponent implements AfterViewInit {
   secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
   gettingThereContent: GettingTherePageContent = createDefaultGettingTherePageContent();
   gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
+  private gettingThereModalSnapshot: GettingTherePageContent | null = null;
   constructor() {
     this.consumeNavigationFeedback();
     void this.loadProfile();
@@ -354,6 +366,7 @@ export class DashboardComponent implements AfterViewInit {
       this.applyGettingThereContent(savedContent);
       this.gettingThereFeedbackTone.set('success');
       this.gettingThereFeedback.set('El contenido de Cómo llegar se guardó correctamente.');
+      this.closeGettingThereModal(false);
     } catch (error) {
       this.gettingThereFeedbackTone.set('error');
       this.gettingThereFeedback.set(
@@ -372,6 +385,12 @@ export class DashboardComponent implements AfterViewInit {
     // El menu lateral navega por secciones del dashboard sin cambiar de ruta.
     this.activeMenuItem.set(menuKey);
     this.closeMobileMenu();
+
+    if (menuKey === 'getting-there') {
+      this.openGettingThereModal();
+      return;
+    }
+
     const targetId = this.menuItems.find((item) => item.key === menuKey)?.targetId;
 
     if (!targetId) {
@@ -379,6 +398,25 @@ export class DashboardComponent implements AfterViewInit {
     }
 
     this.scrollToDashboardSection(targetId);
+  }
+
+  openGettingThereModal(): void {
+    this.gettingThereModalSnapshot = this.buildGettingThereContentPayload();
+    this.clearGettingThereFeedback();
+    this.gettingThereModalOpen.set(true);
+  }
+
+  closeGettingThereModal(discardChanges = true): void {
+    if (discardChanges && this.gettingThereSaving()) {
+      return;
+    }
+
+    if (discardChanges && this.gettingThereModalSnapshot) {
+      this.applyGettingThereContent(this.gettingThereModalSnapshot);
+    }
+
+    this.gettingThereModalSnapshot = null;
+    this.gettingThereModalOpen.set(false);
   }
 
   activeMenuLabel(): string {
@@ -434,6 +472,13 @@ export class DashboardComponent implements AfterViewInit {
   @HostListener('window:scroll')
   onWindowScroll(): void {
     this.syncActiveMenuItem();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.gettingThereModalOpen()) {
+      this.closeGettingThereModal();
+    }
   }
 
   toggleMobileMenu(): void {

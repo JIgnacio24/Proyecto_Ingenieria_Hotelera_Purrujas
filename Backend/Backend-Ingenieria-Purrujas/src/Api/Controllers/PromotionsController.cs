@@ -9,13 +9,34 @@ namespace Backend_Ingenieria_Purrujas.Api.Controllers;
 public class PromotionsController(IPromotionRepository promotionRepository) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Promotion>>> GetAll()
-        => Ok(await promotionRepository.GetAllAsync());
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Promotion>> GetById(int id)
+    public async Task<ActionResult<IEnumerable<PublicPromotion>>> GetAll(CancellationToken cancellationToken = default)
     {
-        var p = await promotionRepository.GetByIdAsync(id);
-        return p is null ? NotFound() : Ok(p);
+        var promotions = await promotionRepository.GetAllAsync(cancellationToken);
+        return Ok(promotions.Select(MapPromotion));
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PublicPromotion>> GetById(int id, CancellationToken cancellationToken = default)
+    {
+        var promotion = await promotionRepository.GetByIdAsync(id, cancellationToken);
+        return promotion is null ? NotFound() : Ok(MapPromotion(promotion));
+    }
+
+    private static PublicPromotion MapPromotion(Promotion promotion) => new(
+        promotion.PromotionId,
+        promotion.Name,
+        "http://localhost:4200/reservar",
+        promotion.Discount,
+        promotion.StartDate,
+        promotion.EndDate,
+        promotion.RoomTypeId);
 }
+
+public sealed record PublicPromotion(
+    int PromotionId,
+    string Name,
+    string Link,
+    int Discount,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    int RoomTypeId);

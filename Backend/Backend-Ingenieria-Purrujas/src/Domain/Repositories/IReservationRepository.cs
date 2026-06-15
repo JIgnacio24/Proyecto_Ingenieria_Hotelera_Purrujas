@@ -12,5 +12,5 @@ public interface IReservationRepository
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ReservationDetail>> GetDeletedAsync(CancellationToken cancellationToken = default);
     Task UpdateAsync(int id, DateTime reservationDate, DateOnly startDate, DateOnly endDate, int roomId, int customerId, int statusId, CancellationToken cancellationToken = default);
-    Task UpdateBillAsync(int reservationId, decimal basePrice, decimal discount, decimal seasonAmount, CancellationToken cancellationToken = default);
+    Task UpdateBillAsync(int reservationId, decimal basePrice, decimal seasonAmount, decimal discount, CancellationToken cancellationToken = default);
 }

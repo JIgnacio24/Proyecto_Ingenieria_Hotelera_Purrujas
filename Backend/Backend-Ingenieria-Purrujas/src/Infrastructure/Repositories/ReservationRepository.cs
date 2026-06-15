@@ -40,8 +40,8 @@ public class ReservationRepository : IReservationRepository
 
             // Create Bill
             const string billSql = """
-                INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount)
-                VALUES (@ReservationId, @BasePrice, @Discount, @SeasonAmount)
+                INSERT INTO Bill (ReservationId, BasePrice, Discount, SeasonAmount, Currency)
+                VALUES (@ReservationId, @BasePrice, @Discount, @SeasonAmount, @Currency)
                 """;
 
             await using var billCmd = new SqlCommand(billSql, conn, transaction);
@@ -49,6 +49,7 @@ public class ReservationRepository : IReservationRepository
             billCmd.Parameters.AddWithValue("@BasePrice", bill.BasePrice);
             billCmd.Parameters.AddWithValue("@Discount", bill.Discount);
             billCmd.Parameters.AddWithValue("@SeasonAmount", bill.SeasonAmount);
+            billCmd.Parameters.AddWithValue("@Currency", bill.Currency);
             await billCmd.ExecuteNonQueryAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
@@ -82,6 +83,7 @@ public class ReservationRepository : IReservationRepository
                 ISNULL(b.BasePrice, 0)            AS BasePrice,
                 ISNULL(b.Discount, 0)             AS Discount,
                 ISNULL(b.SeasonAmount, 0)         AS SeasonAmount,
+                ISNULL(b.Currency, 'USD')         AS Currency,
                 r.ReservationStatusId,
                 rs.Name                           AS ReservationStatusName
             FROM Reservation r
@@ -126,6 +128,7 @@ public class ReservationRepository : IReservationRepository
                 ISNULL(b.BasePrice, 0)            AS BasePrice,
                 ISNULL(b.Discount, 0)             AS Discount,
                 ISNULL(b.SeasonAmount, 0)         AS SeasonAmount,
+                ISNULL(b.Currency, 'USD')         AS Currency,
                 r.ReservationStatusId,
                 rs.Name                           AS ReservationStatusName
             FROM Reservation r
@@ -202,22 +205,27 @@ public class ReservationRepository : IReservationRepository
         }
     }
 
-    public async Task UpdateBillAsync(int reservationId, decimal basePrice, decimal discount, decimal seasonAmount, CancellationToken cancellationToken = default)
+    public async Task UpdateBillAsync(
+        int reservationId,
+        decimal basePrice,
+        decimal seasonAmount,
+        decimal discount,
+        CancellationToken cancellationToken = default)
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
 
         const string sql = """
             UPDATE Bill
-            SET BasePrice = @BasePrice, Discount = @Discount, SeasonAmount = @SeasonAmount
+            SET BasePrice = @BasePrice, SeasonAmount = @SeasonAmount, Discount = @Discount
             WHERE ReservationId = @ReservationId
             """;
 
         await using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@ReservationId", reservationId);
         cmd.Parameters.AddWithValue("@BasePrice", basePrice);
-        cmd.Parameters.AddWithValue("@Discount", discount);
         cmd.Parameters.AddWithValue("@SeasonAmount", seasonAmount);
+        cmd.Parameters.AddWithValue("@Discount", discount);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
@@ -258,6 +266,7 @@ public class ReservationRepository : IReservationRepository
                 ISNULL(b.BasePrice, 0)            AS BasePrice,
                 ISNULL(b.Discount, 0)             AS Discount,
                 ISNULL(b.SeasonAmount, 0)         AS SeasonAmount,
+                ISNULL(b.Currency, 'USD')         AS Currency,
                 r.ReservationStatusId,
                 rs.Name                           AS ReservationStatusName
             FROM Reservation r
@@ -296,6 +305,7 @@ public class ReservationRepository : IReservationRepository
         BasePrice             = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
         Discount              = reader.GetDecimal(reader.GetOrdinal("Discount")),
         SeasonAmount          = reader.GetDecimal(reader.GetOrdinal("SeasonAmount")),
+        Currency              = reader.GetString(reader.GetOrdinal("Currency")),
         ReservationStatusId   = reader.GetInt32(reader.GetOrdinal("ReservationStatusId")),
         ReservationStatusName = reader.GetString(reader.GetOrdinal("ReservationStatusName"))
     };
