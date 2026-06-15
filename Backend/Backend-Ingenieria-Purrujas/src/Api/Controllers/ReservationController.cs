@@ -35,7 +35,7 @@ public class ReservationController(
         }
         catch (SqlException)
         {
-            return StatusCode(503, new { message = "El servicio de disponibilidad no está disponible. Verifique que el DB patch fue aplicado." });
+            return StatusCode(503, new { message = "El servicio de disponibilidad no está disponible. Verifique que el script principal de base de datos fue aplicado." });
         }
         catch (Exception)
         {

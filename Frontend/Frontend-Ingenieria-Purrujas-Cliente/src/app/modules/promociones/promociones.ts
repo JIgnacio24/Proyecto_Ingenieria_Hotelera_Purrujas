@@ -2,20 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { PublicidadService, Promocion } from '../../services/publicidad.service';
+import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 import { ChangeDetectorRef } from '@angular/core';
-
-const ROOM_NAMES: Record<number, string> = {
-  1: 'Habitación Doble',
-  2: 'Suite Volcán',
-  3: 'Villa Familiar'
-};
-
-/** Mapea roomTypeId → key que usa ReservarComponent */
-const ROOM_ID_MAP: Record<number, string> = {
-  1: 'doble',
-  2: 'suite',
-  3: 'villa'
-};
 
 @Component({
   selector: 'app-promociones',
@@ -26,17 +14,24 @@ const ROOM_ID_MAP: Record<number, string> = {
 })
 export class Promociones implements OnInit {
   private publicidadService = inject(PublicidadService);
+  private roomTypesService = inject(RoomTypesService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
 
   promociones: Promocion[] = [];
   filtroActivo: 'todas' | 'activas' | 'proximas' = 'todas';
+  private roomTypes: PublicRoomType[] = [];
 
   ngOnInit(): void {
     this.publicidadService.getPromociones().subscribe(data => {
       this.promociones = data;
-      this.setFiltro('todas'); // Apply default filter
-      this.cdr.detectChanges(); // Force change detection
+      this.setFiltro('todas');
+      this.cdr.detectChanges();
+    });
+
+    this.roomTypesService.getAll().subscribe(tipos => {
+      this.roomTypes = tipos;
+      this.cdr.detectChanges();
     });
   }
 
@@ -73,17 +68,16 @@ export class Promociones implements OnInit {
   }
 
   roomName(roomTypeId: number): string {
-    return ROOM_NAMES[roomTypeId] ?? `Tipo ${roomTypeId}`;
+    return this.roomTypes.find(rt => rt.roomTypeId === roomTypeId)?.name ?? `Tipo ${roomTypeId}`;
   }
 
   /** Navega a /reservar con fechas, habitación y descuento pre-cargados */
   aprovecharOferta(promo: Promocion): void {
-    const habitacion = ROOM_ID_MAP[promo.roomTypeId] ?? 'doble';
     this.router.navigate(['/reservar'], {
       queryParams: {
         inicio: promo.startDate.split('T')[0],
         fin: promo.endDate.split('T')[0],
-        habitacion,
+        habitacion: promo.roomTypeId,
         descuento: promo.discount
       }
     });

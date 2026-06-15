@@ -166,6 +166,26 @@
   line-height: 1.25;
 }
 
+.pub-description {
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+
+.pub-image {
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 160px;
+}
+
+.pub-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .pub-cta,
 .cta-button {
   display: inline-flex;

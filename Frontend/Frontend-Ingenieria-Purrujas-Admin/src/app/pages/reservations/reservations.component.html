@@ -94,7 +94,12 @@
               <td>{{ formatDate(r.startDate) }}</td>
               <td>{{ formatDate(r.endDate) }}</td>
               <td class="center">{{ r.nightsTotal }}</td>
-              <td class="amount">${{ r.totalUsd | number:'1.2-2' }}</td>
+              <td class="amount">
+                ${{ r.totalUsd | number:'1.2-2' }}
+                @if (r.discountUsd > 0) {
+                  <div class="discount-line">−${{ r.discountUsd | number:'1.2-2' }} off</div>
+                }
+              </td>
               <td>
                 <span [class]="statusClass(r.status)">{{ r.status }}</span>
               </td>
@@ -192,6 +197,12 @@
             <span class="current-info-label">Total actual</span>
             <span class="current-info-value">${{ editingReservation()!.totalUsd | number:'1.2-2' }}</span>
           </div>
+          @if (editingReservation()!.discountUsd > 0) {
+            <div class="current-info-item current-info-item--full">
+              <span class="current-info-label">Descuento aplicado</span>
+              <span class="current-info-value current-info-value--discount">−${{ editingReservation()!.discountUsd | number:'1.2-2' }}</span>
+            </div>
+          }
         </div>
 
         <div class="edit-form">

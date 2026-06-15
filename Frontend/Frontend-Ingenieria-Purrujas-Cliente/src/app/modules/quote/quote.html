@@ -11,6 +11,8 @@
 <section class="section quote-body">
   <div class="container quote-grid">
     <div class="quote-card">
+      <div class="quote-alert" role="alert" *ngIf="habitacionesError">{{ habitacionesError }}</div>
+
       <div class="quote-field">
         <label for="habitacion">Tipo de habitación</label>
         <select

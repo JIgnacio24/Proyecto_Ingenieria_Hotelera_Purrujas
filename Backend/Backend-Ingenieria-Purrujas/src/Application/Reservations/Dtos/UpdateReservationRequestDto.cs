@@ -13,4 +13,6 @@ public sealed class UpdateReservationRequestDto
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "La habitación es requerida.")]
     public int RoomId { get; set; }
+
+    public int? PromotionId { get; set; }
 }

@@ -21,7 +21,9 @@ public class AdminAuditLogsController : ControllerBase
             ["rooms"] = "Habitaciones",
             ["seasons"] = "Temporadas",
             ["promotions"] = "Ofertas especiales",
-            ["audit-logs"] = "Bitacoras de uso"
+            ["audit-logs"] = "Bitacoras de uso",
+            ["analytics"] = "Metricas del hotel",
+            ["advertising"] = "Publicidad"
         };
 
     private readonly IAdminAuditLogService _adminAuditLogService;

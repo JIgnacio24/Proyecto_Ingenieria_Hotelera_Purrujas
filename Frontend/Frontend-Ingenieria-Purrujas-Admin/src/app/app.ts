@@ -26,7 +26,9 @@ export class App {
     ['/panel/habitaciones', 'rooms'],
     ['/panel/temporadas', 'seasons'],
     ['/panel/ofertas', 'promotions'],
-    ['/panel/bitacoras', 'audit-logs']
+    ['/panel/bitacoras', 'audit-logs'],
+    ['/panel/metricas', 'analytics'],
+    ['/panel/publicidad', 'advertising']
   ]);
 
   private lastRecordedViewKey = '';

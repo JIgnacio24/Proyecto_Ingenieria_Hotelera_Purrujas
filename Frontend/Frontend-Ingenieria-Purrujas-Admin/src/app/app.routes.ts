@@ -11,6 +11,7 @@ import { RoomTypesComponent } from './pages/room-types/room-types.component';
 import { SeasonsComponent } from './pages/seasons/seasons.component';
 import { PromotionsComponent } from './pages/promotions/promotions.component';
 import { AuditLogsComponent } from './pages/audit-logs/audit-logs.component';
+import { AdvertisingComponent } from './pages/advertising/advertising.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'ingreso' },
@@ -25,5 +26,6 @@ export const routes: Routes = [
   { path: 'panel/ofertas', component: PromotionsComponent, canActivate: [authGuard] },
   { path: 'panel/bitacoras', component: AuditLogsComponent, canActivate: [authGuard] },
   { path: 'panel/metricas', component: AnalyticsComponent, canActivate: [authGuard] },
+  { path: 'panel/publicidad', component: AdvertisingComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'ingreso' }
 ];

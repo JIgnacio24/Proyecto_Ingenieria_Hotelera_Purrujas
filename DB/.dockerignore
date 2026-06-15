@@ -3,3 +3,4 @@
 !Dockerfile
 !docker-entrypoint.sh
 !sqlserver-healthcheck.sh
+!Patches/

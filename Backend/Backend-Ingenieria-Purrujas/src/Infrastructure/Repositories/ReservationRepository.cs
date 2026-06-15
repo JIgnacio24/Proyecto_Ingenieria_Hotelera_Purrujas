@@ -202,20 +202,21 @@ public class ReservationRepository : IReservationRepository
         }
     }
 
-    public async Task UpdateBillAsync(int reservationId, decimal basePrice, decimal seasonAmount, CancellationToken cancellationToken = default)
+    public async Task UpdateBillAsync(int reservationId, decimal basePrice, decimal discount, decimal seasonAmount, CancellationToken cancellationToken = default)
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
 
         const string sql = """
             UPDATE Bill
-            SET BasePrice = @BasePrice, SeasonAmount = @SeasonAmount
+            SET BasePrice = @BasePrice, Discount = @Discount, SeasonAmount = @SeasonAmount
             WHERE ReservationId = @ReservationId
             """;
 
         await using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@ReservationId", reservationId);
         cmd.Parameters.AddWithValue("@BasePrice", basePrice);
+        cmd.Parameters.AddWithValue("@Discount", discount);
         cmd.Parameters.AddWithValue("@SeasonAmount", seasonAmount);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }

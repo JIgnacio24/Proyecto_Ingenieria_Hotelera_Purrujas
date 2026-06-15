@@ -55,4 +55,12 @@ else
     echo "La base Ingenieria_Purrujas_BD ya existe. Se omite la inicializacion."
 fi
 
+echo "Esperando a que Ingenieria_Purrujas_BD este accesible..."
+for _ in {1..30}; do
+    if sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$SQLSERVER_PASSWORD" -d "Ingenieria_Purrujas_BD" -Q "SELECT 1" >/dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+done
+
 wait "$server_pid"

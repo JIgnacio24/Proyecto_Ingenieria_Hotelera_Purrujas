@@ -199,13 +199,16 @@ export class DashboardComponent implements AfterViewInit {
       description:
         'Consulta quien realizo cada accion administrativa, la fecha y hora, la accion concreta y su resumen.',
       link: '/panel/bitacoras',
-      actionLabel: 'Ver bitacoras'
+      actionLabel: 'Ver bitacoras',
+      group: 'admin'
     },
     {
       key: 'ads',
       title: 'Publicidad',
-      status: 'Interfaz pendiente',
-      description: 'Módulo en construcción. Aquí se administrará la publicidad visible en el sitio del cliente.',
+      status: 'Disponible',
+      description: 'Crea, edita y elimina los anuncios publicitarios visibles en el sitio del cliente.',
+      link: '/panel/publicidad',
+      actionLabel: 'Administrar publicidad',
       group: 'admin'
     }
   ];
@@ -422,6 +425,7 @@ export class DashboardComponent implements AfterViewInit {
         return 'M5 5h14M5 12h8M5 19h6M16 15v3l2 1';
       case 'ads':
         return 'M5 16V8l9-3v14zm9-6h3a2 2 0 0 1 0 4h-3M7 16v2.5A1.5 1.5 0 0 0 8.5 20H10';
+        return 'M4 6h16M4 12h16M4 18h16M8 6v12M16 6v12';
       default:
         return '';
     }
