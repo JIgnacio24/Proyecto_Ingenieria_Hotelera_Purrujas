@@ -1,4 +1,4 @@
-﻿USE master;
+USE master;
 GO
 
 IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
@@ -41,24 +41,6 @@ CREATE TABLE AdminUser (
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     LastLoginAt DATETIME2 NULL
 );
-GO
-
-CREATE TABLE AdminAuditLog (
-    AdminAuditLogId INT PRIMARY KEY IDENTITY,
-    AdminUserId INT NOT NULL,
-    OccurredAt DATETIME2 NOT NULL CONSTRAINT DF_AdminAuditLog_OccurredAt DEFAULT SYSDATETIME(),
-    [Action] NVARCHAR(150) NOT NULL,
-    Description NVARCHAR(600) NOT NULL,
-    CONSTRAINT FK_AdminAuditLog_AdminUser FOREIGN KEY (AdminUserId) REFERENCES AdminUser(AdminUserId)
-);
-GO
-
-CREATE INDEX IX_AdminAuditLog_OccurredAt
-ON AdminAuditLog (OccurredAt DESC, AdminAuditLogId DESC);
-GO
-
-CREATE INDEX IX_AdminAuditLog_AdminUserId
-ON AdminAuditLog (AdminUserId, OccurredAt DESC);
 GO
 
 CREATE TABLE RoomType (
