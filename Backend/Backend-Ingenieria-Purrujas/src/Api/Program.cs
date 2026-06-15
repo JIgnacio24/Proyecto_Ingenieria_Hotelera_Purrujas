@@ -107,6 +107,7 @@ builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IGalleryImagesRepository, GalleryImagesRepository>();
 builder.Services.AddScoped<IRoomAvailabilityRepository, RoomAvailabilityRepository>();
 builder.Services.AddScoped<RoomAvailabilityPdfService>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 var app = builder.Build();
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;

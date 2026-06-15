@@ -27,6 +27,232 @@
     </div>
   }
 
+  <section class="avl-card" aria-label="Estado y disponibilidad de habitaciones">
+    <div class="avl-header">
+      <div class="section-head">
+        <p>Estado del hotel</p>
+        <span>Estado operativo del día actual y consulta de disponibilidad por fechas.</span>
+      </div>
+      <div class="avl-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="loadRoomAvailabilityToday()"
+          [disabled]="availabilityLoading() || availabilityReportBusy()"
+        >
+          {{ availabilityLoading() ? 'Actualizando...' : 'Actualizar hoy' }}
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="downloadRoomAvailabilityReport()"
+          [disabled]="availabilityLoading() || availabilityReportBusy()"
+        >
+          {{ availabilityReportBusy() ? 'Generando PDF...' : 'Descargar PDF' }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="openRoomAvailabilityReportPreview()"
+          [disabled]="availabilityLoading() || availabilityReportBusy()"
+        >
+          {{ availabilityReportBusy() ? 'Generando PDF...' : 'Ver reporte PDF' }}
+        </button>
+      </div>
+    </div>
+
+    @if (roomAvailabilitySummary(); as summary) {
+      <div class="availability-hero">
+        <div>
+          <span class="availability-date">{{ formatAvailabilityDate(summary.date) }}</span>
+          <h2>Estado del hotel hoy</h2>
+        </div>
+        <div class="availability-total">
+          <strong>{{ summary.availableRooms }}</strong>
+          <span>disponibles de {{ summary.totalRooms }}</span>
+        </div>
+      </div>
+
+      <div class="availability-metrics">
+        <article>
+          <span>Disponibles</span>
+          <strong>{{ summary.availableRooms }}</strong>
+        </article>
+        <article>
+          <span>Ocupadas</span>
+          <strong>{{ summary.occupiedRooms }}</strong>
+        </article>
+        <article>
+          <span>Fuera de servicio</span>
+          <strong>{{ summary.outOfServiceRooms }}</strong>
+        </article>
+      </div>
+
+      <div class="availability-table-wrap">
+        <table class="availability-table">
+          <thead>
+            <tr>
+              <th>Habitación</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Huésped actual</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (room of summary.rooms; track room.roomId) {
+              <tr>
+                <td>{{ room.roomNumber }}</td>
+                <td>{{ room.roomTypeName }}</td>
+                <td>
+                  <span class="room-status" [ngClass]="statusClass(room.statusName)">
+                    {{ room.statusName }}
+                  </span>
+                </td>
+                <td>{{ room.currentGuest || 'Sin huésped' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4">No hay habitaciones registradas.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <form class="avl-search-form" (ngSubmit)="searchRoomAvailability()">
+        <div class="section-head">
+          <p>Consultar disponibilidad</p>
+          <span>Filtra habitaciones disponibles por rango de fechas y tipo.</span>
+        </div>
+        <div class="avl-search-grid">
+          <label class="avl-field">
+            <span>Fecha de llegada</span>
+            <input
+              type="date"
+              name="availabilityStartDate"
+              [(ngModel)]="availabilityStartDate"
+              [min]="todayInputValue()"
+              [disabled]="availabilitySearching()"
+            />
+          </label>
+          <label class="avl-field">
+            <span>Fecha de salida</span>
+            <input
+              type="date"
+              name="availabilityEndDate"
+              [(ngModel)]="availabilityEndDate"
+              [min]="minEndDate()"
+              [disabled]="availabilitySearching()"
+            />
+          </label>
+          <label class="avl-field">
+            <span>Tipo de habitación</span>
+            <select
+              name="availabilityRoomTypeId"
+              [(ngModel)]="availabilityRoomTypeId"
+              [disabled]="availabilitySearching()"
+            >
+              <option [ngValue]="null">Todos los tipos</option>
+              @for (roomType of summary.roomTypes; track roomType.roomTypeId) {
+                <option [ngValue]="roomType.roomTypeId">{{ roomType.name }}</option>
+              }
+            </select>
+          </label>
+          <button type="submit" class="btn-primary" [disabled]="availabilitySearching()">
+            {{ availabilitySearching() ? 'Consultando...' : 'Consultar' }}
+          </button>
+        </div>
+        @if (availabilityFeedback()) {
+          <p
+            class="avl-feedback"
+            [class.avl-feedback--success]="availabilityFeedbackTone() === 'success'"
+            [class.avl-feedback--error]="availabilityFeedbackTone() === 'error'"
+          >
+            {{ availabilityFeedback() }}
+          </p>
+        }
+      </form>
+
+      @if (availabilitySearchResult(); as result) {
+        <div class="avl-results">
+          <div class="avl-results-head">
+            <div>
+              <p>Resultado</p>
+              <span>
+                {{ formatAvailabilityDate(result.startDate) }} – {{ formatAvailabilityDate(result.endDate) }}
+                · {{ result.roomTypeName }}
+              </span>
+            </div>
+            <strong>{{ result.availableRooms }} disponibles</strong>
+          </div>
+
+          @if (result.availableRooms > 0) {
+            <div class="avl-result-grid">
+              @for (room of result.rooms; track room.roomId) {
+                <article class="avl-room-card">
+                  <span>Habitación {{ room.roomNumber }}</span>
+                  <strong>{{ room.roomTypeName }}</strong>
+                  <strong class="room-price">{{ formatUsd(room.totalUsd) }}</strong>
+                  <small>
+                    {{ room.nightsTotal }} noche{{ room.nightsTotal === 1 ? '' : 's' }}
+                    · {{ formatUsd(room.basePricePerNight) }} base/noche
+                  </small>
+                  @if (room.highSeasonNights > 0) {
+                    <small>
+                      {{ room.highSeasonNights }} noche{{ room.highSeasonNights === 1 ? '' : 's' }}
+                      con temporada · x{{ room.highestSeasonMultiplier | number:'1.2-2' }}
+                    </small>
+                  }
+                  <small>{{ room.operationalStatus }}</small>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">{{ availabilityEmptyMessage(result) }}</p>
+
+            @if (hasUnavailableTypeSummary(result)) {
+              <div class="section-head">
+                <p>Disponibilidad por tipo</p>
+                <span>Resumen del mismo rango consultado.</span>
+              </div>
+              <div class="avl-result-grid">
+                @for (roomType of availabilityTypeItems(result); track roomType.roomTypeId) {
+                  <article class="avl-room-card">
+                    <span>{{ roomType.roomTypeName }}</span>
+                    <strong>{{ roomType.availableRooms }}</strong>
+                    <small>{{ roomType.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}</small>
+                  </article>
+                }
+              </div>
+            }
+
+            @if (filteredSuggestedDateRanges(result).length > 0) {
+              <div class="section-head">
+                <p>Fechas cercanas con disponibilidad</p>
+                <span>Sugerencias calculadas con la misma lógica operativa.</span>
+              </div>
+              <div class="avl-result-grid">
+                @for (suggestion of filteredSuggestedDateRanges(result); track suggestion.startDate + '-' + suggestion.endDate) {
+                  <article class="avl-room-card">
+                    <strong>{{ availabilityDateSuggestionLabel(suggestion) }}</strong>
+                    <span>
+                      {{ suggestion.availableRooms }}
+                      {{ suggestion.availableRooms === 1 ? 'habitación disponible' : 'habitaciones disponibles' }}
+                    </span>
+                  </article>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    } @else {
+      <p class="loading-state">
+        {{ availabilityLoading() ? 'Cargando disponibilidad de habitaciones...' : 'Sin datos de disponibilidad.' }}
+      </p>
+    }
+  </section>
+
   <section class="rt-form-card" aria-label="Formulario de habitación">
     <div class="section-head">
       <p>{{ editingRoomId ? 'Editar habitación' : 'Nueva habitación' }}</p>
