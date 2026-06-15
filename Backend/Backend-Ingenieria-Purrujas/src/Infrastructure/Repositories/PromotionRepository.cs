@@ -2,16 +2,19 @@ using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 
 public class PromotionRepository : IPromotionRepository
 {
     private readonly string _connectionString;
+    private readonly ILogger<PromotionRepository> _logger;
 
-    public PromotionRepository(IConfiguration configuration)
+    public PromotionRepository(IConfiguration configuration, ILogger<PromotionRepository> logger)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+        _logger = logger;
     }
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
@@ -49,7 +52,10 @@ public class PromotionRepository : IPromotionRepository
             while (await reader.ReadAsync(cancellationToken))
                 results.Add(MapRow(reader));
         }
-        catch { /* swallow; fallback empty */ }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener todas las promociones.");
+        }
 
         return results;
     }
@@ -88,7 +94,10 @@ public class PromotionRepository : IPromotionRepository
             if (await reader.ReadAsync(cancellationToken))
                 return MapRow(reader);
         }
-        catch { /* swallow */ }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener la promoción Id {Id}.", id);
+        }
 
         return null;
     }

@@ -7,6 +7,7 @@ import {
   FacilitiesPageContent
 } from '../../services/facilities-content.service';
 import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
+import { environment } from '../../../environments/environment';
 
 
 type FacilityServiceViewModel = {
@@ -57,7 +58,7 @@ export class FacilitiesComponent {
         return {
           title: service.title,
           description: service.description,
-          imageUrl: image ? `http://localhost:5234${image.src}` : '',
+          imageUrl: image ? `${environment.assetBaseUrl}${image.src}` : '',
           imageAlt: image?.alt ?? service.title,
           animationClass: media.animationClass
         };

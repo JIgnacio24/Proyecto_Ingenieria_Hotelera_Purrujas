@@ -226,7 +226,6 @@ public class ReservationRepository : IReservationRepository
         cmd.Parameters.AddWithValue("@BasePrice", basePrice);
         cmd.Parameters.AddWithValue("@Discount", discount);
         cmd.Parameters.AddWithValue("@SeasonAmount", seasonAmount);
-        cmd.Parameters.AddWithValue("@Discount", discount);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 

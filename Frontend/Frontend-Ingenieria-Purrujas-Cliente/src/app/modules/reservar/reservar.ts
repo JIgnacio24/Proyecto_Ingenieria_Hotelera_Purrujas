@@ -4,11 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of, Subscription } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
-import { PublicidadService, Promocion } from '../../services/publicidad.service';
 import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable';
@@ -22,6 +20,28 @@ interface RoomOption {
   capacidad: string;
   precioBaja: number;
   icon: string;
+}
+
+const EMPTY_ROOM: RoomOption = {
+  roomTypeId: 0,
+  id: '',
+  nombre: '',
+  descripcion: '',
+  capacidad: '',
+  precioBaja: 0,
+  icon: ''
+};
+
+function mapRoomType(tipo: PublicRoomType): RoomOption {
+  return {
+    roomTypeId: tipo.roomTypeId,
+    id: tipo.name.trim().toLowerCase(),
+    nombre: tipo.name,
+    descripcion: tipo.description ?? '',
+    capacidad: `${tipo.capacity} ${tipo.capacity === 1 ? 'persona' : 'personas'}`,
+    precioBaja: tipo.basePrice,
+    icon: '🛏️'
+  };
 }
 
 @Component({
@@ -78,7 +98,6 @@ export class ReservarComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public currencyService: CurrencyService,
     private reservationService: ReservationService,
-    private publicidadService: PublicidadService,
     private roomTypesService: RoomTypesService,
     private cdr: ChangeDetectorRef
   ) {
@@ -218,11 +237,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
       promotionId: this.promoId ?? undefined
     };
 
-    forkJoin([
-      this.reservationService.createReservation(request),
-      of(null).pipe(delay(3000))
-    ]).subscribe({
-      next: ([response]) => {
+    this.reservationService.createReservation(request).subscribe({
+      next: (response) => {
         this.confirmedReservation = response;
         this.submitState = 'success';
         this.cdr.detectChanges();
@@ -333,11 +349,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
     if (!this.selectedRoom.roomTypeId) return;
     this.availabilityStatus = 'checking';
     this.availabilityError = '';
-    forkJoin([
-      this.reservationService.checkAvailability(this.selectedRoom.id, this.fechaInicio, this.fechaFin),
-      of(null).pipe(delay(3000))
-    ]).subscribe({
-      next: ([r]) => {
+    this.reservationService.checkAvailability(this.selectedRoom.id, this.fechaInicio, this.fechaFin).subscribe({
+      next: (r) => {
         this.availabilityError = '';
         this.availabilityStatus = r.isAvailable ? 'available' : 'unavailable';
         this.availableRooms = r.availableRooms;
@@ -350,41 +363,6 @@ export class ReservarComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  /**
-   * Busca la mejor promoción (mayor descuento) cuyo período de vigencia
-   * se solape con las fechas seleccionadas y corresponda al tipo de habitación activo.
-   */
-  private detectPromo(): void {
-    if (!this.fechaInicio || !this.fechaFin || this.promociones.length === 0) {
-      this.promoDescuento = 0;
-      this.promoNombre = '';
-      return;
-    }
-
-    const roomTypeId = this.selectedRoom.roomTypeId;
-    const inicio = new Date(this.fechaInicio + 'T00:00:00');
-    const fin    = new Date(this.fechaFin    + 'T00:00:00');
-
-    const candidatas = this.promociones.filter(p =>
-      p.roomTypeId === roomTypeId &&
-      new Date(p.startDate + (p.startDate.includes('T') ? '' : 'T00:00:00')) <= fin &&
-      new Date(p.endDate   + (p.endDate.includes('T')   ? '' : 'T00:00:00')) >= inicio
-    );
-
-    if (candidatas.length === 0) {
-      this.promoDescuento = 0;
-      this.promoNombre = '';
-      this.promoId = null;
-    } else {
-      const mejor = candidatas.reduce((best, p) => p.discount > best.discount ? p : best);
-      this.promoDescuento = mejor.discount;
-      this.promoNombre = mejor.name;
-      this.promoId = mejor.promotionId;
-    }
-
-    this.cdr.detectChanges();
   }
 
   private updateDisplayTotal(): void {

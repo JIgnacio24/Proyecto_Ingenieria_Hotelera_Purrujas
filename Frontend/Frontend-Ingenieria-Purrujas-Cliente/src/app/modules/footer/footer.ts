@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PublicidadService, Promocion, Publicidad } from '../../services/publicidad.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface CarouselItem {
   id: string;
@@ -24,6 +26,7 @@ interface CarouselItem {
 export class FooterComponent implements OnInit, AfterViewInit {
   private publicidadService = inject(PublicidadService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('tickerTrack') tickerTrack: ElementRef | undefined;
 
@@ -32,9 +35,11 @@ export class FooterComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Usar combineLatest para esperar a que AMBAS llamadas terminen
     combineLatest([
-      this.publicidadService.getPromociones(),
-      this.publicidadService.getPublicidades()
-    ]).subscribe(([promociones, publicidades]) => {
+      this.publicidadService.getPromociones().pipe(catchError(() => of([] as Promocion[]))),
+      this.publicidadService.getPublicidades().pipe(catchError(() => of([] as Publicidad[])))
+    ]).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(([promociones, publicidades]) => {
       // Convertir promociones a items del carrusel
       const promoItems: CarouselItem[] = promociones.map(p => ({
         id: `promo-${p.promotionId}`,

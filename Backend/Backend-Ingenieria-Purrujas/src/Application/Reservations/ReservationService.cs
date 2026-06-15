@@ -12,7 +12,6 @@ public class ReservationService(
     IRoomRepository roomRepository,
     ICustomerRepository customerRepository,
     IQuoteService quoteService,
-    IPromotionRepository promotionRepository,
     IEmailService emailService,
     ILogger<ReservationService> logger
 ) : IReservationService
@@ -76,15 +75,16 @@ public class ReservationService(
         var seasonAmount = quote.Subtotal - basePrice;
         var bill = new Bill
         {
-            BasePrice    = quote.BasePricePerNight * quote.NightsTotal,
-            Discount     = discountAmount,
-            SeasonAmount = seasonAmount
+            BasePrice    = basePrice,
+            Discount     = quote.DiscountAmount,
+            SeasonAmount = seasonAmount,
+            Currency     = currency
         };
 
         var reservationId = await reservationRepository.CreateAsync(reservation, bill, cancellationToken);
 
-        var totalUsd = quote.Total - discountAmount;
-        var totalCrc = totalUsd * UsdToCrcRate;
+        var (totalUsd, totalCrc) = ResolveTotals(quote.Total, currency);
+        var (discountUsd, discountCrc) = ResolveTotals(quote.DiscountAmount, currency);
 
         var dto = new ReservationResponseDto
         {
@@ -101,8 +101,8 @@ public class ReservationService(
             NightsLow        = quote.NightsLow,
             TotalUsd         = totalUsd,
             TotalCrc         = totalCrc,
-            DiscountUsd      = discountAmount,
-            DiscountCrc      = discountAmount * UsdToCrcRate,
+            DiscountUsd      = discountUsd,
+            DiscountCrc      = discountCrc,
             Currency         = currency,
             Status           = "Pendiente",
             CreatedAt        = DateTime.UtcNow
@@ -185,21 +185,6 @@ public class ReservationService(
             cancellationToken,
             allowPastDates: true);
 
-        var discountAmount = 0m;
-        if (request.PromotionId.HasValue)
-        {
-            var promotion = await promotionRepository.GetByIdAsync(request.PromotionId.Value, cancellationToken);
-            var roomTypeId = RoomTypeIdFromKey(roomTypeKey);
-            if (promotion is not null
-                && promotion.IsActive
-                && (roomTypeId is null || promotion.RoomTypeId == roomTypeId)
-                && promotion.StartDate <= request.EndDate
-                && promotion.EndDate >= request.StartDate)
-            {
-                discountAmount = decimal.Round(quote.Total * promotion.Discount / 100m, 2);
-            }
-        }
-
         await reservationRepository.UpdateAsync(
             id,
             current.ReservationDate,
@@ -246,6 +231,7 @@ public class ReservationService(
         var currency = NormalizeCurrencyOrDefault(d.Currency);
         var storedTotal = d.BasePrice + d.SeasonAmount - d.Discount;
         var (totalUsd, totalCrc) = ResolveTotals(storedTotal, currency);
+        var (discountUsd, discountCrc) = ResolveTotals(d.Discount, currency);
 
         return new ReservationResponseDto
         {
@@ -261,10 +247,10 @@ public class ReservationService(
             NightsHigh       = 0,
             NightsLow        = nights,
             TotalUsd         = totalUsd,
-            TotalCrc         = totalUsd * 500m,
-            DiscountUsd      = d.Discount,
-            DiscountCrc      = d.Discount * 500m,
-            Currency         = "USD",
+            TotalCrc         = totalCrc,
+            DiscountUsd      = discountUsd,
+            DiscountCrc      = discountCrc,
+            Currency         = currency,
             Status           = d.ReservationStatusName,
             CreatedAt        = d.ReservationDate
         };
