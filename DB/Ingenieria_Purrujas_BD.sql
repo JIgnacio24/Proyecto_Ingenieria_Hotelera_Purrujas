@@ -264,6 +264,15 @@ CREATE TABLE OccupancyHistory (
 );
 GO
 
+CREATE TABLE AdminAuditLog (
+    AdminAuditLogId INT            NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    AdminUserId     INT            NOT NULL REFERENCES AdminUser(AdminUserId),
+    [Action]        NVARCHAR(150)  NOT NULL,
+    Description     NVARCHAR(600)  NOT NULL,
+    OccurredAt      DATETIME2      NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+
 -- =========================================
 -- ADMIN USER
 -- =========================================
