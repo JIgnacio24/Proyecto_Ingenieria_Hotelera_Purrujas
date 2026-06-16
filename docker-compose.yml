@@ -10,7 +10,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Developer"
       MSSQL_TCP_PORT: "1435"
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Purrujas2026!}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Purrujas_2026!}"
       RESET_DATABASE_ON_START: "false"
     ports:
       - "1435:1435"
@@ -35,7 +35,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_URLS: "http://+:5234"
-      ConnectionStrings__DefaultConnection: "Server=db,1435;Database=Ingenieria_Purrujas_BD;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Purrujas2026!};TrustServerCertificate=True;Encrypt=False"
+      ConnectionStrings__DefaultConnection: "Server=db,1435;Database=Ingenieria_Purrujas_BD;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Purrujas_2026!};TrustServerCertificate=True;Encrypt=False"
       Cors__AllowedOrigins__0: "http://localhost:4203"
       Cors__AllowedOrigins__1: "http://127.0.0.1:4203"
       Cors__AllowedOrigins__2: "http://localhost:4204"

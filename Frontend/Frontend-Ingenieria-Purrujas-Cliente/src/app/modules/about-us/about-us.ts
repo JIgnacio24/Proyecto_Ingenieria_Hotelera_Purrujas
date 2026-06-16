@@ -13,6 +13,7 @@ import {
 import { GalleryImage, GalleryImagesService } from '../../services/galleryImages.service';
 import { GettingThereComponent } from '../getting-there/getting-there.component';
 import { OnlineReservationCtaComponent } from '../online-reservation-cta/online-reservation-cta.component';
+import { environment } from '../../../environments/environment';
 
 interface GalleryItem {
   src: string;
@@ -155,7 +156,7 @@ export class AboutUs implements OnInit, OnDestroy {
 
     this.galleryItems = images.map((image) => ({
       ...image,
-      src: `http://localhost:5234${image.src}`
+      src: `${environment.assetBaseUrl}${image.src}`
     }));
 
     this.changeDetectorRef.detectChanges();

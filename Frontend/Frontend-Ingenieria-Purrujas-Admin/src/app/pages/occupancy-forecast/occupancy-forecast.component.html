@@ -1,0 +1,53 @@
+<section class="forecast-page">
+  <div class="forecast-topbar">
+    <a routerLink="/panel" class="back-link" aria-label="Volver al panel">
+      <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Volver al panel
+    </a>
+  </div>
+
+  <header class="forecast-header">
+    <h1 class="forecast-title">Predicción de Ocupación</h1>
+    <p class="forecast-subtitle">
+      Proyección de los próximos 6 meses basada en historial de 36 meses y modelo ML.NET.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <div class="forecast-loading">
+      <div class="spinner"></div>
+      <span>Entrenando modelo y generando predicciones…</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="forecast-error">
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- El canvas se renderiza siempre para que @ViewChild pueda acceder a él -->
+  <div class="chart-card" [class.chart-hidden]="loading() || !!error()">
+    <div class="chart-legend-info">
+      <span class="legend-dot legend-history"></span> Historial (últimos 12 meses)
+      <span class="legend-dot legend-forecast"></span> Proyección (próximos 6 meses)
+    </div>
+    <div class="chart-container">
+      <canvas #chartCanvas></canvas>
+    </div>
+  </div>
+
+  @if (!loading() && !error()) {
+    <div class="info-card">
+      <h2 class="info-title">¿Cómo funciona?</h2>
+      <ul class="info-list">
+        <li>El sistema genera 36 meses de historial sintético adaptado a las temporadas configuradas.</li>
+        <li>Se entrena un modelo de regresión lineal con ML.NET (Microsoft.ML).</li>
+        <li>El modelo predice la ocupación mensual para los próximos 6 meses.</li>
+        <li>Cuando existan suficientes reservas reales, reemplazarán los datos sintéticos automáticamente.</li>
+      </ul>
+    </div>
+  }
+</section>

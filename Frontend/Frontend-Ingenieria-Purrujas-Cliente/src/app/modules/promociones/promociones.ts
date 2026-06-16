@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { PublicidadService, Promocion } from '../../services/publicidad.service';
 import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-promociones',
@@ -17,19 +18,24 @@ export class Promociones implements OnInit {
   private roomTypesService = inject(RoomTypesService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   promociones: Promocion[] = [];
   filtroActivo: 'todas' | 'activas' | 'proximas' = 'todas';
   private roomTypes: PublicRoomType[] = [];
 
   ngOnInit(): void {
-    this.publicidadService.getPromociones().subscribe(data => {
+    this.publicidadService.getPromociones().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(data => {
       this.promociones = data;
       this.setFiltro('todas');
       this.cdr.detectChanges();
     });
 
-    this.roomTypesService.getAll().subscribe(tipos => {
+    this.roomTypesService.getAll().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(tipos => {
       this.roomTypes = tipos;
       this.cdr.detectChanges();
     });
@@ -77,8 +83,7 @@ export class Promociones implements OnInit {
       queryParams: {
         inicio: promo.startDate.split('T')[0],
         fin: promo.endDate.split('T')[0],
-        habitacion: promo.roomTypeId,
-        descuento: promo.discount
+        habitacion: promo.roomTypeId
       }
     });
   }

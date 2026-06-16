@@ -97,11 +97,6 @@
               <td class="amount">
                 {{ currencySymbol(r.currency) }}{{ reservationTotal(r) | number:'1.2-2' }}
                 <span class="room-number">{{ r.currency }}</span>
-                @if (r.discountUsd > 0 || r.discountCrc > 0) {
-                  <div class="discount-line">
-                    −{{ currencySymbol(r.currency) }}{{ (r.currency === 'CRC' ? r.discountCrc : r.discountUsd) | number:'1.2-2' }}
-                  </div>
-                }
               </td>
               <td>
                 <span [class]="statusClass(r.status)">{{ r.status }}</span>

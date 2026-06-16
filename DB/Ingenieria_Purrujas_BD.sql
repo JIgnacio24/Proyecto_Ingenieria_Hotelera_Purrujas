@@ -1,4 +1,4 @@
-﻿USE master;
+USE master;
 GO
 
 IF DB_ID(N'Ingenieria_Purrujas_BD') IS NOT NULL
@@ -41,24 +41,6 @@ CREATE TABLE AdminUser (
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     LastLoginAt DATETIME2 NULL
 );
-GO
-
-CREATE TABLE AdminAuditLog (
-    AdminAuditLogId INT PRIMARY KEY IDENTITY,
-    AdminUserId INT NOT NULL,
-    OccurredAt DATETIME2 NOT NULL CONSTRAINT DF_AdminAuditLog_OccurredAt DEFAULT SYSDATETIME(),
-    [Action] NVARCHAR(150) NOT NULL,
-    Description NVARCHAR(600) NOT NULL,
-    CONSTRAINT FK_AdminAuditLog_AdminUser FOREIGN KEY (AdminUserId) REFERENCES AdminUser(AdminUserId)
-);
-GO
-
-CREATE INDEX IX_AdminAuditLog_OccurredAt
-ON AdminAuditLog (OccurredAt DESC, AdminAuditLogId DESC);
-GO
-
-CREATE INDEX IX_AdminAuditLog_AdminUserId
-ON AdminAuditLog (AdminUserId, OccurredAt DESC);
 GO
 
 CREATE TABLE RoomType (
@@ -270,6 +252,24 @@ CREATE TABLE ForecastSnapshots (
     ModelVersion NVARCHAR(100) NULL,
     ConfidenceLevel DECIMAL(8,2) NULL,
     GeneratedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+
+CREATE TABLE OccupancyHistory (
+    Id                  INT IDENTITY(1,1) PRIMARY KEY,
+    Year                INT NOT NULL,
+    Month               INT NOT NULL CHECK (Month BETWEEN 1 AND 12),
+    OccupancyPercentage DECIMAL(5,2) NOT NULL,
+    CONSTRAINT UQ_OccupancyHistory_YearMonth UNIQUE (Year, Month)
+);
+GO
+
+CREATE TABLE AdminAuditLog (
+    AdminAuditLogId INT            NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    AdminUserId     INT            NOT NULL REFERENCES AdminUser(AdminUserId),
+    [Action]        NVARCHAR(150)  NOT NULL,
+    Description     NVARCHAR(600)  NOT NULL,
+    OccurredAt      DATETIME2      NOT NULL DEFAULT SYSDATETIME()
 );
 GO
 

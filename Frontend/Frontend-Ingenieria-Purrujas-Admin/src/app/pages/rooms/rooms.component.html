@@ -333,45 +333,26 @@
       <section class="type-selector" aria-label="Habitaciones registradas">
         <div class="section-head">
           <p>Selecciona una habitación</p>
-          <span>Pulsa una tarjeta para revisar sus datos o abrir la edición.</span>
+          <span>Elige una habitación del listado para revisar sus datos o abrir la edición.</span>
         </div>
 
         @if (rooms().length === 0) {
           <p class="empty-state">No hay habitaciones registradas. Crea la primera con el formulario de arriba.</p>
         } @else {
-          <div class="type-cards">
-            @for (room of rooms(); track room.roomId) {
-              <button
-                type="button"
-                class="type-card"
-                [class.type-card--active]="selectedRoomId() === room.roomId"
-                [attr.aria-pressed]="selectedRoomId() === room.roomId"
-                [attr.aria-label]="'Ver detalles de la habitación ' + room.roomNumber"
-                (click)="selectRoom(room.roomId)"
-              >
-                <div class="type-card__top">
-                  <span class="type-card__name">Habitación {{ room.roomNumber }}</span>
-                  <span
-                    class="type-badge"
-                    [class.type-badge--active]="getStatus(room.roomStatusId)?.isAvailableForBooking"
-                    [class.type-badge--inactive]="!getStatus(room.roomStatusId)?.isAvailableForBooking"
-                  >
-                    {{ room.roomStatusName }}
-                  </span>
-                </div>
-
-                <div class="type-card__meta">
-                  <span class="type-card__capacity">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    {{ room.roomTypeName }}
-                  </span>
-                  <span class="type-card__price">{{ getStatusLabel(room.roomStatusId) }}</span>
-                </div>
-              </button>
-            }
-          </div>
+          <label class="rt-field">
+            <select
+              class="rt-field__input"
+              aria-label="Seleccionar habitación"
+              (change)="onRoomSelect($event)"
+            >
+              <option value="">— Selecciona una habitación —</option>
+              @for (room of rooms(); track room.roomId) {
+                <option [value]="room.roomId" [selected]="selectedRoomId() === room.roomId">
+                  Hab. {{ room.roomNumber }} · {{ room.roomTypeName }} · {{ room.roomStatusName }}
+                </option>
+              }
+            </select>
+          </label>
         }
       </section>
 

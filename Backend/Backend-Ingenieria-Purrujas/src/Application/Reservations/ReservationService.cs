@@ -198,11 +198,7 @@ public class ReservationService(
         var basePrice = quote.BasePricePerNight * quote.NightsTotal;
         var seasonAmount = quote.Subtotal - basePrice;
         await reservationRepository.UpdateBillAsync(
-            id,
-            basePrice,
-            seasonAmount,
-            quote.DiscountAmount,
-            cancellationToken);
+            id, basePrice, seasonAmount, quote.DiscountAmount, cancellationToken);
 
         var updated = await reservationRepository.GetByIdAsync(id, cancellationToken);
         return MapToDto(updated!);

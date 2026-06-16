@@ -73,6 +73,11 @@ export class RoomsComponent {
     this.selectedRoomId.set(this.selectedRoomId() === roomId ? null : roomId);
   }
 
+  onRoomSelect(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedRoomId.set(value ? +value : null);
+  }
+
   async loadData(): Promise<void> {
     this.loading.set(true);
     this.clearFeedback();

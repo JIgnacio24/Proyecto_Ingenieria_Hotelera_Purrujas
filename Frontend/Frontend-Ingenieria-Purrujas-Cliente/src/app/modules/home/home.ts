@@ -13,8 +13,9 @@ import {
   HomeContentService,
   HomePageContent
 } from '../../services/home-content.service';
+import { environment } from '../../../environments/environment';
 
-const API_ASSET_BASE_URL = 'http://localhost:5234';
+const API_ASSET_BASE_URL = environment.assetBaseUrl;
 const DEFAULT_HERO_IMAGE = '/images/foto_fondo.png';
 const HERO_OVERLAY = 'linear-gradient(160deg, rgba(26,58,42,0.82) 0%, rgba(45,106,79,0.65) 60%, rgba(82,183,136,0.3) 100%)';
 
@@ -62,7 +63,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   price(basePrice: number): number {
-    return this.currency === 'CRC' ? basePrice * 540 : basePrice;
+    return this.currencyService.convertFromUsd(basePrice, this.currency);
   }
 
   private async loadHeroImage(): Promise<void> {

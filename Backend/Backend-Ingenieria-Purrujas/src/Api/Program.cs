@@ -1,10 +1,12 @@
 using Backend_Ingenieria_Purrujas.Application.Auth;
 using Backend_Ingenieria_Purrujas.Application.AdminAudit;
 using Backend_Ingenieria_Purrujas.Application.Email;
+using Backend_Ingenieria_Purrujas.Application.Occupancy;
 using Backend_Ingenieria_Purrujas.Application.Quotes;
 using Backend_Ingenieria_Purrujas.Application.Reservations;
 using Backend_Ingenieria_Purrujas.Api.Services;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using Backend_Ingenieria_Purrujas.Infrastructure.Data;
 using Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -109,8 +111,17 @@ builder.Services.AddScoped<IGalleryImagesRepository, GalleryImagesRepository>();
 builder.Services.AddScoped<IRoomAvailabilityRepository, RoomAvailabilityRepository>();
 builder.Services.AddScoped<RoomAvailabilityPdfService>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IOccupancyRepository, OccupancyRepository>();
+builder.Services.AddScoped<IOccupancyPredictionService, OccupancyPredictionService>();
+builder.Services.AddScoped<OccupancySeeder>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<OccupancySeeder>();
+    await seeder.SeedAsync();
+}
 var configuredUrls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
 var hasHttpsEndpoint = configuredUrls
     .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
