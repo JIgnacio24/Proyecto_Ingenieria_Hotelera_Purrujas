@@ -224,7 +224,6 @@ public class ReservationRepository : IReservationRepository
         await using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@ReservationId", reservationId);
         cmd.Parameters.AddWithValue("@BasePrice", basePrice);
-        cmd.Parameters.AddWithValue("@Discount", discount);
         cmd.Parameters.AddWithValue("@SeasonAmount", seasonAmount);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }

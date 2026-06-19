@@ -9,6 +9,7 @@ import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
 import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 
+type RoomId = 'doble' | 'suite' | 'villa';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -92,6 +93,8 @@ export class ReservarComponent implements OnInit, OnDestroy {
   guestForm: FormGroup;
 
   private subs = new Subscription();
+  private promociones: Promocion[] = [];
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -125,12 +128,13 @@ export class ReservarComponent implements OnInit, OnDestroy {
 
   /** Precio final después de aplicar el descuento promocional */
   get totalConDescuento(): number {
-    return this.finalTotal;
+    if (this.promoDescuento <= 0 || this.total <= 0) return this.total;
+    return Math.round(this.total * (1 - this.promoDescuento / 100) * 100) / 100;
   }
 
   /** Ahorro absoluto en la moneda seleccionada */
   get promoAhorro(): number {
-    return this.discountAmount;
+    return Math.round((this.total - this.totalConDescuento) * 100) / 100;
   }
 
   confirmedReservationSymbol(): string {
@@ -178,7 +182,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
     // Pre-cargar parámetros de URL (fechas y habitación)
     const params = this.route.snapshot.queryParamMap;
     if (params.has('inicio')) this.fechaInicio = params.get('inicio')!;
-    if (params.has('fin'))    this.fechaFin    = params.get('fin')!;
+    if (params.has('fin')) this.fechaFin = params.get('fin')!;
 
     // Cargar tipos de habitación desde la API
     this.subs.add(
@@ -190,7 +194,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
           // Pre-seleccionar habitación por query param ?habitacion=<roomTypeId>
           const habitacionParam = params.get('habitacion');
           const porId = habitacionParam
-            ? this.habitaciones.find(h => h.roomTypeId === +habitacionParam)
+            ? this.habitaciones.find((h) => h.roomTypeId === +habitacionParam)
             : null;
           this.selectedRoom = porId ?? this.habitaciones[0] ?? EMPTY_ROOM;
 
@@ -327,10 +331,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
         currency: Currency;
         promotionDiscount: number;
         promotionName?: string;
-      }>(
-        '/api/quote/calculate',
-        payload
-      )
+      }>('/api/quote/calculate', payload)
       .subscribe({
         next: (r) => {
           if (r.currency !== this.currency) return;
