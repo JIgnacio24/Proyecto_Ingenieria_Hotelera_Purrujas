@@ -148,6 +148,20 @@ export class ReservarComponent implements OnInit, OnDestroy {
       : this.confirmedReservation.totalUsd;
   }
 
+  confirmedReservationOriginalPrice(): number {
+    if (!this.confirmedReservation) return 0;
+    return this.confirmedReservationCurrency() === 'CRC'
+      ? this.confirmedReservation.totalCrc + this.confirmedReservation.discountCrc
+      : this.confirmedReservation.totalUsd + this.confirmedReservation.discountUsd;
+  }
+
+  confirmedReservationDiscount(): number {
+    if (!this.confirmedReservation) return 0;
+    return this.confirmedReservationCurrency() === 'CRC'
+      ? this.confirmedReservation.discountCrc
+      : this.confirmedReservation.discountUsd;
+  }
+
   price(amountUsd: number): number {
     return this.currencyService.convertFromUsd(amountUsd, this.currency);
   }
