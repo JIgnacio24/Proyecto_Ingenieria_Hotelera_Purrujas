@@ -93,7 +93,6 @@ export class ReservarComponent implements OnInit, OnDestroy {
   guestForm: FormGroup;
 
   private subs = new Subscription();
-  private promociones: Promocion[] = [];
 
   constructor(
     private fb: FormBuilder,

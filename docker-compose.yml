@@ -11,7 +11,7 @@ services:
       MSSQL_PID: "Developer"
       MSSQL_TCP_PORT: "1435"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Purrujas_2026!}"
-      RESET_DATABASE_ON_START: "false"
+      RESET_DATABASE_ON_START: "${RESET_DATABASE_ON_START:-false}"
     ports:
       - "1435:1435"
     volumes:

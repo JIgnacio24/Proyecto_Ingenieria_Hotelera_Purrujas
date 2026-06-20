@@ -1,139 +1,194 @@
-# Implementación de Docker en el Sistema Hotelero Las Purrujas
+# Docker en el Proyecto Ingenieria Hotelera Purrujas
 
-## ¿Qué es Docker y por qué se usó?
+Este documento describe como esta implementado Docker en el proyecto, que hace cada Dockerfile, como funciona `docker-compose.yml`, como se inicializa la base de datos, que comandos se deben usar y que se verifico para confirmar que el proyecto queda consistente y listo para ejecutarse.
 
-Docker es una plataforma que permite empaquetar una aplicación junto con todas sus dependencias (librerías, configuraciones, runtime) dentro de una unidad llamada **contenedor**. A diferencia de instalar el software directamente en una máquina, un contenedor es aislado, reproducible y funciona igual en cualquier computadora, independientemente del sistema operativo o configuración local del desarrollador.
+## Estado Verificado
 
-Para este proyecto, Docker resuelve un problema concreto: el sistema está compuesto por cuatro servicios distintos (base de datos SQL Server, backend .NET, frontend de administración Angular y frontend de clientes Angular). Sin Docker, cada integrante del equipo necesita instalar y configurar manualmente todos esos componentes, gestionar versiones y resolver conflictos entre herramientas. Con Docker, basta con tener Docker Desktop instalado y ejecutar un único comando para levantar toda la aplicación.
+Validacion realizada localmente el 2026-06-19:
 
----
+- `docker compose config --quiet`: correcto.
+- `dotnet build Backend-Ingenieria-Purrujas.sln`: correcto, con advertencia de seguridad moderada en `MailKit 4.13.0`.
+- `bun run build` en `Frontend-Ingenieria-Purrujas-Admin`: correcto, con advertencia de presupuesto de bundle.
+- `bun run build` en `Frontend-Ingenieria-Purrujas-Cliente`: correcto, con advertencias de presupuesto de bundle y fuentes CSS.
+- `docker compose build`: correcto para los cuatro servicios.
+- Inicializacion real de BD en un proyecto temporal de Compose con volumen limpio: `healthy`, `RestartCount=0`, 29 tablas, 67 procedimientos y 3 patches registrados en `dbo.__SchemaMigrations`.
 
-## Herramienta requerida: Docker Desktop
+Tambien se corrigio una condicion necesaria para SQL Server: el script de base de datos ahora activa las opciones `SET` requeridas antes de crear el indice filtrado `UX_Room_RoomNumber_Active`.
 
-Para ejecutar Docker en una computadora local se necesita instalar **Docker Desktop**, que incluye el motor de Docker, Docker Compose y una interfaz visual para monitorear los contenedores.
+## Arquitectura Docker
 
-**Descarga:** https://www.docker.com/products/docker-desktop
+El proyecto se ejecuta con cuatro servicios principales:
 
-Al instalar en Windows, el instalador pide habilitar **WSL 2** (Windows Subsystem for Linux), que es el entorno que permite correr contenedores Linux dentro de Windows. Es necesario aceptarlo.
+| Servicio | Carpeta | Tecnologia | Puerto host | Puerto contenedor | Funcion |
+|---|---|---:|---:|---:|---|
+| `db` | `DB/` | SQL Server 2022 | `1435` | `1435` | Base de datos `Ingenieria_Purrujas_BD` |
+| `backend` | `Backend/` | ASP.NET Core .NET 9 | `5234` | `5234` | API REST |
+| `frontend-admin` | `Frontend/Frontend-Ingenieria-Purrujas-Admin/` | Angular + Bun | `4203` | `4203` | Panel administrativo |
+| `frontend-cliente` | `Frontend/Frontend-Ingenieria-Purrujas-Cliente/` | Angular + Bun | `4204` | `4204` | Sitio del cliente |
 
-Se debe elegir la versión correcta según la arquitectura del procesador:
-- Procesadores **Intel o AMD** → versión **AMD64**
-- Procesadores **ARM** (algunos portátiles modernos) o **Apple Silicon** → versión **ARM64**
+URLs principales al levantar todo:
 
-> AMD64 no significa que sea exclusivo para procesadores AMD. Es el nombre de la arquitectura de 64 bits que comparten tanto Intel como AMD.
-
----
-
-## Estructura de archivos Docker del proyecto
-
-El proyecto utiliza los siguientes archivos relacionados con Docker:
-
+```powershell
+http://localhost:4203   # Frontend administrativo
+http://localhost:4204   # Frontend cliente
+http://localhost:5234   # Backend API
+localhost,1435          # SQL Server desde herramientas externas
 ```
+
+## Archivos Docker del Proyecto
+
+```text
 Proyecto_Ingenieria_Hotelera_Purrujas/
-├── docker-compose.yml                          # Orquestador principal
+├── docker-compose.yml
+├── DOCKER_IMPLEMENTACION.md
 ├── Backend/
-│   ├── Dockerfile                              # Imagen del backend .NET
-│   ├── .env                                    # Variables de entorno para Docker (no está en git)
-│   ├── .env.example                            # Plantilla del .env para Docker
-│   └── .dockerignore                           # Archivos excluidos al construir la imagen
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   └── .env
 ├── DB/
-│   ├── Dockerfile                              # Imagen personalizada de SQL Server
-│   ├── Ingenieria_Purrujas_BD.sql              # Script de creación de la base de datos
-│   ├── docker-entrypoint.sh                    # Script de inicialización del contenedor de BD
-│   ├── sqlserver-healthcheck.sh                # Script de verificación de salud de la BD
-│   └── .dockerignore
-├── Frontend/
-│   ├── Frontend-Ingenieria-Purrujas-Admin/
-│   │   ├── Dockerfile                          # Imagen del frontend admin
-│   │   └── .dockerignore
-│   └── Frontend-Ingenieria-Purrujas-Cliente/
-│       ├── Dockerfile                          # Imagen del frontend cliente
-│       ├── proxy.conf.json                     # Proxy para desarrollo local
-│       ├── proxy.docker.conf.json              # Proxy para desarrollo dentro de Docker
-│       └── .dockerignore
+│   ├── Dockerfile
+│   ├── Ingenieria_Purrujas_BD.sql
+│   ├── docker-entrypoint.sh
+│   ├── sqlserver-healthcheck.sh
+│   ├── .dockerignore
+│   └── Patches/
+│       ├── 2026-05-26_add_description_capacity_to_room_type.sql
+│       ├── 2026-06-11_fix_room_types_invalid_data.sql
+│       └── 2026-06-12_advertising_crud.sql
+└── Frontend/
+    ├── Frontend-Ingenieria-Purrujas-Admin/
+    │   ├── Dockerfile
+    │   ├── .dockerignore
+    │   ├── package.json
+    │   └── bun.lock
+    └── Frontend-Ingenieria-Purrujas-Cliente/
+        ├── Dockerfile
+        ├── .dockerignore
+        ├── package.json
+        ├── bun.lock
+        ├── proxy.conf.json
+        └── proxy.docker.conf.json
 ```
 
----
+## docker-compose.yml
 
-## Descripción detallada de cada archivo
+`docker-compose.yml` es el orquestador principal. Define como se construyen las imagenes, como se conectan los contenedores, que puertos se publican y en que orden deben arrancar los servicios.
 
-### `docker-compose.yml` — El orquestador
-
-Este archivo define los cuatro servicios que componen la aplicación y cómo se relacionan entre sí. Docker Compose lee este archivo y se encarga de construir las imágenes, crear los contenedores, conectarlos en una red interna y levantarlos en el orden correcto.
+### Servicio db
 
 ```yaml
-services:
-  db:
-    build:
-      context: ./DB
-    container_name: ingenieria-purrujas-db
-    restart: unless-stopped
-    env_file:
-      - ./Backend/.env
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"
-      MSSQL_TCP_PORT: "1435"
-      RESET_DATABASE_ON_START: "false"
-    ports:
-      - "1435:1435"
-    volumes:
-      - purrujas_sqlserver_data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/sqlserver-healthcheck.sh"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
-    networks:
-      - Ingenieria-Purrujas-Sistema-Hotelero
+db:
+  build:
+    context: ./DB
+  container_name: ingenieria-purrujas-db
+  restart: unless-stopped
+  env_file:
+    - ./Backend/.env
+  environment:
+    ACCEPT_EULA: "Y"
+    MSSQL_PID: "Developer"
+    MSSQL_TCP_PORT: "1435"
+    MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Purrujas_2026!}"
+    RESET_DATABASE_ON_START: "${RESET_DATABASE_ON_START:-false}"
+  ports:
+    - "1435:1435"
+  volumes:
+    - purrujas_sqlserver_data:/var/opt/mssql
+  healthcheck:
+    test: ["CMD", "/usr/local/bin/sqlserver-healthcheck.sh"]
+    interval: 10s
+    timeout: 5s
+    retries: 20
+    start_period: 30s
+```
 
-  backend:
-    build:
-      context: ./Backend
-    container_name: ingenieria-purrujas-backend
-    restart: unless-stopped
-    env_file:
-      - ./Backend/.env
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_URLS: "http://+:5234"
-      Cors__AllowedOrigins__0: "http://localhost:4203"
-      Cors__AllowedOrigins__1: "http://127.0.0.1:4203"
-      Cors__AllowedOrigins__2: "http://localhost:4204"
-      Cors__AllowedOrigins__3: "http://127.0.0.1:4204"
-    ports:
-      - "5234:5234"
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - Ingenieria-Purrujas-Sistema-Hotelero
+Puntos importantes:
 
-  frontend-admin:
-    build:
-      context: ./Frontend/Frontend-Ingenieria-Purrujas-Admin
-    container_name: ingenieria-purrujas-frontend-admin
-    restart: unless-stopped
-    ports:
-      - "4203:4203"
-    depends_on:
-      - backend
-    networks:
-      - Ingenieria-Purrujas-Sistema-Hotelero
+- Usa una imagen personalizada construida desde `DB/Dockerfile`.
+- Expone SQL Server en `localhost:1435`.
+- Guarda los datos reales en el volumen `purrujas_sqlserver_data`.
+- Ejecuta `sqlserver-healthcheck.sh` hasta que SQL Server responda.
+- `RESET_DATABASE_ON_START` queda en `false` por defecto para no borrar datos en cada arranque.
+- El password `sa` debe coincidir con el password usado por el backend en su cadena de conexion.
 
-  frontend-cliente:
-    build:
-      context: ./Frontend/Frontend-Ingenieria-Purrujas-Cliente
-    container_name: ingenieria-purrujas-frontend-cliente
-    restart: unless-stopped
-    ports:
-      - "4204:4204"
-    depends_on:
-      - backend
-    networks:
-      - Ingenieria-Purrujas-Sistema-Hotelero
+Nota sobre variables: los valores `${...}` de Compose se resuelven desde variables del shell o desde un archivo `.env` en la raiz del proyecto, no desde `env_file`. En el estado actual, el valor por defecto coincide con `Backend/.env`, por eso backend y base de datos quedan alineados.
 
+### Servicio backend
+
+```yaml
+backend:
+  build:
+    context: ./Backend
+  container_name: ingenieria-purrujas-backend
+  restart: unless-stopped
+  env_file:
+    - ./Backend/.env
+  environment:
+    ASPNETCORE_ENVIRONMENT: "Development"
+    ASPNETCORE_URLS: "http://+:5234"
+    ConnectionStrings__DefaultConnection: "Server=db,1435;Database=Ingenieria_Purrujas_BD;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Purrujas_2026!};TrustServerCertificate=True;Encrypt=False"
+    Cors__AllowedOrigins__0: "http://localhost:4203"
+    Cors__AllowedOrigins__1: "http://127.0.0.1:4203"
+    Cors__AllowedOrigins__2: "http://localhost:4204"
+    Cors__AllowedOrigins__3: "http://127.0.0.1:4204"
+  ports:
+    - "5234:5234"
+  depends_on:
+    db:
+      condition: service_healthy
+```
+
+Puntos importantes:
+
+- El backend no arranca hasta que `db` este `healthy`.
+- Dentro de Docker, la base de datos se alcanza como `Server=db,1435`, no como `localhost`.
+- `ASPNETCORE_URLS=http://+:5234` permite que ASP.NET escuche conexiones desde fuera del contenedor.
+- CORS permite los dos frontends locales: `4203` y `4204`.
+- El archivo `Backend/.env` tambien se carga, pero la cadena `ConnectionStrings__DefaultConnection` del compose tiene prioridad.
+
+### Servicio frontend-admin
+
+```yaml
+frontend-admin:
+  build:
+    context: ./Frontend/Frontend-Ingenieria-Purrujas-Admin
+  container_name: ingenieria-purrujas-frontend-admin
+  restart: unless-stopped
+  ports:
+    - "4203:4203"
+  depends_on:
+    - backend
+```
+
+El admin se sirve con Angular en modo desarrollo. Su Dockerfile usa `ng serve --host 0.0.0.0 --port 4203 --configuration development`.
+
+En configuracion `development`, Angular reemplaza `environment.ts` por `environment.development.ts`, donde la API queda en:
+
+```ts
+apiBaseUrl: 'http://localhost:5234/api'
+```
+
+Esto funciona para uso local porque el navegador del usuario llama a `localhost:5234`, que esta publicado por Docker hacia el backend.
+
+### Servicio frontend-cliente
+
+```yaml
+frontend-cliente:
+  build:
+    context: ./Frontend/Frontend-Ingenieria-Purrujas-Cliente
+  container_name: ingenieria-purrujas-frontend-cliente
+  restart: unless-stopped
+  ports:
+    - "4204:4204"
+  depends_on:
+    - backend
+```
+
+El frontend cliente tambien usa Angular en modo desarrollo, pero sus llamadas a API se hacen contra rutas relativas `/api`. Por eso su Dockerfile usa `proxy.docker.conf.json`, que redirige esas rutas al backend dentro de la red Docker.
+
+## Red y Volumen
+
+```yaml
 volumes:
   purrujas_sqlserver_data:
 
@@ -143,18 +198,14 @@ networks:
     driver: bridge
 ```
 
-**Decisiones de diseño relevantes:**
+La red `Ingenieria-Purrujas-Sistema-Hotelero` permite que los contenedores se comuniquen por nombre de servicio:
 
-- `depends_on` con `condition: service_healthy`: el backend no arranca hasta que la base de datos pase el healthcheck. Esto evita que el backend falle al intentar conectarse a una base de datos que todavía está iniciando.
-- `restart: unless-stopped`: si un contenedor falla inesperadamente, Docker lo reinicia automáticamente.
-- `volumes: purrujas_sqlserver_data`: los datos de la base de datos se guardan en un volumen persistente. Si el contenedor se detiene y se vuelve a levantar, los datos no se pierden.
-- `RESET_DATABASE_ON_START: "false"`: la base de datos solo se inicializa con el script SQL si no existe previamente. Esto protege los datos en levantadas posteriores.
-- Red `bridge` compartida: todos los servicios están en la misma red interna, lo que les permite comunicarse entre sí usando el nombre del servicio (por ejemplo, el backend accede a la BD como `Server=db,1435` en lugar de `localhost`).
-- `ports ("host:contenedor")`: mapea los puertos del contenedor a la máquina anfitriona para que el navegador pueda acceder usando `localhost`.
+- `backend` accede a SQL Server con hostname `db`.
+- `frontend-cliente` redirige `/api` hacia hostname `backend`.
 
----
+El volumen `purrujas_sqlserver_data` persiste `/var/opt/mssql`. Esto contiene los archivos de datos de SQL Server. Si se elimina el contenedor sin eliminar el volumen, la base sigue existiendo.
 
-### `DB/Dockerfile` — Imagen personalizada de SQL Server
+## DB/Dockerfile
 
 ```dockerfile
 FROM mcr.microsoft.com/mssql/server:2022-latest
@@ -162,10 +213,12 @@ FROM mcr.microsoft.com/mssql/server:2022-latest
 USER root
 
 COPY Ingenieria_Purrujas_BD.sql /docker-entrypoint-initdb.d/Ingenieria_Purrujas_BD.sql
+COPY Patches/ /docker-entrypoint-initdb.d/Patches/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY sqlserver-healthcheck.sh /usr/local/bin/sqlserver-healthcheck.sh
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/sqlserver-healthcheck.sh \
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh /usr/local/bin/sqlserver-healthcheck.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/sqlserver-healthcheck.sh \
     && chown -R mssql:root /docker-entrypoint-initdb.d \
     && chown mssql:root /usr/local/bin/docker-entrypoint.sh /usr/local/bin/sqlserver-healthcheck.sh
 
@@ -176,105 +229,126 @@ EXPOSE 1435
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 ```
 
-Se parte de la imagen oficial de Microsoft SQL Server 2022. Sobre ella se copian el script de inicialización de la base de datos y los dos scripts de shell personalizados. Los permisos de ejecución se asignan con `chmod +x` y la propiedad de los archivos se transfiere al usuario `mssql` por razones de seguridad. El contenedor inicia ejecutando `docker-entrypoint.sh`.
+Este Dockerfile crea una imagen SQL Server preparada para inicializar automaticamente el proyecto.
 
----
+Que hace cada parte:
 
-### `DB/docker-entrypoint.sh` — Inicialización automática de la base de datos
+- `FROM mcr.microsoft.com/mssql/server:2022-latest`: usa la imagen oficial de SQL Server 2022.
+- `USER root`: cambia temporalmente a root para copiar archivos y ajustar permisos.
+- `COPY Ingenieria_Purrujas_BD.sql`: copia el script base de la base de datos.
+- `COPY Patches/`: copia migraciones incrementales.
+- `COPY docker-entrypoint.sh`: copia el script que arranca SQL Server e inicializa la BD.
+- `COPY sqlserver-healthcheck.sh`: copia el script usado por Docker Compose para marcar salud.
+- `sed -i 's/\r$//'`: elimina retornos de carro de Windows en scripts `.sh`.
+- `chmod +x`: permite ejecutar los scripts.
+- `chown`: entrega ownership al usuario `mssql`.
+- `USER mssql`: vuelve a usuario no root para ejecutar SQL Server.
+- `EXPOSE 1435`: documenta el puerto SQL configurado.
+- `ENTRYPOINT`: usa el entrypoint propio del proyecto.
 
-Este script reemplaza el proceso de inicio predeterminado de SQL Server para agregar lógica de inicialización automática de la base de datos.
+## DB/docker-entrypoint.sh
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
+El entrypoint personaliza el arranque normal de SQL Server. Su flujo es:
 
-SQLSERVER_PORT="${MSSQL_TCP_PORT:-1433}"
-SQL_SCRIPT="/docker-entrypoint-initdb.d/Ingenieria_Purrujas_BD.sql"
+1. Lee `MSSQL_TCP_PORT`, `MSSQL_SA_PASSWORD` y la ruta del SQL base.
+2. Define una funcion `sqlcmd()` compatible con `mssql-tools18` y `mssql-tools`.
+3. Falla rapido si no existe password de SQL Server.
+4. Ejecuta `/opt/mssql/bin/sqlservr` en segundo plano.
+5. Espera hasta que SQL Server acepte conexiones.
+6. Comprueba si existe `Ingenieria_Purrujas_BD`.
+7. Si no existe, o si `RESET_DATABASE_ON_START=true`, ejecuta `Ingenieria_Purrujas_BD.sql`.
+8. Espera a que la base ya creada sea accesible.
+9. Crea `dbo.__SchemaMigrations` si no existe.
+10. Aplica los `.sql` de `DB/Patches` en orden alfabetico.
+11. Registra cada patch aplicado en `dbo.__SchemaMigrations`.
+12. Mantiene el proceso de SQL Server en primer plano con `wait "$server_pid"`.
 
-sqlcmd() {
-    if [ -x "/opt/mssql-tools18/bin/sqlcmd" ]; then
-        /opt/mssql-tools18/bin/sqlcmd -C "$@"
-    elif [ -x "/opt/mssql-tools/bin/sqlcmd" ]; then
-        /opt/mssql-tools/bin/sqlcmd "$@"
-    else
-        echo "No se encontro sqlcmd en la imagen de SQL Server." >&2
-        return 1
-    fi
-}
+La tabla de control queda asi:
 
-if [ -z "${MSSQL_SA_PASSWORD:-}" ]; then
-    echo "La variable MSSQL_SA_PASSWORD es obligatoria para SQL Server." >&2
-    exit 1
-fi
-
-/opt/mssql/bin/sqlservr &
-server_pid=$!
-
-cleanup() {
-    kill "$server_pid" 2>/dev/null || true
-    wait "$server_pid" 2>/dev/null || true
-}
-trap cleanup EXIT SIGTERM SIGINT
-
-echo "Esperando a que SQL Server acepte conexiones en el puerto ${SQLSERVER_PORT}..."
-ready=0
-for _ in {1..60}; do
-    if sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; then
-        ready=1
-        break
-    fi
-    sleep 2
-done
-
-if [ "$ready" -ne 1 ]; then
-    echo "SQL Server no estuvo listo a tiempo." >&2
-    exit 1
-fi
-
-db_exists="$(sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$MSSQL_SA_PASSWORD" -h -1 -W -Q \
-    "SET NOCOUNT ON; SELECT CASE WHEN DB_ID(N'Ingenieria_Purrujas_BD') IS NULL THEN 0 ELSE 1 END" \
-    | tr -d '\r[:space:]')"
-
-if [ "${RESET_DATABASE_ON_START:-false}" = "true" ] || [ "$db_exists" != "1" ]; then
-    echo "Inicializando Ingenieria_Purrujas_BD desde ${SQL_SCRIPT}..."
-    sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$MSSQL_SA_PASSWORD" -b -i "$SQL_SCRIPT"
-else
-    echo "La base Ingenieria_Purrujas_BD ya existe. Se omite la inicializacion."
-fi
-
-wait "$server_pid"
+```sql
+CREATE TABLE dbo.__SchemaMigrations (
+    PatchName NVARCHAR(260) NOT NULL PRIMARY KEY,
+    AppliedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+);
 ```
 
-El script realiza los siguientes pasos en orden:
-1. Inicia el proceso de SQL Server en segundo plano.
-2. Espera activamente hasta 120 segundos (60 intentos × 2 segundos) a que SQL Server acepte conexiones.
-3. Verifica si la base de datos `Ingenieria_Purrujas_BD` ya existe.
-4. Si no existe (o si `RESET_DATABASE_ON_START` es `true`), ejecuta el script SQL de creación de la base de datos.
-5. Si ya existe, omite la inicialización para preservar los datos.
-6. Mantiene el proceso en primer plano para que el contenedor siga corriendo.
+Esto evita aplicar dos veces el mismo patch sobre una base persistente.
 
----
-
-### `DB/sqlserver-healthcheck.sh` — Verificación de salud
+## DB/sqlserver-healthcheck.sh
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 SQLSERVER_PORT="${MSSQL_TCP_PORT:-1433}"
+SQLSERVER_PASSWORD="${MSSQL_SA_PASSWORD:-${SA_PASSWORD:-}}"
+
+if [ -z "$SQLSERVER_PASSWORD" ]; then
+    exit 1
+fi
 
 if [ -x "/opt/mssql-tools18/bin/sqlcmd" ]; then
-    /opt/mssql-tools18/bin/sqlcmd -C -S "localhost,${SQLSERVER_PORT}" -U sa -P "${MSSQL_SA_PASSWORD}" -Q "SELECT 1" >/dev/null
+    /opt/mssql-tools18/bin/sqlcmd -C -S "localhost,${SQLSERVER_PORT}" -U sa -P "$SQLSERVER_PASSWORD" -Q "SELECT 1" >/dev/null
 else
-    /opt/mssql-tools/bin/sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "${MSSQL_SA_PASSWORD}" -Q "SELECT 1" >/dev/null
+    /opt/mssql-tools/bin/sqlcmd -S "localhost,${SQLSERVER_PORT}" -U sa -P "$SQLSERVER_PASSWORD" -Q "SELECT 1" >/dev/null
 fi
 ```
 
-Docker Compose ejecuta este script periódicamente para determinar si el contenedor de base de datos está listo. Si el comando `SELECT 1` se ejecuta sin error, el contenedor se marca como `healthy` y el backend recibe autorización para arrancar. Esto implementa el patrón de dependencia con condición de salud definido en el `docker-compose.yml`.
+El healthcheck no valida todo el modelo de datos. Su responsabilidad es confirmar que SQL Server responde a una consulta simple. El backend depende de este estado con:
 
----
+```yaml
+depends_on:
+  db:
+    condition: service_healthy
+```
 
-### `Backend/Dockerfile` — Imagen del backend .NET
+## Scripts de Base de Datos
+
+### Script base
+
+`DB/Ingenieria_Purrujas_BD.sql` crea y prepara `Ingenieria_Purrujas_BD`. Incluye tablas, datos iniciales, procedimientos almacenados y bloques idempotentes para estructuras agregadas durante la evolucion del proyecto.
+
+Objetos validados en inicializacion limpia:
+
+- 29 tablas.
+- 67 procedimientos almacenados.
+- Patches registrados en `dbo.__SchemaMigrations`: 3.
+
+### Patches
+
+Los patches actuales son:
+
+| Patch | Proposito |
+|---|---|
+| `2026-05-26_add_description_capacity_to_room_type.sql` | Agrega `Description` y `Capacity` a `RoomType` si no existen. |
+| `2026-06-11_fix_room_types_invalid_data.sql` | Corrige tipos de habitacion invalidos y agrega constraint contra nombres vacios. |
+| `2026-06-12_advertising_crud.sql` | Migra `Advertising` y crea procedimientos CRUD para publicidad. |
+
+Los patches son idempotentes a nivel de esquema: revisan existencia de columnas, constraints o procedimientos antes de modificar. Ademas, el entrypoint registra cada archivo aplicado para no repetirlo en siguientes arranques.
+
+### Alineacion con backend
+
+Se verifico que los procedimientos `usp_*` usados por los repositorios C# existen en `DB/Ingenieria_Purrujas_BD.sql`. Tambien se valido que las tablas usadas por consultas directas del backend existen en el script base.
+
+Ejemplos de procedimientos usados y presentes:
+
+- `usp_AdminUser_Register`
+- `usp_AdminUser_Login`
+- `usp_AdminAuditLog_Create`
+- `usp_Advertising_GetAll`
+- `usp_Advertising_Create`
+- `usp_Reservation_Create`
+- `usp_Reservation_Update`
+- `usp_Room_GetAll`
+- `usp_Room_GetFirstAvailableByTypeKey`
+- `usp_Room_CountAvailableByTypeKey`
+- `usp_Season_Create`
+- `usp_Promotion_Update`
+- `usp_FacilitiesPageContent_Get`
+- `usp_AboutUsPageContent_Upsert`
+- `usp_GettingTherePageContent_Upsert`
+
+## Backend/Dockerfile
 
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
@@ -306,44 +380,83 @@ COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Backend-Ingenieria-Purrujas.Api.dll"]
 ```
 
-Este Dockerfile usa la técnica de **build multi-etapa**:
+Este Dockerfile usa build multi-etapa:
 
-- **Etapa `build`**: usa la imagen del SDK completo de .NET 9 para compilar y publicar la aplicación. Se copian primero solo los archivos `.csproj` para que Docker pueda aprovechar su caché de capas al restaurar paquetes NuGet. Si el código fuente cambia pero los proyectos no cambian, Docker reutiliza la capa de `dotnet restore`.
-- **Etapa `runtime`**: usa únicamente la imagen de runtime de ASP.NET Core, que es mucho más liviana que el SDK. Solo se copia el resultado compilado de la etapa anterior. Esto produce una imagen final pequeña y sin herramientas de compilación innecesarias.
+- Etapa `build`: usa SDK .NET 9 para restaurar dependencias y publicar la API.
+- Etapa `runtime`: usa ASP.NET Runtime .NET 9, mas liviano que el SDK.
 
----
+La copia de `.csproj` antes del resto del codigo permite aprovechar cache de Docker. Si cambia un controlador, pero no cambian dependencias, `dotnet restore` puede reutilizarse.
 
-### `Frontend/Dockerfile` — Imágenes de los frontends Angular
+`Backend/.dockerignore` excluye:
 
-Ambos frontends siguen la misma estructura:
+```text
+.env
+.vscode/
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.lscache
+**/*.log
+```
+
+Esto evita copiar secretos, binarios locales y basura de build al contexto de Docker.
+
+## Frontend Admin Dockerfile
 
 ```dockerfile
+FROM oven/bun:1.2.15-slim AS bun
+
 FROM node:22.12-bookworm-slim
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
 ENV CHOKIDAR_USEPOLLING=true
-EXPOSE 4203  # (o 4204 para el cliente)
+EXPOSE 4203
 
-CMD ["npm", "run", "ng", "--", "serve", "--host", "0.0.0.0", "--port", "4203", "--configuration", "development"]
+CMD ["bun", "run", "ng", "serve", "--host", "0.0.0.0", "--port", "4203", "--configuration", "development"]
 ```
 
-Se copian primero los archivos de dependencias (`package.json` y `package-lock.json`) y se instalan con `npm ci` antes de copiar el resto del código. Esto permite que Docker reutilice la capa de instalación de paquetes si las dependencias no cambiaron. `npm ci` se prefiere sobre `npm install` en entornos reproducibles porque instala exactamente las versiones del `package-lock.json`.
+Puntos importantes:
 
-`CHOKIDAR_USEPOLLING=true` activa el polling para la detección de cambios de archivos, necesario porque los sistemas de archivos virtualizados dentro de Docker en Windows no emiten eventos de cambio nativos de manera confiable.
+- Usa Node 22.12 como runtime del dev server.
+- Copia el binario de Bun desde `oven/bun:1.2.15-slim`.
+- Instala dependencias con `bun install --frozen-lockfile`.
+- Usa `ng serve` para servir Angular en desarrollo.
+- Expone `4203`.
+- `CHOKIDAR_USEPOLLING=true` mejora deteccion de cambios en entornos Docker sobre Windows.
 
-`--host 0.0.0.0` hace que el servidor de Angular escuche en todas las interfaces de red del contenedor, lo que permite que el mapeo de puertos de Docker funcione. Sin esto, Angular solo escucharía en `localhost` dentro del contenedor y sería inaccesible desde el exterior.
+El lock `bun.lock` del admin fue sincronizado para incluir `chart.js`, dependencia necesaria para `occupancy-forecast.component.ts`.
 
-El frontend cliente agrega `--proxy-config proxy.docker.conf.json`, que redirige las llamadas a `/api` hacia el contenedor del backend usando su nombre de servicio interno (`http://backend:5234`), en lugar de `localhost`.
+## Frontend Cliente Dockerfile
 
----
+```dockerfile
+FROM oven/bun:1.2.15-slim AS bun
 
-### `Frontend/Frontend-Ingenieria-Purrujas-Cliente/proxy.docker.conf.json` — Proxy de red interna
+FROM node:22.12-bookworm-slim
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+
+WORKDIR /app
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+
+ENV CHOKIDAR_USEPOLLING=true
+EXPOSE 4204
+
+CMD ["bun", "run", "ng", "serve", "--host", "0.0.0.0", "--port", "4204", "--configuration", "development", "--proxy-config", "proxy.docker.conf.json"]
+```
+
+La diferencia principal con el admin es el proxy:
 
 ```json
 {
@@ -356,111 +469,283 @@ El frontend cliente agrega `--proxy-config proxy.docker.conf.json`, que redirige
 }
 ```
 
-Este archivo es específico para el entorno Docker. Dentro de la red de Docker, los contenedores no se pueden comunicar usando `localhost` porque cada uno tiene su propia interfaz de red aislada. En su lugar, se usa el nombre del servicio definido en `docker-compose.yml` (`backend`) como hostname. El servidor de desarrollo de Angular actúa como intermediario: cuando el navegador hace una petición a `/api/...`, el servidor Angular dentro del contenedor la redirige a `http://backend:5234/api/...`.
+Dentro de la red Docker, `backend` es el nombre DNS del contenedor de API. Esto permite que el cliente haga peticiones a `/api/...` desde el navegador, mientras el dev server de Angular las reenvia al backend.
 
-Para desarrollo local sin Docker existe el archivo `proxy.conf.json` que apunta a `http://localhost:5234`, y el Dockerfile usa explícitamente la versión Docker (`proxy.docker.conf.json`).
+## Variables de Entorno
 
----
+`Backend/.env` existe en el proyecto local y contiene variables para el backend y valores compatibles con Docker.
 
-### `Backend/.env` — Variables de entorno para Docker
+No debe copiarse a la imagen del backend, y de hecho `Backend/.dockerignore` lo excluye. Docker Compose lo inyecta como variables de entorno en tiempo de ejecucion.
 
-Este archivo es **excluido del repositorio** por `.gitignore` porque contiene credenciales. Cada integrante del equipo debe crearlo manualmente. Es cargado por Docker Compose a través de la directiva `env_file: - ./Backend/.env` en el `docker-compose.yml`.
+Variables relevantes:
 
-La diferencia fundamental con el `.env` de desarrollo local (`src/Api/.env`) está en la cadena de conexión a la base de datos:
+```text
+ASPNETCORE_ENVIRONMENT=Development
+ASPNETCORE_URLS=http://+:5234
+API_BASE_URL=http://localhost:5234/api
 
-| Aspecto | Desarrollo local | Docker |
-|---|---|---|
-| Servidor | `Server=.` (SQL Server local) | `Server=db,1435` (contenedor en la red Docker) |
-| Autenticación | `Integrated Security=True` (Windows) | `User Id=sa;Password=...` (SQL auth) |
-| Puerto | Estándar 1433 | Personalizado 1435 |
-
-En Docker no existe "autenticación integrada de Windows" porque el contenedor corre Linux. Por eso se usa el usuario administrador `sa` con una contraseña.
-
----
-
-### `.gitattributes` — Control de saltos de línea
-
-```
-# Auto detect text files and perform LF normalization
-* text=auto
-
-# Shell scripts siempre deben usar LF (Unix) o fallan en contenedores Linux
-*.sh text eol=lf
+MSSQL_SA_PASSWORD=<password>
+MSSQL_TCP_PORT=1435
+SQLSERVER_DATABASE=Ingenieria_Purrujas_BD
+ConnectionStrings__DefaultConnection=Server=db,1435;Database=Ingenieria_Purrujas_BD;User Id=sa;Password=<password>;TrustServerCertificate=True;Encrypt=True;Connect Timeout=30
+DATABASE_CONNECTION_STRING=Server=db,1435;Database=Ingenieria_Purrujas_BD;User Id=sa;Password=<password>;TrustServerCertificate=True;Encrypt=True;Connect Timeout=30
 ```
 
-Esta configuración fue necesaria para resolver un problema de compatibilidad entre Windows y Linux. Git en Windows, por defecto, convierte los saltos de línea de los archivos de texto de LF (Unix) a CRLF (Windows) al hacer checkout. Los scripts `.sh` que se ejecutan dentro de los contenedores Linux fallaban con el error:
+La variable que realmente usa el backend para los repositorios es `ConnectionStrings__DefaultConnection`, porque en .NET equivale a:
 
-```
-/usr/bin/env: 'bash\r': No such file or directory
-```
-
-El `\r` visible en el error es el carácter de retorno de carro (`CR`) de Windows que quedaba al final de la primera línea del script. La regla `*.sh text eol=lf` fuerza que Git siempre mantenga los scripts con saltos de línea Unix, independientemente del sistema operativo donde se haga el checkout.
-
-Los scripts afectados (`DB/docker-entrypoint.sh` y `DB/sqlserver-healthcheck.sh`) también fueron convertidos directamente en disco para corregir el problema en las copias ya descargadas.
-
----
-
-## Flujo de arranque de los contenedores
-
-Cuando se ejecuta `docker-compose up --build`, los servicios arrancan en este orden debido a las dependencias configuradas:
-
-```
-1. db (SQL Server)
-      │
-      │ Docker construye la imagen personalizada de SQL Server
-      │ Corre docker-entrypoint.sh: inicia sqlservr, espera conexión, inicializa BD si no existe
-      │ Docker ejecuta sqlserver-healthcheck.sh cada 10 segundos
-      │
-      ▼ (cuando healthcheck pasa: "healthy")
-2. backend (.NET API)
-      │
-      │ Docker construye la imagen multi-etapa: restore → publish → runtime
-      │ El backend arranca y se conecta a la BD usando "Server=db,1435"
-      │
-      ▼ (cuando el contenedor está corriendo)
-3. frontend-admin y frontend-cliente (Angular)
-      │
-      │ Docker instala dependencias npm y sirve la app con ng serve
-      │
-      ▼
-Todo el sistema está disponible en:
-  - http://localhost:4203  (admin)
-  - http://localhost:4204  (cliente)
-  - http://localhost:5234  (API)
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "..."
+  }
+}
 ```
 
----
+En Docker Compose se sobreescribe explicitamente con `Encrypt=False` para la conexion interna al contenedor SQL Server.
 
-## Comandos de operación
+## Comandos Principales
 
-```bash
-# Levantar todo (construye imágenes si no existen o si hubo cambios)
-docker-compose up --build
+Usar los comandos desde la raiz del proyecto.
 
-# Levantar en segundo plano
-docker-compose up --build -d
+### Construir imagenes
 
-# Ver el estado de los contenedores
-docker-compose ps
-
-# Ver los logs de un servicio en tiempo real
-docker-compose logs -f backend
-docker-compose logs -f db
-
-# Detener todos los contenedores (conserva los datos)
-docker-compose down
-
-# Detener y eliminar volúmenes (borra la base de datos)
-docker-compose down -v
+```powershell
+docker compose build
 ```
 
----
+### Levantar todo en primer plano
 
-## Coexistencia con el entorno de desarrollo local
+```powershell
+docker compose up --build
+```
 
-Docker y el entorno de desarrollo local son independientes y **no deben usarse al mismo tiempo** porque ambos ocupan los mismos puertos del sistema.
+### Levantar todo en segundo plano
 
-| Modo | Cuándo usarlo | Cómo |
-|---|---|---|
-| **Local** | Desarrollo activo del día a día | `dotnet run` + `ng serve` (hot reload inmediato) |
-| **Docker** | Prueba integrada de todos los servicios | `docker-compose up --build` |
+```powershell
+docker compose up -d --build
+```
+
+### Ver estado
+
+```powershell
+docker compose ps
+```
+
+### Ver logs
+
+```powershell
+docker compose logs -f db
+docker compose logs -f backend
+docker compose logs -f frontend-admin
+docker compose logs -f frontend-cliente
+```
+
+### Detener sin borrar datos
+
+```powershell
+docker compose down
+```
+
+Esto conserva `purrujas_sqlserver_data`.
+
+### Detener y borrar la base de datos
+
+```powershell
+docker compose down -v
+```
+
+Esto elimina el volumen de SQL Server. En el siguiente `up`, el entrypoint ejecutara de nuevo `Ingenieria_Purrujas_BD.sql` y los patches.
+
+### Forzar reinicializacion desde variable
+
+En PowerShell:
+
+```powershell
+$env:RESET_DATABASE_ON_START = "true"
+docker compose up -d --build db
+Remove-Item Env:\RESET_DATABASE_ON_START
+```
+
+Esta opcion hace que el entrypoint vuelva a ejecutar el script base aunque la base exista. Usarla con cuidado porque el script base puede recrear la base y perder datos.
+
+## Comandos de Verificacion
+
+### Validar compose
+
+```powershell
+docker compose config --quiet
+```
+
+### Compilar backend localmente
+
+```powershell
+cd Backend
+dotnet build Backend-Ingenieria-Purrujas.sln
+```
+
+### Compilar frontends localmente
+
+```powershell
+cd Frontend/Frontend-Ingenieria-Purrujas-Admin
+bun run build
+
+cd ../Frontend-Ingenieria-Purrujas-Cliente
+bun run build
+```
+
+### Validar inicializacion limpia de BD sin tocar el volumen principal
+
+```powershell
+docker compose -p purrujas_verify up -d --build db
+docker inspect -f "{{.State.Health.Status}} RestartCount={{.RestartCount}}" ingenieria-purrujas-db
+docker compose -p purrujas_verify down -v
+```
+
+Advertencia: el `container_name` del servicio `db` es fijo (`ingenieria-purrujas-db`). Para esta prueba temporal, el compose principal no debe estar corriendo al mismo tiempo.
+
+### Consultar objetos creados en SQL Server
+
+```powershell
+docker exec ingenieria-purrujas-db /opt/mssql-tools18/bin/sqlcmd -C `
+  -S localhost,1435 `
+  -U sa `
+  -P "<password>" `
+  -d Ingenieria_Purrujas_BD `
+  -Q "SET NOCOUNT ON; SELECT 'migrations' AS Item, COUNT(*) AS Total FROM dbo.__SchemaMigrations UNION ALL SELECT 'tables', COUNT(*) FROM sys.tables UNION ALL SELECT 'procedures', COUNT(*) FROM sys.procedures;"
+```
+
+Resultado esperado en la validacion actual:
+
+```text
+migrations  3
+tables      29
+procedures  67
+```
+
+## Flujo de Arranque
+
+```text
+docker compose up
+        |
+        v
+Construye imagen db
+        |
+        v
+Arranca SQL Server con docker-entrypoint.sh
+        |
+        v
+Espera conexion en localhost,1435 dentro del contenedor
+        |
+        v
+Crea Ingenieria_Purrujas_BD si no existe
+        |
+        v
+Crea dbo.__SchemaMigrations y aplica DB/Patches/*.sql
+        |
+        v
+Healthcheck pasa a healthy
+        |
+        v
+Arranca backend
+        |
+        v
+Arrancan frontend-admin y frontend-cliente
+```
+
+## Consideraciones de Desarrollo y Produccion
+
+La configuracion actual esta orientada a desarrollo e integracion local:
+
+- Los frontends usan `ng serve`, no una build estatica servida por Nginx.
+- `ASPNETCORE_ENVIRONMENT` queda en `Development`.
+- SQL Server usa `MSSQL_PID=Developer`.
+- Hay un password por defecto en `docker-compose.yml` para facilitar ejecucion local.
+- Los puertos se publican directamente en `localhost`.
+
+Para produccion convendria cambiar:
+
+- Servir Angular con build estatica y Nginx.
+- Usar secretos fuera del repositorio.
+- Quitar passwords por defecto.
+- Definir `ASPNETCORE_ENVIRONMENT=Production`.
+- Revisar CORS con dominios reales.
+- Usar imagenes versionadas en vez de `latest` para SQL Server.
+
+## Problemas Comunes
+
+### El backend no conecta a la base
+
+Revisar:
+
+```powershell
+docker compose ps
+docker compose logs db
+docker compose logs backend
+```
+
+Confirmar que `db` este `healthy` y que la cadena del backend use:
+
+```text
+Server=db,1435
+```
+
+Dentro de Docker no se debe usar `localhost` para conectar backend con base de datos.
+
+### La BD no se reinicializa aunque cambie el SQL
+
+Esto es esperado si el volumen ya existe. El entrypoint omite el script base cuando encuentra `Ingenieria_Purrujas_BD`, salvo que `RESET_DATABASE_ON_START=true`.
+
+Para recrear desde cero:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+### Aparecen errores de login mientras SQL arranca
+
+Durante los primeros segundos pueden aparecer mensajes como:
+
+```text
+SQL Server is not ready to accept new client connections
+Login failed for user 'sa'
+```
+
+Si luego el contenedor queda `healthy`, esos mensajes son intentos tempranos del healthcheck/entrypoint y no representan un fallo final.
+
+### Cambie `Backend/.env` y Compose no cambio el password interpolado
+
+`env_file` inyecta variables al contenedor, pero no alimenta las expresiones `${...}` del YAML. Para cambiar valores interpolados como `MSSQL_SA_PASSWORD`, usar una variable del shell o un `.env` en la raiz del proyecto.
+
+PowerShell:
+
+```powershell
+$env:MSSQL_SA_PASSWORD = "<password>"
+docker compose up -d --build
+```
+
+### El puerto ya esta ocupado
+
+Revisar procesos o contenedores usando puertos:
+
+```powershell
+docker compose ps
+docker ps
+netstat -ano | findstr ":5234"
+netstat -ano | findstr ":4203"
+netstat -ano | findstr ":4204"
+netstat -ano | findstr ":1435"
+```
+
+## Resumen de Consistencia Actual
+
+El proyecto queda alineado asi:
+
+- `docker-compose.yml` construye los cuatro servicios desde sus carpetas correctas.
+- SQL Server escucha en `1435`, y el backend usa `Server=db,1435`.
+- El backend expone `5234`, y CORS permite `4203` y `4204`.
+- El frontend admin usa `http://localhost:5234/api` en configuracion Docker de desarrollo.
+- El frontend cliente usa `/api` con proxy Docker hacia `http://backend:5234`.
+- El script SQL base y los patches se ejecutan correctamente en una base limpia.
+- Los procedimientos almacenados usados por C# estan presentes en la BD.
+- Las imagenes Docker construyen correctamente.
