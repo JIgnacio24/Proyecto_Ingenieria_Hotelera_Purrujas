@@ -8,6 +8,13 @@
   </div>
 </section>
 
+@if (aboutUsLoading) {
+  <div class="loading-row" role="status" aria-live="polite">
+    <span class="spinner spinner--lg" aria-hidden="true"></span>
+    <span>Cargando contenido...</span>
+  </div>
+} @else {
+
 <!-- Historia -->
 <section id="sobre-nosotros" class="section section-historia">
   <div class="container">
@@ -154,6 +161,8 @@
     </div>
   </div>
 </section>
+
+}
 
 <app-getting-there-section variant="about"></app-getting-there-section>
 

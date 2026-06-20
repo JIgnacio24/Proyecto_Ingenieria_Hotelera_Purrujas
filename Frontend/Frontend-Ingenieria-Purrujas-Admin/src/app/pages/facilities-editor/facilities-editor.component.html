@@ -1,0 +1,136 @@
+<section class="admin-facilities-shell">
+  <header class="admin-toolbar">
+    <div>
+      <p class="admin-eyebrow">Contenido del sitio</p>
+      <h1>Editar facilidades</h1>
+      <span>Actualiza los textos visibles de facilidades en el sitio del cliente.</span>
+    </div>
+
+    <div class="admin-actions">
+      <a routerLink="/panel" class="back-link" aria-label="Volver al panel">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Volver al panel
+      </a>
+      <button type="button" class="secondary-button" (click)="loadContent()" [disabled]="loading() || saving()">
+        Recargar
+      </button>
+      <button type="submit" form="facilities-content-form" class="primary-button" [disabled]="loading() || saving()">
+        {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </header>
+
+  @if (feedback()) {
+    <p
+      class="admin-feedback"
+      [class.success-feedback]="feedbackTone() === 'success'"
+      [class.error-feedback]="feedbackTone() === 'error'"
+    >
+      {{ feedback() }}
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="loading-state">Cargando contenido de facilidades...</p>
+  } @else {
+    <form id="facilities-content-form" class="editor-form" (ngSubmit)="save()">
+      <div class="form-grid">
+        <label class="field">
+          <span>Etiqueta de sección</span>
+          <input type="text" name="sectionTag" [(ngModel)]="facilitiesContent.sectionTag" [disabled]="saving()" />
+        </label>
+
+        <label class="field">
+          <span>Título de sección</span>
+          <input type="text" name="sectionTitle" [(ngModel)]="facilitiesContent.sectionTitle" [disabled]="saving()" />
+        </label>
+
+        <label class="field">
+          <span>Título destacado</span>
+          <input type="text" name="highlightTitle" [(ngModel)]="facilitiesContent.highlightTitle" [disabled]="saving()" />
+        </label>
+
+        <label class="field field-full">
+          <span>Descripción destacada</span>
+          <textarea
+            rows="4"
+            name="highlightDescription"
+            [(ngModel)]="facilitiesContent.highlightDescription"
+            [disabled]="saving()"
+          ></textarea>
+        </label>
+      </div>
+
+      <div class="list-editors">
+        <article class="list-editor-card">
+          <div class="group-head">
+            <h3>Bloque principal</h3>
+            <p>Un elemento por línea.</p>
+          </div>
+
+          <label class="field">
+            <span>Título del bloque</span>
+            <input type="text" name="primaryListTitle" [(ngModel)]="facilitiesContent.primaryListTitle" [disabled]="saving()" />
+          </label>
+
+          <label class="field">
+            <span>Elementos del bloque</span>
+            <textarea rows="7" name="primaryListItems" [(ngModel)]="primaryListItemsText" [disabled]="saving()"></textarea>
+          </label>
+        </article>
+
+        <article class="list-editor-card">
+          <div class="group-head">
+            <h3>Bloque secundario</h3>
+            <p>Un elemento por línea.</p>
+          </div>
+
+          <label class="field">
+            <span>Título del bloque</span>
+            <input type="text" name="secondaryListTitle" [(ngModel)]="facilitiesContent.secondaryListTitle" [disabled]="saving()" />
+          </label>
+
+          <label class="field">
+            <span>Elementos del bloque</span>
+            <textarea rows="7" name="secondaryListItems" [(ngModel)]="secondaryListItemsText" [disabled]="saving()"></textarea>
+          </label>
+        </article>
+      </div>
+
+      <div class="services-editor">
+        <div class="group-head">
+          <h3>Tarjetas de servicios</h3>
+          <p>Estas tarjetas conservan las imágenes actuales del cliente y solo cambian el texto.</p>
+        </div>
+
+        <div class="services-grid">
+          @for (service of facilitiesContent.serviceCards; track $index; let index = $index) {
+            <article class="service-editor-card">
+              <div class="service-editor-head">
+                <strong>Tarjeta {{ index + 1 }}</strong>
+                <span>{{ serviceReferenceLabels[index] || 'Servicio adicional' }}</span>
+              </div>
+
+              <label class="field">
+                <span>Título</span>
+                <input type="text" [name]="'serviceTitle' + index" [(ngModel)]="service.title" [disabled]="saving()" />
+              </label>
+
+              <label class="field">
+                <span>Descripción</span>
+                <textarea
+                  rows="4"
+                  [name]="'serviceDescription' + index"
+                  [(ngModel)]="service.description"
+                  [disabled]="saving()"
+                ></textarea>
+              </label>
+            </article>
+          }
+        </div>
+      </div>
+    </form>
+  }
+</section>

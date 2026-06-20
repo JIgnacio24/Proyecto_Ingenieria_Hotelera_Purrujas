@@ -39,6 +39,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
   readonly minStartDate = this.formatDateForInput(new Date());
 
   habitaciones: Room[] = [];
+  habitacionesLoading = true;
   habitacionSeleccionada: Room = EMPTY_ROOM;
   fechaInicio = '';
   fechaFin = '';
@@ -47,6 +48,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
   nochesAlta = 0;
   nochesBaja = 0;
   total = 0;
+  calculando = false;
   mensajeError = '';
   habitacionesError = '';
   currency: Currency = 'USD';
@@ -70,6 +72,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
       this.roomTypesService.getAll().subscribe({
         next: (tipos) => {
           this.habitacionesError = '';
+          this.habitacionesLoading = false;
           this.habitaciones = tipos.map((rt: PublicRoomType) => ({
             roomTypeId: rt.roomTypeId,
             id: rt.name,
@@ -87,6 +90,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
           this.calcular();
         },
         error: () => {
+          this.habitacionesLoading = false;
           this.habitacionesError = 'No fue posible cargar los tipos de habitación. Por favor recargue la página.';
         }
       })
@@ -165,6 +169,8 @@ export class QuoteComponent implements OnInit, OnDestroy {
       currency: this.currency
     };
 
+    this.calculando = true;
+
     this.http
       .post<{
         roomTypeKey: string;
@@ -182,6 +188,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
           this.nochesAlta = response.nightsHigh;
           this.nochesBaja = response.nightsLow;
           this.total = response.total;
+          this.calculando = false;
         },
         error: (error) => {
           this.resetQuote();
@@ -234,6 +241,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
     this.nochesTotales = 0;
     this.nochesAlta = 0;
     this.nochesBaja = 0;
+    this.calculando = false;
   }
 
   private parseDateInput(value: string): Date | null {

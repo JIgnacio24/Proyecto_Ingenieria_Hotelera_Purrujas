@@ -19,36 +19,43 @@
       <h2 class="section-title centered white">Ofertas de Nuestros Aliados</h2>
     </div>
 
-    <div class="pub-list">
-      @for (pub of publicidades; track pub.advertisingId) {
-        <div class="pub-card animate-up">
-          @if (pub.imageUrl) {
-            <div class="pub-image">
-              <img [src]="pub.imageUrl" [alt]="pub.title" loading="lazy" />
-            </div>
-          } @else {
-            <div class="pub-icon">
-              <span class="material-icons">storefront</span>
-            </div>
-          }
-          <div class="pub-body">
-            <h3>{{ pub.title }}</h3>
-            @if (pub.description) {
-              <p class="pub-description">{{ pub.description }}</p>
+    @if (publicidadesLoading) {
+      <div class="loading-row" role="status" aria-live="polite">
+        <span class="spinner spinner--lg" aria-hidden="true"></span>
+        <span>Cargando publicidad...</span>
+      </div>
+    } @else {
+      <div class="pub-list">
+        @for (pub of publicidades; track pub.advertisingId) {
+          <div class="pub-card animate-up">
+            @if (pub.imageUrl) {
+              <div class="pub-image">
+                <img [src]="pub.imageUrl" [alt]="pub.title" loading="lazy" />
+              </div>
+            } @else {
+              <div class="pub-icon">
+                <span class="material-icons">storefront</span>
+              </div>
             }
+            <div class="pub-body">
+              <h3>{{ pub.title }}</h3>
+              @if (pub.description) {
+                <p class="pub-description">{{ pub.description }}</p>
+              }
+            </div>
+            <a [href]="pub.link" target="_blank" rel="noopener noreferrer" class="pub-cta">
+              Ver oferta <span class="material-icons">open_in_new</span>
+            </a>
           </div>
-          <a [href]="pub.link" target="_blank" rel="noopener noreferrer" class="pub-cta">
-            Ver oferta <span class="material-icons">open_in_new</span>
-          </a>
+        }
+      </div>
+
+      @if (publicidades.length === 0) {
+        <div class="empty-state">
+          <span class="material-icons">storefront</span>
+          <p>No hay publicidad disponible en este momento.</p>
         </div>
       }
-    </div>
-
-    @if (publicidades.length === 0) {
-      <div class="empty-state">
-        <span class="material-icons">storefront</span>
-        <p>No hay publicidad disponible en este momento.</p>
-      </div>
     }
   </div>
 </section>
