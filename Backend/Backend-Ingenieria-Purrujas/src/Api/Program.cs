@@ -51,6 +51,9 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+// Caché en memoria para datos de referencia (temporadas, promociones, tipos de
+// habitación) usados por la Cotización Rápida. Evita reconsultar en cada recálculo.
+builder.Services.AddMemoryCache();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

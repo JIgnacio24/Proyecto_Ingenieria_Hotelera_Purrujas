@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -47,6 +47,9 @@ export class QuoteComponent implements OnInit, OnDestroy {
   nochesTotales = 0;
   nochesAlta = 0;
   nochesBaja = 0;
+  // Total base en USD devuelto por el servidor; la conversión a la moneda
+  // mostrada se hace en el cliente (×500), idéntica a la del backend.
+  totalUsd = 0;
   total = 0;
   calculando = false;
   mensajeError = '';
@@ -55,12 +58,14 @@ export class QuoteComponent implements OnInit, OnDestroy {
   currencySymbol = '$';
 
   private subs = new Subscription();
+  private calcSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
     public currencyService: CurrencyService,
-    private roomTypesService: RoomTypesService
+    private roomTypesService: RoomTypesService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   get minEndDate(): string {
@@ -87,11 +92,13 @@ export class QuoteComponent implements OnInit, OnDestroy {
           const porId = roomParam ? this.habitaciones.find(h => h.roomTypeId === +roomParam) : null;
           const porNombre = roomParam ? this.habitaciones.find(h => h.id === roomParam) : null;
           this.habitacionSeleccionada = porId ?? porNombre ?? this.habitaciones[0] ?? EMPTY_ROOM;
+          this.cdr.detectChanges();
           this.calcular();
         },
         error: () => {
           this.habitacionesLoading = false;
           this.habitacionesError = 'No fue posible cargar los tipos de habitación. Por favor recargue la página.';
+          this.cdr.detectChanges();
         }
       })
     );
@@ -100,12 +107,22 @@ export class QuoteComponent implements OnInit, OnDestroy {
       this.currencyService.currencyChanges$.subscribe((curr) => {
         this.currency = curr;
         this.currencySymbol = this.currencyService.symbol(curr);
-        this.calcular();
+        // Cambiar de moneda NO requiere recalcular en el servidor: solo se
+        // reconvierte el total base (USD) localmente. Resultado instantáneo.
+        this.aplicarMoneda();
       })
     );
   }
 
+  private aplicarMoneda(): void {
+    this.total = this.currencyService.convertFromUsd(this.totalUsd, this.currency);
+    // Sin Zone.js la app no detecta cambios automáticamente tras un callback
+    // asíncrono (suscripción a la moneda): hay que pedir el refresco de la vista.
+    this.cdr.detectChanges();
+  }
+
   ngOnDestroy(): void {
+    this.calcSub?.unsubscribe();
     this.subs.unsubscribe();
   }
 
@@ -162,16 +179,25 @@ export class QuoteComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Siempre se pide la cotización base en USD. La conversión a la moneda
+    // mostrada se hace en el cliente, de modo que cambiar de moneda no dispara
+    // una nueva llamada al backend.
     const payload = {
       roomTypeKey: this.habitacionSeleccionada.id,
       startDate: this.fechaInicio,
       endDate: this.fechaFin,
-      currency: this.currency
+      currency: 'USD'
     };
 
     this.calculando = true;
 
-    this.http
+    // Cancela cualquier cálculo aún en vuelo: si el usuario cambia habitación,
+    // fechas o moneda en rápida sucesión, solo la última petición debe resolver.
+    // Evita respuestas obsoletas que sobrescriben el resultado vigente.
+    this.calcSub?.unsubscribe();
+
+    const startedAt = performance.now();
+    this.calcSub = this.http
       .post<{
         roomTypeKey: string;
         nightsTotal: number;
@@ -187,12 +213,19 @@ export class QuoteComponent implements OnInit, OnDestroy {
           this.nochesTotales = response.nightsTotal;
           this.nochesAlta = response.nightsHigh;
           this.nochesBaja = response.nightsLow;
-          this.total = response.total;
+          this.totalUsd = response.total;
+          this.total = this.currencyService.convertFromUsd(this.totalUsd, this.currency);
           this.calculando = false;
+          // La app corre sin Zone.js: la respuesta HTTP llega fuera de un evento,
+          // así que sin esto el total y el spinner no se refrescan hasta el
+          // siguiente click. Forzamos la detección de cambios.
+          this.cdr.detectChanges();
+          console.debug(`[Cotización] /api/quote/calculate: ${Math.round(performance.now() - startedAt)} ms`);
         },
         error: (error) => {
           this.resetQuote();
           this.mensajeError = error?.error?.message ?? 'No se pudo calcular la cotización.';
+          this.cdr.detectChanges();
         }
       });
   }
@@ -237,6 +270,7 @@ export class QuoteComponent implements OnInit, OnDestroy {
   }
 
   private resetQuote(): void {
+    this.totalUsd = 0;
     this.total = 0;
     this.nochesTotales = 0;
     this.nochesAlta = 0;

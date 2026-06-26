@@ -1,5 +1,8 @@
+using System.Diagnostics;
 using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace Backend_Ingenieria_Purrujas.Application.Quotes;
 
@@ -8,7 +11,17 @@ public class QuoteService : IQuoteService
     private readonly IRoomTypeRepository _roomTypeRepository;
     private readonly ISeasonRepository _seasonRepository;
     private readonly IPromotionRepository _promotionRepository;
+    private readonly IMemoryCache _cache;
+    private readonly ILogger<QuoteService> _logger;
     private const decimal UsdToCrcRate = 500m;
+
+    // Los datos de referencia (temporadas, promociones, tipos de habitación) cambian
+    // con muy poca frecuencia desde el panel de administración. Cachearlos unos segundos
+    // elimina las consultas repetidas cuando el usuario cambia moneda/fechas/habitación.
+    private static readonly TimeSpan ReferenceDataTtl = TimeSpan.FromSeconds(60);
+    private const string SeasonsCacheKey = "quote:seasons:active";
+    private const string PromotionsCacheKey = "quote:promotions:all";
+
     private static readonly HashSet<string> SupportedCurrencies = new(StringComparer.OrdinalIgnoreCase)
     {
         "USD",
@@ -18,11 +31,15 @@ public class QuoteService : IQuoteService
     public QuoteService(
         IRoomTypeRepository roomTypeRepository,
         ISeasonRepository seasonRepository,
-        IPromotionRepository promotionRepository)
+        IPromotionRepository promotionRepository,
+        IMemoryCache cache,
+        ILogger<QuoteService> logger)
     {
         _roomTypeRepository = roomTypeRepository;
         _seasonRepository = seasonRepository;
         _promotionRepository = promotionRepository;
+        _cache = cache;
+        _logger = logger;
     }
 
     public async Task<QuoteResponseDto> CalculateAsync(
@@ -30,16 +47,28 @@ public class QuoteService : IQuoteService
         CancellationToken cancellationToken = default,
         bool allowPastDates = false)
     {
+        var totalStopwatch = Stopwatch.StartNew();
+
         var roomTypeKey = NormalizeRoomTypeKey(request.RoomTypeKey);
         ValidateStayDates(request.StartDate, request.EndDate, allowPastDates);
         var currency = NormalizeCurrency(request.Currency);
 
-        var roomType = await _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken)
-            ?? throw new ArgumentException($"Tipo de habitación '{roomTypeKey}' no encontrado.");
+        // Las tres lecturas son independientes entre sí: se lanzan en paralelo
+        // (cada repositorio usa su propia conexión) en lugar de en secuencia.
+        var fetchStopwatch = Stopwatch.StartNew();
+        var roomTypeTask = GetRoomTypeCachedAsync(roomTypeKey, cancellationToken);
+        var seasonsTask = GetActiveSeasonsCachedAsync(cancellationToken);
+        var promotionsTask = GetPromotionsCachedAsync(cancellationToken);
+        await Task.WhenAll(roomTypeTask, seasonsTask, promotionsTask);
+        fetchStopwatch.Stop();
 
-        var seasons = await _seasonRepository.GetActiveAsync(cancellationToken);
+        var roomType = roomTypeTask.Result
+            ?? throw new ArgumentException($"Tipo de habitación '{roomTypeKey}' no encontrado.");
+        var seasons = seasonsTask.Result;
+        var promotions = promotionsTask.Result;
+
+        var computeStopwatch = Stopwatch.StartNew();
         var quoteBreakdown = BuildQuoteBreakdown(request.StartDate, request.EndDate, roomType.BasePrice, seasons);
-        var promotions = await _promotionRepository.GetAllAsync(cancellationToken);
         var promotion = ResolvePromotion(request.StartDate, request.EndDate, roomType.RoomTypeId, promotions);
         var discountUsd = promotion is null
             ? 0m
@@ -51,6 +80,18 @@ public class QuoteService : IQuoteService
         var discountAmount = discountUsd * conversionRate;
         var total = totalUsd * conversionRate;
         var basePerNight = roomType.BasePrice * conversionRate;
+        computeStopwatch.Stop();
+        totalStopwatch.Stop();
+
+        _logger.LogInformation(
+            "Cotización calculada: total={TotalMs}ms (datos={FetchMs}ms, cálculo={ComputeMs}ms) " +
+            "[habitación={RoomTypeKey}, noches={Nights}, moneda={Currency}]",
+            totalStopwatch.ElapsedMilliseconds,
+            fetchStopwatch.ElapsedMilliseconds,
+            computeStopwatch.ElapsedMilliseconds,
+            roomTypeKey,
+            quoteBreakdown.TotalNights,
+            currency);
 
         return new QuoteResponseDto(
             RoomTypeKey: roomTypeKey,
@@ -66,6 +107,37 @@ public class QuoteService : IQuoteService
             PromotionDiscount: promotion?.Discount ?? 0,
             PromotionName: promotion?.Name
         );
+    }
+
+    // ── Lecturas cacheadas de datos de referencia ────────────────────────────
+    // TTL corto: el resultado es idéntico al de la BD dentro de la ventana de
+    // caché; los cambios del administrador se reflejan en a lo sumo 60 s.
+
+    private Task<IReadOnlyCollection<Season>> GetActiveSeasonsCachedAsync(CancellationToken cancellationToken)
+    {
+        return _cache.GetOrCreateAsync(SeasonsCacheKey, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = ReferenceDataTtl;
+            return _seasonRepository.GetActiveAsync(cancellationToken);
+        })!;
+    }
+
+    private Task<IReadOnlyList<Promotion>> GetPromotionsCachedAsync(CancellationToken cancellationToken)
+    {
+        return _cache.GetOrCreateAsync(PromotionsCacheKey, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = ReferenceDataTtl;
+            return _promotionRepository.GetAllAsync(cancellationToken);
+        })!;
+    }
+
+    private Task<RoomType?> GetRoomTypeCachedAsync(string roomTypeKey, CancellationToken cancellationToken)
+    {
+        return _cache.GetOrCreateAsync($"quote:roomtype:{roomTypeKey}", entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = ReferenceDataTtl;
+            return _roomTypeRepository.GetByKeyAsync(roomTypeKey, cancellationToken);
+        });
     }
 
     private static Promotion? ResolvePromotion(

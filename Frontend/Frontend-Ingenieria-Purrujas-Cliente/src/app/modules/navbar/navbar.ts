@@ -106,6 +106,14 @@ export class NavbarComponent {
   }
 
   private updateActiveSection(): void {
+    // El scroll-spy de secciones solo aplica en la página de inicio. En otras
+    // rutas (p. ej. /about-us, que embebe la sección "como-llegar" del mapa) no
+    // debe tocar el estado activo del navbar, o el activo saltaría a "Como
+    // llegar" y dejaría de marcar "Sobre nosotros".
+    if (this.currentPath !== '/') {
+      return;
+    }
+
     const activeOffset = this.navOffset() + 8;
     let activeSection: HomeSectionId | null = null;
 
@@ -127,7 +135,7 @@ export class NavbarComponent {
     }
 
     if (activeSection) {
-      this.currentPath = '/';
+      // Ya no se sobrescribe currentPath: en la home siempre es '/'.
       this.currentFragment = activeSection;
     }
   }
