@@ -9,7 +9,10 @@
       <div class="ticker-track" #tickerTrack>
         <!-- Debug: Si carouselItems está vacío, mostrar mensaje -->
         @if (carouselItems.length === 0) {
-          <div style="color: #aaa; padding: 10px;">Cargando ofertas...</div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; color: #aaa; padding: 10px;">
+            <span class="spinner" aria-hidden="true"></span>
+            Cargando ofertas...
+          </div>
         } @else {
           @for (item of tickerItems; track $index) {
             <a [routerLink]="item.type === 'publicidad' ? '/publicidad' : '/promociones'"
@@ -41,7 +44,7 @@
 
   <!-- Copyright -->
   <div class="copyright-row">
-    <p>&copy; 2025 <strong>Hotel Las Purrujas</strong> &nbsp;·&nbsp; Cartago, Costa Rica &nbsp;·&nbsp; Proyecto Académico</p>
+    <p>&copy; 2026 <strong>Hotel Las Purrujas</strong> &nbsp;·&nbsp; Cartago, Costa Rica &nbsp;·&nbsp; Proyecto Académico</p>
   </div>
 </footer>
 

@@ -55,6 +55,7 @@ export class AboutUs implements OnInit, OnDestroy {
   currencySymbol = '$';
   private subs = new Subscription();
   aboutUsContent: AboutUsPageContent = createEmptyAboutUsPageContent();
+  aboutUsLoading = true;
 
   galleryItems: GalleryImage[] = [];
 
@@ -141,12 +142,17 @@ export class AboutUs implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Error loading about us content with fetch:', error);
+      this.ngZone.run(() => {
+        this.aboutUsLoading = false;
+        this.changeDetectorRef.detectChanges();
+      });
     }
   }
 
   private applyAboutUsContent(content: Partial<AboutUsPageContent> | null | undefined): void {
     // Aplica el contenido normalizado y fuerza refresco visual tras respuestas asincronas.
     this.aboutUsContent = normalizeAboutUsPageContent(content);
+    this.aboutUsLoading = false;
     this.changeDetectorRef.detectChanges();
   }
 

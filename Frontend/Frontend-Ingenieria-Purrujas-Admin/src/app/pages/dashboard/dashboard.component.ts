@@ -7,13 +7,6 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { AdminUser } from '../../core/auth.models';
 import {
-  cloneFacilitiesPageContent,
-  createDefaultFacilitiesPageContent,
-  FACILITIES_SERVICE_REFERENCE_LABELS,
-  FacilitiesContentService,
-  FacilitiesPageContent
-} from '../../core/facilities-content.service';
-import {
   cloneGettingTherePageContent,
   createDefaultGettingTherePageContent,
   GettingThereContentService,
@@ -73,7 +66,6 @@ export class DashboardComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  private readonly facilitiesContentService = inject(FacilitiesContentService);
   private readonly gettingThereContentService = inject(GettingThereContentService);
   readonly menuItems: readonly DashboardMenuItem[] = [
     {
@@ -95,7 +87,8 @@ export class DashboardComponent implements AfterViewInit {
       label: 'Editar facilidades',
       compactLabel: 'Facilidades',
       icon: 'pages',
-      targetId: 'dashboard-content'
+      targetId: 'dashboard-content',
+      route: '/panel/facilidades'
     },
     {
       key: 'getting-there',
@@ -154,6 +147,15 @@ export class DashboardComponent implements AfterViewInit {
       status: 'Editable',
       description: 'Abre la vista editable de Sobre nosotros para cambiar textos, historia, filosofía, misión, visión, valores y galería.',
       link: '/panel/sobre-nosotros',
+      actionLabel: 'Abrir editor',
+      group: 'editing'
+    },
+    {
+      key: 'facilities-editor',
+      title: 'Editar facilidades',
+      status: 'Editable',
+      description: 'Abre el editor de facilidades para actualizar las instalaciones, servicios destacados y tarjetas de servicios.',
+      link: '/panel/facilidades',
       actionLabel: 'Abrir editor',
       group: 'editing'
     },
@@ -254,26 +256,17 @@ export class DashboardComponent implements AfterViewInit {
   readonly dashboardFeedback = signal('');
   readonly dashboardFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly profile = signal<AdminUser | null>(this.authService.currentUser());
-  readonly facilitiesLoading = signal(true);
-  readonly facilitiesSaving = signal(false);
-  readonly facilitiesFeedback = signal('');
-  readonly facilitiesFeedbackTone = signal<'success' | 'error' | ''>('');
   readonly gettingThereLoading = signal(true);
   readonly gettingThereSaving = signal(false);
   readonly gettingThereModalOpen = signal(false);
   readonly gettingThereFeedback = signal('');
   readonly gettingThereFeedbackTone = signal<'success' | 'error' | ''>('');
-  readonly serviceReferenceLabels = FACILITIES_SERVICE_REFERENCE_LABELS;
-  facilitiesContent: FacilitiesPageContent = createDefaultFacilitiesPageContent();
-  primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
-  secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
   gettingThereContent: GettingTherePageContent = createDefaultGettingTherePageContent();
   gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
   private gettingThereModalSnapshot: GettingTherePageContent | null = null;
   constructor() {
     this.consumeNavigationFeedback();
     void this.loadProfile();
-    void this.loadFacilitiesContent();
     void this.loadGettingThereContent();
   }
 
@@ -302,53 +295,6 @@ export class DashboardComponent implements AfterViewInit {
 
   logout(): void {
     this.authService.logout();
-  }
-
-  async loadFacilitiesContent(): Promise<void> {
-    this.facilitiesLoading.set(true);
-    this.clearFacilitiesFeedback();
-
-    try {
-      const content = await firstValueFrom(this.facilitiesContentService.getContent());
-      this.applyFacilitiesContent(content);
-    } catch (error) {
-      this.applyFacilitiesContent(createDefaultFacilitiesPageContent());
-      this.facilitiesFeedbackTone.set('error');
-      this.facilitiesFeedback.set(
-        this.resolveError(
-          error,
-          'No fue posible cargar el contenido de facilidades. Se muestran los valores predeterminados.'
-        )
-      );
-    } finally {
-      this.facilitiesLoading.set(false);
-    }
-  }
-
-  async saveFacilitiesContent(): Promise<void> {
-    this.facilitiesSaving.set(true);
-    this.clearFacilitiesFeedback();
-
-    try {
-      const savedContent = await firstValueFrom(
-        this.facilitiesContentService.updateContent(this.buildFacilitiesContentPayload())
-      );
-
-      this.applyFacilitiesContent(savedContent);
-      this.facilitiesFeedbackTone.set('success');
-      this.facilitiesFeedback.set('El contenido de facilidades se guardó correctamente.');
-    } catch (error) {
-      this.facilitiesFeedbackTone.set('error');
-      this.facilitiesFeedback.set(
-        this.resolveError(error, 'No fue posible guardar el contenido de facilidades.')
-      );
-
-      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-        this.authService.logout();
-      }
-    } finally {
-      this.facilitiesSaving.set(false);
-    }
   }
 
   async loadGettingThereContent(): Promise<void> {
@@ -556,25 +502,6 @@ export class DashboardComponent implements AfterViewInit {
     view.history.replaceState(remainingState, this.document.title, view.location.href);
   }
 
-  private applyFacilitiesContent(content: FacilitiesPageContent): void {
-    this.facilitiesContent = cloneFacilitiesPageContent(content);
-    this.primaryListItemsText = this.facilitiesContent.primaryListItems.join('\n');
-    this.secondaryListItemsText = this.facilitiesContent.secondaryListItems.join('\n');
-  }
-
-  private buildFacilitiesContentPayload(): FacilitiesPageContent {
-    // Los campos multilinea del formulario se guardan como arreglos limpios en el JSON.
-    return cloneFacilitiesPageContent({
-      ...this.facilitiesContent,
-      primaryListItems: this.parseLines(this.primaryListItemsText),
-      secondaryListItems: this.parseLines(this.secondaryListItemsText),
-      serviceCards: this.facilitiesContent.serviceCards.map((service) => ({
-        title: service.title.trim(),
-        description: service.description.trim()
-      }))
-    });
-  }
-
   private applyGettingThereContent(content: GettingTherePageContent): void {
     this.gettingThereContent = cloneGettingTherePageContent(content);
     this.gettingThereDirectionsItemsText = this.gettingThereContent.directionsItems.join('\n');
@@ -592,11 +519,6 @@ export class DashboardComponent implements AfterViewInit {
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
-  }
-
-  private clearFacilitiesFeedback(): void {
-    this.facilitiesFeedback.set('');
-    this.facilitiesFeedbackTone.set('');
   }
 
   private clearGettingThereFeedback(): void {

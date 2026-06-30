@@ -78,6 +78,36 @@ body.loaded app-root {
   transition: opacity 0.5s ease;
 }
 
+/* Spinner reutilizable para estados de carga/cálculo en cualquier componente */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(26, 58, 42, 0.3);
+  border-top-color: #1a3a2a;
+  border-radius: 50%;
+  display: inline-block;
+  animation: app-spin 0.8s linear infinite;
+}
+
+.spinner--lg {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  color: #5c7465;
+  justify-content: center;
+}
+
+@keyframes app-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Asegurar que app-root y sus hijos no oculten el footer */
 app-root {
   display: block;

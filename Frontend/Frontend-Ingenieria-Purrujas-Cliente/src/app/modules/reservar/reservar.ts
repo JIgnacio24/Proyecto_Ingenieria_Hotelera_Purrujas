@@ -9,6 +9,7 @@ import { Currency, CurrencyService } from '../../shared/currency.service';
 import { ReservationService, ReservationResponse } from '../../services/reservation.service';
 import { RoomTypesService, PublicRoomType } from '../../services/room-types.service';
 
+type RoomId = 'doble' | 'suite' | 'villa';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -79,6 +80,12 @@ export class ReservarComponent implements OnInit, OnDestroy {
   discountAmount = 0;
   totalUsd = 0;
   totalCrc = 0;
+  /** Subtotal cacheado en ambas monedas para evitar recalcular en el backend al cambiar de moneda */
+  private subtotalUsd = 0;
+  private subtotalCrc = 0;
+  private discountUsd = 0;
+  private discountCrc = 0;
+  quoteLoading = false;
   quoteError = '';
 
   availabilityStatus: AvailabilityStatus = 'idle';
@@ -92,6 +99,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   guestForm: FormGroup;
 
   private subs = new Subscription();
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -123,12 +131,12 @@ export class ReservarComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Precio final después de aplicar el descuento promocional */
+  /** Precio final después de aplicar el descuento promocional (calculado por el backend) */
   get totalConDescuento(): number {
     return this.finalTotal;
   }
 
-  /** Ahorro absoluto en la moneda seleccionada */
+  /** Ahorro absoluto en la moneda seleccionada (calculado por el backend) */
   get promoAhorro(): number {
     return this.discountAmount;
   }
@@ -167,18 +175,16 @@ export class ReservarComponent implements OnInit, OnDestroy {
       this.currencyService.currencyChanges$.subscribe((curr) => {
         this.currency = curr;
         this.currencySymbol = this.currencyService.symbol(curr);
-        if (this.fechaInicio && this.fechaFin && this.nochesTotales > 0) {
-          this.calculateQuote();
-        } else {
-          this.updateDisplayTotal();
-        }
+        // La conversión es una multiplicación fija, no requiere volver a consultar al backend.
+        this.updateDisplayTotal();
+        this.cdr.detectChanges();
       })
     );
 
     // Pre-cargar parámetros de URL (fechas y habitación)
     const params = this.route.snapshot.queryParamMap;
     if (params.has('inicio')) this.fechaInicio = params.get('inicio')!;
-    if (params.has('fin'))    this.fechaFin    = params.get('fin')!;
+    if (params.has('fin')) this.fechaFin = params.get('fin')!;
 
     // Cargar tipos de habitación desde la API
     this.subs.add(
@@ -190,7 +196,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
           // Pre-seleccionar habitación por query param ?habitacion=<roomTypeId>
           const habitacionParam = params.get('habitacion');
           const porId = habitacionParam
-            ? this.habitaciones.find(h => h.roomTypeId === +habitacionParam)
+            ? this.habitaciones.find((h) => h.roomTypeId === +habitacionParam)
             : null;
           this.selectedRoom = porId ?? this.habitaciones[0] ?? EMPTY_ROOM;
 
@@ -308,6 +314,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
   private calculateQuote(): void {
     if (!this.selectedRoom.roomTypeId) return;
     this.quoteError = '';
+    this.quoteLoading = true;
     const payload = {
       roomTypeKey: this.selectedRoom.id,
       startDate: this.fechaInicio,
@@ -327,10 +334,7 @@ export class ReservarComponent implements OnInit, OnDestroy {
         currency: Currency;
         promotionDiscount: number;
         promotionName?: string;
-      }>(
-        '/api/quote/calculate',
-        payload
-      )
+      }>('/api/quote/calculate', payload)
       .subscribe({
         next: (r) => {
           if (r.currency !== this.currency) return;
@@ -338,23 +342,27 @@ export class ReservarComponent implements OnInit, OnDestroy {
           this.nochesTotales = r.nightsTotal;
           this.nochesAlta = r.nightsHigh;
           this.nochesBaja = r.nightsLow;
-          this.total = r.subtotal;
-          this.finalTotal = r.total;
-          this.discountAmount = r.discountAmount;
           this.promoDescuento = r.promotionDiscount;
           this.promoNombre = r.promotionName || '';
-          if (r.currency === 'CRC') {
-            this.totalCrc = r.total;
-            this.totalUsd = r.total / 500;
-          } else {
-            this.totalUsd = r.total;
-            this.totalCrc = r.total * 500;
-          }
+
+          // Se cachean los montos en ambas monedas (tasa fija) para no volver a
+          // llamar al backend cuando el usuario solo cambia de moneda.
+          this.subtotalUsd = r.currency === 'CRC' ? r.subtotal / 500 : r.subtotal;
+          this.subtotalCrc = r.currency === 'CRC' ? r.subtotal : r.subtotal * 500;
+          this.discountUsd = r.currency === 'CRC' ? r.discountAmount / 500 : r.discountAmount;
+          this.discountCrc = r.currency === 'CRC' ? r.discountAmount : r.discountAmount * 500;
+          this.totalUsd = r.currency === 'CRC' ? r.total / 500 : r.total;
+          this.totalCrc = r.currency === 'CRC' ? r.total : r.total * 500;
+
+          this.updateDisplayTotal();
+          this.quoteLoading = false;
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.resetQuoteAndAvailability();
           this.quoteError = err?.error?.message || 'No se pudo calcular el precio.';
+          this.quoteLoading = false;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -380,7 +388,10 @@ export class ReservarComponent implements OnInit, OnDestroy {
   }
 
   private updateDisplayTotal(): void {
-    this.finalTotal = this.currency === 'CRC' ? this.totalCrc : this.totalUsd;
+    const isCrc = this.currency === 'CRC';
+    this.total = isCrc ? this.subtotalCrc : this.subtotalUsd;
+    this.discountAmount = isCrc ? this.discountCrc : this.discountUsd;
+    this.finalTotal = isCrc ? this.totalCrc : this.totalUsd;
   }
 
   private confirmedReservationCurrency(): Currency {
@@ -414,6 +425,11 @@ export class ReservarComponent implements OnInit, OnDestroy {
     this.discountAmount = 0;
     this.totalUsd = 0;
     this.totalCrc = 0;
+    this.subtotalUsd = 0;
+    this.subtotalCrc = 0;
+    this.discountUsd = 0;
+    this.discountCrc = 0;
+    this.quoteLoading = false;
     this.quoteError = '';
     this.availabilityStatus = 'idle';
     this.availableRooms = 0;
