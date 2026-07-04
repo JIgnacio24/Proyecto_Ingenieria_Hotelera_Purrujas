@@ -19,12 +19,14 @@ export class PublicidadComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   publicidades: Publicidad[] = [];
+  publicidadesLoading = true;
 
   ngOnInit(): void {
     this.publicidadService.getPublicidades().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(data => {
       this.publicidades = data;
+      this.publicidadesLoading = false;
       this.cdr.detectChanges();
     });
   }

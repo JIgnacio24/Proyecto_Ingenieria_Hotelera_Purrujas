@@ -21,6 +21,7 @@ export class Promociones implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   promociones: Promocion[] = [];
+  promocionesLoading = true;
   filtroActivo: 'todas' | 'activas' | 'proximas' = 'todas';
   private roomTypes: PublicRoomType[] = [];
 
@@ -29,6 +30,7 @@ export class Promociones implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(data => {
       this.promociones = data;
+      this.promocionesLoading = false;
       this.setFiltro('todas');
       this.cdr.detectChanges();
     });

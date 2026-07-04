@@ -1,3 +1,9 @@
+/* Spinner con colores claros para que se vea sobre el fondo verde oscuro del footer */
+.promo-footer .spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+}
+
 /* ── Contenedor principal del footer ── */
 .promo-footer {
   position: fixed;

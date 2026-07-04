@@ -2,16 +2,19 @@ using Backend_Ingenieria_Purrujas.Domain.Entities;
 using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 
 public class SeasonRepository : ISeasonRepository
 {
     private readonly string _connectionString;
+    private readonly ILogger<SeasonRepository> _logger;
 
-    public SeasonRepository(IConfiguration configuration)
+    public SeasonRepository(IConfiguration configuration, ILogger<SeasonRepository> logger)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+        _logger = logger;
     }
 
     // ── GetActiveAsync — usado por el motor de cotización ────────────────────
@@ -39,7 +42,10 @@ public class SeasonRepository : ISeasonRepository
             while (await reader.ReadAsync(cancellationToken))
                 results.Add(MapRow(reader));
         }
-        catch { /* swallow; fallback empty */ }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener las temporadas activas; se devuelve lista vacía.");
+        }
 
         return results;
     }

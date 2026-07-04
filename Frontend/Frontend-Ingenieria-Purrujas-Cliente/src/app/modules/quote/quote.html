@@ -13,7 +13,12 @@
     <div class="quote-card">
       <div class="quote-alert" role="alert" *ngIf="habitacionesError">{{ habitacionesError }}</div>
 
-      <div class="quote-field">
+      <div class="loading-row" *ngIf="habitacionesLoading" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Cargando tipos de habitación...</span>
+      </div>
+
+      <div class="quote-field" *ngIf="!habitacionesLoading">
         <label for="habitacion">Tipo de habitación</label>
         <select
           id="habitacion"
@@ -56,7 +61,12 @@
         </div>
       </div>
 
-      <div class="quote-summary">
+      <div class="loading-row" *ngIf="calculando" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Calculando...</span>
+      </div>
+
+      <div class="quote-summary" *ngIf="!calculando">
         <div>
           <div class="summary-value">{{ nochesTotales }}</div>
           <div class="summary-label">Noches totales</div>
@@ -82,7 +92,8 @@
       <div class="price-breakdown">
         <div class="row total">
           <span>Total estimado ({{ nochesTotales }} noches)</span>
-          <strong class="total-amount">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
+          <strong class="total-amount" *ngIf="!calculando">{{ currencySymbol }}{{ total | number:'1.2-2' }}</strong>
+          <span class="spinner" *ngIf="calculando" aria-hidden="true"></span>
         </div>
       </div>
 

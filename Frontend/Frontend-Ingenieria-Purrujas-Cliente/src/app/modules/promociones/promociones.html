@@ -51,71 +51,78 @@
       </button>
     </div>
 
-    <div class="promo-grid">
-      @for (promo of promocionesFiltradas; track promo.promotionId) {
-        <div class="promo-card animate-up">
-          <div class="promo-header">
-            <div class="discount-circle">
-              <span class="discount-value">-{{ promo.discount }}%</span>
-              <span class="discount-label">descuento</span>
+    @if (promocionesLoading) {
+      <div class="loading-row" role="status" aria-live="polite">
+        <span class="spinner spinner--lg" aria-hidden="true"></span>
+        <span>Cargando promociones...</span>
+      </div>
+    } @else {
+      <div class="promo-grid">
+        @for (promo of promocionesFiltradas; track promo.promotionId) {
+          <div class="promo-card animate-up">
+            <div class="promo-header">
+              <div class="discount-circle">
+                <span class="discount-value">-{{ promo.discount }}%</span>
+                <span class="discount-label">descuento</span>
+              </div>
+              <div class="promo-status">
+                @if (isActiva(promo)) {
+                  <span class="status-badge activa">
+                    <span class="material-icons">bolt</span> Activa
+                  </span>
+                } @else {
+                  <span class="status-badge proxima">
+                    <span class="material-icons">schedule</span> Próximamente
+                  </span>
+                }
+              </div>
             </div>
-            <div class="promo-status">
+
+            <div class="promo-body">
+              <div class="promo-room-tag">
+                <span class="material-icons">hotel</span>
+                {{ roomName(promo.roomTypeId) }}
+              </div>
+              <h3>{{ promo.name }}</h3>
+
+              <div class="promo-dates">
+                <div class="date-item">
+                  <span class="material-icons">calendar_today</span>
+                  <div>
+                    <small>Desde</small>
+                    <span>{{ formatDate(promo.startDate) }}</span>
+                  </div>
+                </div>
+                <div class="date-item">
+                  <span class="material-icons">event</span>
+                  <div>
+                    <small>Hasta</small>
+                    <span>{{ formatDate(promo.endDate) }}</span>
+                  </div>
+                </div>
+              </div>
+
               @if (isActiva(promo)) {
-                <span class="status-badge activa">
-                  <span class="material-icons">bolt</span> Activa
-                </span>
-              } @else {
-                <span class="status-badge proxima">
-                  <span class="material-icons">schedule</span> Próximamente
-                </span>
+                <div class="countdown">
+                  <span class="material-icons">timer</span>
+                  Termina en <strong>{{ diasRestantes(promo.endDate) }} días</strong>
+                </div>
               }
+
+              <button type="button" class="promo-cta" (click)="aprovecharOferta(promo)">
+                Aprovechar oferta <span class="material-icons">arrow_forward</span>
+              </button>
             </div>
           </div>
+        }
+      </div>
 
-          <div class="promo-body">
-            <div class="promo-room-tag">
-              <span class="material-icons">hotel</span>
-              {{ roomName(promo.roomTypeId) }}
-            </div>
-            <h3>{{ promo.name }}</h3>
-
-            <div class="promo-dates">
-              <div class="date-item">
-                <span class="material-icons">calendar_today</span>
-                <div>
-                  <small>Desde</small>
-                  <span>{{ formatDate(promo.startDate) }}</span>
-                </div>
-              </div>
-              <div class="date-item">
-                <span class="material-icons">event</span>
-                <div>
-                  <small>Hasta</small>
-                  <span>{{ formatDate(promo.endDate) }}</span>
-                </div>
-              </div>
-            </div>
-
-            @if (isActiva(promo)) {
-              <div class="countdown">
-                <span class="material-icons">timer</span>
-                Termina en <strong>{{ diasRestantes(promo.endDate) }} días</strong>
-              </div>
-            }
-
-            <button type="button" class="promo-cta" (click)="aprovecharOferta(promo)">
-              Aprovechar oferta <span class="material-icons">arrow_forward</span>
-            </button>
-          </div>
+      @if (promocionesFiltradas.length === 0) {
+        <div class="empty-state">
+          <span class="material-icons">search_off</span>
+          <p>No hay promociones en esta categoría por el momento.</p>
         </div>
       }
-    </div>
-
-    @if (promocionesFiltradas.length === 0) {
-      <div class="empty-state">
-        <span class="material-icons">search_off</span>
-        <p>No hay promociones en esta categoría por el momento.</p>
-      </div>
     }
   </div>
 </section>

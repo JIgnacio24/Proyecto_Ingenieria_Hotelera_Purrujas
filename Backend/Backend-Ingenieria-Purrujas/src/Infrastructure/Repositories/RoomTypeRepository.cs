@@ -3,6 +3,7 @@ using Backend_Ingenieria_Purrujas.Domain.Repositories;
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Text;
 
@@ -11,6 +12,7 @@ namespace Backend_Ingenieria_Purrujas.Infrastructure.Repositories;
 public class RoomTypeRepository : IRoomTypeRepository
 {
     private readonly string _connectionString;
+    private readonly ILogger<RoomTypeRepository> _logger;
     private static readonly Dictionary<string, RoomType> FallbackRoomTypes = new()
     {
         { "doble", new RoomType { RoomTypeId = 1, Name = "Habitación Doble", BasePrice = 95,  Capacity = 2 } },
@@ -18,9 +20,10 @@ public class RoomTypeRepository : IRoomTypeRepository
         { "villa", new RoomType { RoomTypeId = 3, Name = "Villa Familiar",   BasePrice = 180, Capacity = 6 } }
     };
 
-    public RoomTypeRepository(IConfiguration configuration)
+    public RoomTypeRepository(IConfiguration configuration, ILogger<RoomTypeRepository> logger)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<RoomType>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -54,8 +57,9 @@ public class RoomTypeRepository : IRoomTypeRepository
             var result = DeduplicateRoomTypes(roomTypes);
             return result.Count > 0 ? result : FallbackRoomTypes.Values.ToList();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener los tipos de habitación; se usan valores de respaldo.");
             return FallbackRoomTypes.Values.ToList();
         }
     }
@@ -115,9 +119,9 @@ public class RoomTypeRepository : IRoomTypeRepository
                 return MapRoomType(reader);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Fallback below
+            _logger.LogError(ex, "Error al buscar el tipo de habitación '{RoomKey}'; se usa valor de respaldo.", roomKey);
         }
 
         return TryGetFallback(roomKey);
